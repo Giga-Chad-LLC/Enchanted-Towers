@@ -5,6 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import android.view.View;
+
+import 	android.widget.TextView;
+import android.widget.Button;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -13,6 +18,7 @@ import tech.gusavila92.websocketclient.WebSocketClient;
 
 
 public class MainActivity extends AppCompatActivity {
+    static private final String websocketServerURL = "wss://ws.postman-echo.com/raw"; // "ws://127.0.0.1:8000/"
     private WebSocketClient webSocketClient;
 
     @Override
@@ -21,16 +27,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         createWebSocketClient();
-        webSocketClient.send("Hello, World!");
-    }
 
+        // register click event
+        Button button = findViewById(R.id.sendMessageButton);
+        button.setOnClickListener(v -> {
+            TextView messageTextView = findViewById(R.id.messageEditText);
+            String message = messageTextView.getText().toString();
+
+            webSocketClient.send(message);
+        });
+    }
 
     private void createWebSocketClient() {
         URI uri;
+
         try {
             // Connect to local host
-            //uri = new URI("ws://127.0.0.1:8000/");
-            uri = new URI("wss://ws.postman-echo.com/raw");
+            uri = new URI(websocketServerURL);
         }
         catch (URISyntaxException e) {
             e.printStackTrace();
@@ -40,77 +53,45 @@ public class MainActivity extends AppCompatActivity {
         webSocketClient = new WebSocketClient(uri) {
             @Override
             public void onOpen() {
-                Log.i("WebSocket", "Session is starting");
-                webSocketClient.send("Hello World!");
+                Log.i("WebSocket", "Connection opened");
             }
 
             @Override
             public void onTextReceived(String message) {
                 Log.i("WebSocket", "Received message: '" + message + "'");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        /*try {
-                            TextView textView = findViewById(R.id.animalSound);
-                            textView.setText(message);
-                        } catch (Exception e){
-                            e.printStackTrace();
-                        }*/
+                runOnUiThread(() -> {
+                    try {
+                        TextView textView = findViewById(R.id.serverMessageTextView);
+                        textView.setText(message);
+                    } catch (Exception e){
+                        e.printStackTrace();
                     }
                 });
             }
 
             @Override
-            public void onBinaryReceived(byte[] data) {
-            }
+            public void onBinaryReceived(byte[] data) {}
 
             @Override
-            public void onPingReceived(byte[] data) {
-            }
+            public void onPingReceived(byte[] data) {}
 
             @Override
-            public void onPongReceived(byte[] data) {
-            }
+            public void onPongReceived(byte[] data) {}
 
             @Override
-            public void onException(Exception e) {
-                System.out.println(e.getMessage());
+            public void onException(Exception err) {
+                System.out.println(err.getMessage());
             }
 
             @Override
             public void onCloseReceived() {
-                Log.i("WebSocket", "Closed");
-                System.out.println("onCloseReceived");
+                Log.i("WebSocket", "Connection closed");
             }
         };
 
         webSocketClient.setConnectTimeout(10_000);
         webSocketClient.setReadTimeout(60_000);
-        webSocketClient.enableAutomaticReconnection(5000);
+        webSocketClient.enableAutomaticReconnection(100);
         webSocketClient.connect();
     }
-
-
-/*    public void sendMessage(View view) {
-        Log.i("WebSocket", "Button was clicked");
-
-        // Send button id string to WebSocket Server
-        switch(view.getId()){
-            case(R.id.dogButton):
-                webSocketClient.send("1");
-                break;
-
-            case(R.id.catButton):
-                webSocketClient.send("2");
-                break;
-
-            case(R.id.pigButton):
-                webSocketClient.send("3");
-                break;
-
-            case(R.id.foxButton):
-                webSocketClient.send("4");
-                break;
-        }
-    }*/
 }
