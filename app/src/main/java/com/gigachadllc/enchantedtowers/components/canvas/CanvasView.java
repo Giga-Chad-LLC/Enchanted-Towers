@@ -55,6 +55,13 @@ public class CanvasView extends View {
         currentColor = newColor.toArgb();
     }
 
+    public void clearCanvas() {
+        pathsList.clear();
+        colorsList.clear();
+        path.reset();
+        invalidate();
+    }
+
     private void init(Context context) {
         paintBrush.setAntiAlias(true);
         paintBrush.setColor(Color.BLACK);
