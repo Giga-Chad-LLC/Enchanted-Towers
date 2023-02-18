@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.gigachadllc.enchantedtowers"
-        minSdk 24
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -29,9 +29,12 @@ android {
 }
 
 dependencies {
-//    Apache
+    // Apache
     implementation 'org.apache.commons:commons-collections4:4.4'
     implementation 'org.apache.commons:commons-lang3:3.9'
+
+    // Android fragments
+    implementation "androidx.fragment:fragment:1.5.5"
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'

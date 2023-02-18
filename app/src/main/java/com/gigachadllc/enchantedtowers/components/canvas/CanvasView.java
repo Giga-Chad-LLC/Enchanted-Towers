@@ -1,4 +1,4 @@
-package com.gigachadllc.enchantedtowers;
+package com.gigachadllc.enchantedtowers.components.canvas;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,12 +12,10 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.TimerTask;
-import java.util.Timer;
-
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.lang3.tuple.Triple;
+
+import java.util.ArrayList;
 
 
 public class CanvasView extends View {
@@ -25,12 +23,14 @@ public class CanvasView extends View {
         PATH_START,
         PATH_CONTINUATION
     };
-    private final int MAX_POINTS_SAVED_COUNT = 100;
-    private CircularFifoQueue<Triple<Float, Float, PointType>> pointsList = new CircularFifoQueue<>(MAX_POINTS_SAVED_COUNT);
-    private Timer timer;
+//    private final int MAX_ENTRIES_SAVED_COUNT = 1000;
+//    private final CircularFifoQueue<Triple<Pair<Float, Float>, Integer, PointType>> pointsList = new CircularFifoQueue<>(MAX_ENTRIES_SAVED_COUNT);
+    private final ArrayList<Path> pathsList = new ArrayList<>();
+    private final ArrayList<Integer> colorsList = new ArrayList<>();
 
-    public Path path = new Path();
-    public Paint paintBrush = new Paint();
+    private Path path = new Path();
+    private int currentColor = Color.BLACK;
+    private Paint paintBrush = new Paint();
 
     public CanvasView(Context context) {
         super(context);
@@ -47,6 +47,14 @@ public class CanvasView extends View {
         init(context);
     }
 
+    public void setBrushColor(int newColor) {
+        currentColor = newColor;
+    }
+
+    public void setBrushColor(Color newColor) {
+        currentColor = newColor.toArgb();
+    }
+
     private void init(Context context) {
         paintBrush.setAntiAlias(true);
         paintBrush.setColor(Color.BLACK);
@@ -56,28 +64,15 @@ public class CanvasView extends View {
         paintBrush.setStrokeWidth(10f);
     }
 
-    private void drawPaths(Canvas canvas) {
-        Triple<Float, Float, PointType> point;
-
-        while (!pointsList.isEmpty()) {
-            point = pointsList.remove();
-
-            float x = point.getLeft();
-            float y = point.getMiddle();
-            PointType type = point.getRight();
-
-            switch (type) {
-                case PATH_START: {
-                    path.moveTo(x, y);
-                    break;
-                }
-                case PATH_CONTINUATION: {
-                    path.lineTo(x, y);
-                    break;
-                }
-            }
+    private void drawPreviousPaths(Canvas canvas) {
+        for (int i = 0; i < pathsList.size(); i++) {
+            paintBrush.setColor(colorsList.get(i));
+            canvas.drawPath(pathsList.get(i), paintBrush);
         }
+    }
 
+    private void drawCurrentPath(Canvas canvas) {
+        paintBrush.setColor(currentColor);
         canvas.drawPath(path, paintBrush);
     }
 
@@ -88,13 +83,21 @@ public class CanvasView extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
-                pointsList.add(Triple.of(x, y, PointType.PATH_START));
+                path.reset();
+                path.moveTo(x, y);
+                return true;
+            }
+            case MotionEvent.ACTION_UP: {
+                path.lineTo(x, y);
+
+                pathsList.add(new Path(path));
+                colorsList.add(paintBrush.getColor());
+
                 invalidate();
                 return true;
             }
-            case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_MOVE: {
-                pointsList.add(Triple.of(x, y, PointType.PATH_CONTINUATION));
+                path.lineTo(x, y);
                 invalidate();
                 return true;
             }
@@ -106,6 +109,7 @@ public class CanvasView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        drawPaths(canvas);
+        drawPreviousPaths(canvas);
+        drawCurrentPath(canvas);
     }
 }
