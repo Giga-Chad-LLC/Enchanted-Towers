@@ -3,6 +3,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
     }
+    includeBuild('../build-logic')
 }
 
 // == Define locations for components ==
@@ -11,7 +12,8 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+includeBuild('../platforms')
 
 // == Define the inner structure of this component ==
-rootProject.name = 'enchanted-towers-server' // the component name
-include ':app'
+rootProject.name = 'server' // the component name
+include('app')

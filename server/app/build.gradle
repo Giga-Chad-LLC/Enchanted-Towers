@@ -1,10 +1,25 @@
 plugins {
+    id('enchantedtowers.java-library')
+}
+
+group = "${group}.server"
+
+
+dependencies {
+    // implementation('com.example.myproduct.user-feature:table')
+    // implementation('com.example.myproduct.admin-feature:config')
+}
+
+
+
+/*
+plugins {
     id 'java'
     id 'application'
 }
 
 application {
-    mainClassName = "Server" // "main.java.Server"
+    mainClassName = "Server"
 }
 
 java {
@@ -18,7 +33,6 @@ repositories {
 
 dependencies {}
 
-/*
 sourceSets {
     main {
         java { srcDirs = ["src"] } // src/main/java
@@ -34,8 +48,9 @@ sourceSets {
         // resources.setSrcDirs(Arrays.asList("testResources")) // listOf("testResources")
     }
 }
-*/
 
 //tasks.test {
 //    useJUnitPlatform()
 //}
+
+*/
