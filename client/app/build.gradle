@@ -1,4 +1,17 @@
 plugins {
+    id('enchantedtowers.android-application')
+}
+
+group = "${group}.client"
+
+dependencies {
+    // implementation('com.example.myproduct.user-feature:table')
+}
+
+
+// default code
+/*
+plugins {
     id 'com.android.application'
 }
 
@@ -40,3 +53,4 @@ dependencies {
     implementation 'tech.gusavila92:java-android-websocket-client:1.2.2'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
+*/
