@@ -35,14 +35,14 @@
 
     <TextView
         android:id="@+id/serverMessageTextView"
-        android:layout_width="217dp"
-        android:layout_height="24dp"
+        android:layout_width="345dp"
+        android:layout_height="67dp"
         android:fontFamily="sans-serif"
         android:textColor="#000000"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.061"
+        app:layout_constraintHorizontal_bias="0.166"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.155" />

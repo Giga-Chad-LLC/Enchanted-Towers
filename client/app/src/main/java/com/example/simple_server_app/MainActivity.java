@@ -18,7 +18,9 @@ import tech.gusavila92.websocketclient.WebSocketClient;
 
 
 public class MainActivity extends AppCompatActivity {
-    static private final String websocketServerURL = "wss://ws.postman-echo.com/raw"; // "ws://127.0.0.1:8000/"
+    static private final String websocketServerURL = "wss://ws.postman-echo.com/raw"; // ws://192.168.0.103:8000/";
+    // wss://ws.postman-echo.com/raw
+    // ws://192.168.0.103:8000/ - LAN Wi-Fi
     private WebSocketClient webSocketClient;
 
     @Override
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
         webSocketClient.setConnectTimeout(10_000);
         webSocketClient.setReadTimeout(60_000);
-        webSocketClient.enableAutomaticReconnection(100);
+        webSocketClient.enableAutomaticReconnection(2000);
         webSocketClient.connect();
     }
 }

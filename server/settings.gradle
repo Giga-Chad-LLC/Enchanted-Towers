@@ -1,0 +1,17 @@
+// == Define locations for build logic ==
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+// == Define locations for components ==
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
+// == Define the inner structure of this component ==
+rootProject.name = 'enchanted-towers-server' // the component name
+include ':app'
