@@ -4,3 +4,10 @@ dependencyResolutionManagement {
         google()
     }
 }
+
+includeBuild('../platforms')
+
+rootProject.name = 'build-logic'
+include('commons')
+include('java-library')
+include('android-application')
