@@ -2,5 +2,5 @@
 //    group = 'verification'
 //    description = 'Run all feature tests'
     dependsOn(gradle.includedBuild('client').task(':app:assembleDebug'))
-    dependsOn(gradle.includedBuild('server').task(':app:assembleDebug'))
+//    dependsOn(gradle.includedBuild('server').task(':app:assembleDebug'))
  }
