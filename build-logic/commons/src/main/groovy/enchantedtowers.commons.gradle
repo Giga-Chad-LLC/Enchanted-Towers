@@ -11,9 +11,9 @@ java {
 }
 
 dependencies {
-    // implementation(platform('com.example.platform:product-platform'))
+     implementation(platform('enchantedtowers.platform:product-platform'))
 
-    // testImplementation(platform('com.example.platform:test-platform'))
+     testImplementation(platform('enchantedtowers.platform:test-platform'))
     // testImplementation('org.junit.jupiter:junit-jupiter')
 }
 
