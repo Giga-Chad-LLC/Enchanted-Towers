@@ -20,10 +20,11 @@ tbd
     1. `[topic]` - **тема/категория**, к которой по смыслу относятся изменения в ветке. Например: `feature`, `bug-fix`, `enhancement`. На данный момент допустимо использовать следующие категории (если хотите добавить свои, то обсудите это с членами команды):
 
         1. `feature`
-        1. `bug-fix`
-        1. `enhancement`
-        1. `research`
-        1. `playground`
+        2. `environment`
+        3. `bug-fix`
+        4. `enhancement`
+        5. `research`
+        6. `playground`
 
     1. `[short-task-description]` - краткое описание из 1-6 слов изменений, которые находятся в ветке. Например: `websocket-server-implementation`, `google-map-api-setup`, `drawing-board-implementation`.
 
