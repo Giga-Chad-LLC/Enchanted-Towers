@@ -15,6 +15,7 @@ import java.net.URISyntaxException;
 
 import tech.gusavila92.websocketclient.WebSocketClient;
 
+import enchantedtowers.sample.Sample;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Sample.print();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
