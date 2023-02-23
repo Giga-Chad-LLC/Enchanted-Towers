@@ -5,6 +5,7 @@ plugins {
 group = "${group}.client"
 
 dependencies {
+    implementation('enchantedtowers.product.common:utils')
     // implementation('com.example.myproduct.user-feature:table')
 }
 

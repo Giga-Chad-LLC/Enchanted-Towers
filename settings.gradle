@@ -4,5 +4,7 @@
 includeBuild('platforms')
 includeBuild('build-logic')
 
+includeBuild('common')
+
 includeBuild('client')
 includeBuild('server')

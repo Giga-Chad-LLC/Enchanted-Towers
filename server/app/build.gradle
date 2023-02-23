@@ -4,8 +4,8 @@ plugins {
 
 group = "${group}.server"
 
-
 dependencies {
+    implementation('enchantedtowers.product.common:utils')
     // implementation('com.example.myproduct.user-feature:table')
     // implementation('com.example.myproduct.admin-feature:config')
 }

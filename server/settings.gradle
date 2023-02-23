@@ -13,6 +13,7 @@ dependencyResolutionManagement {
     }
 }
 includeBuild('../platforms')
+includeBuild('../common')
 
 // == Define the inner structure of this component ==
 rootProject.name = 'server' // the component name
