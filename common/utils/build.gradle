@@ -2,9 +2,11 @@ plugins {
     id('enchantedtowers.java-library')
 }
 
-group = "${group}.common" // enchantedtowers.product.common
+// enchantedtowers.product.common
+group = "${group}.common"
 
 dependencies {
-//    api('com.example.myproduct.model:release')
-//    implementation('com.fasterxml.jackson.core:jackson-databind')
+    // examples:
+    // api('com.example.myproduct.model:release')
+    // implementation('com.fasterxml.jackson.core:jackson-databind')
 }

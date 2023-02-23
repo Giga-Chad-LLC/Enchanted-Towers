@@ -1,24 +1,9 @@
 plugins {
     id('com.android.application')
-//    id('com.android.library')
-
-//    id 'com.android.application' version '7.4.1' apply false
-//    id 'com.android.library' version '7.4.1' apply false
-    // id('com.android.application')
-    // id('org.jetbrains.kotlin.android')
 }
 
 
 group = 'enchantedtowers.product'
-
-
-// remove it?
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
-}
-
 
 
 android {
@@ -58,26 +43,3 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
-
-
-
-/*
-android {
-    // compileSdkVersion(28)
-    // defaultConfig {
-    //     minSdkVersion(24)
-    //     targetSdkVersion(28)
-    // }
-    // compileOptions {
-    //     sourceCompatibility = JavaVersion.VERSION_1_8
-    //     targetCompatibility = JavaVersion.VERSION_1_8
-    // }
-}
-
-dependencies {
-    // implementation(platform('com.example.platform:product-platform'))
-    // testImplementation(platform('com.example.platform:test-platform'))
-
-    // implementation('org.jetbrains.kotlin:kotlin-stdlib')
-}
-*/

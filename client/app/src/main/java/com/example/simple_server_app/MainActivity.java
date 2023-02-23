@@ -9,9 +9,8 @@ import enchantedtowers.sample.Sample;
 public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Sample.print();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Sample.print();
     }
 }

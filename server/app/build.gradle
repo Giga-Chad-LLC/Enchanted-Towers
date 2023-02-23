@@ -6,51 +6,7 @@ group = "${group}.server"
 
 dependencies {
     implementation('enchantedtowers.product.common:utils')
+    // examples:
     // implementation('com.example.myproduct.user-feature:table')
     // implementation('com.example.myproduct.admin-feature:config')
 }
-
-
-
-/*
-plugins {
-    id 'java'
-    id 'application'
-}
-
-application {
-    mainClassName = "Server"
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {}
-
-sourceSets {
-    main {
-        java { srcDirs = ["src"] } // src/main/java
-        resources { srcDir "src/resources" } // src/resources
-        // java.setSrcDirs(Arrays.asList("src")) // listOf("src")
-        // resources.setSrcDirs(Arrays.asList("resources")) // listOf("resources")
-    }
-    test {
-        java {
-
-        }
-        // java.setSrcDirs(Arrays.asList("test")) // listOf("test")
-        // resources.setSrcDirs(Arrays.asList("testResources")) // listOf("testResources")
-    }
-}
-
-//tasks.test {
-//    useJUnitPlatform()
-//}
-
-*/
