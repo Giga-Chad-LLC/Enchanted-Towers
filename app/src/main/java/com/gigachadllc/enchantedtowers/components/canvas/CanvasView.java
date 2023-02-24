@@ -29,7 +29,7 @@ public class CanvasView extends View {
     private final ArrayList<Integer> colorsList = new ArrayList<>();
 
     private Path path = new Path();
-    private int currentColor = Color.BLACK;
+    private int nextShapeColor = Color.BLACK;
     private Paint paintBrush = new Paint();
 
     public CanvasView(Context context) {
@@ -48,11 +48,11 @@ public class CanvasView extends View {
     }
 
     public void setBrushColor(int newColor) {
-        currentColor = newColor;
+        nextShapeColor = newColor;
     }
 
     public void setBrushColor(Color newColor) {
-        currentColor = newColor.toArgb();
+        nextShapeColor = newColor.toArgb();
     }
 
     public void clearCanvas() {
@@ -72,14 +72,17 @@ public class CanvasView extends View {
     }
 
     private void drawPreviousPaths(Canvas canvas) {
+        int currentShapeColor = paintBrush.getColor();
+
         for (int i = 0; i < pathsList.size(); i++) {
             paintBrush.setColor(colorsList.get(i));
             canvas.drawPath(pathsList.get(i), paintBrush);
         }
+
+        paintBrush.setColor(currentShapeColor);
     }
 
     private void drawCurrentPath(Canvas canvas) {
-        paintBrush.setColor(currentColor);
         canvas.drawPath(path, paintBrush);
     }
 
@@ -92,6 +95,10 @@ public class CanvasView extends View {
             case MotionEvent.ACTION_DOWN: {
                 path.reset();
                 path.moveTo(x, y);
+
+                // update color only when started the new shape
+                paintBrush.setColor(nextShapeColor);
+
                 return true;
             }
             case MotionEvent.ACTION_UP: {
