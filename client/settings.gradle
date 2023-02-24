@@ -17,6 +17,7 @@ dependencyResolutionManagement {
     }
 }
 includeBuild('../platforms')
+includeBuild('../common')
 
 
 // == Define the inner structure of this component ==
