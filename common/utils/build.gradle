@@ -1,12 +1,75 @@
 plugins {
+    id 'enchantedtowers.java-library'
+    id 'com.google.protobuf' version '0.9.1'
+}
+
+// enchantedtowers.product.common
+group = "${group}.common"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+//sourceCompatibility = 1.8
+//targetCompatibility = 1.8
+
+def grpcVersion = '1.53.0'
+def protobufVersion = '3.21.7'
+def protocVersion = protobufVersion
+
+dependencies {
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    compileOnly "org.apache.tomcat:annotations-api:6.0.53"
+
+    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+}
+
+// Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
+    plugins {
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+    }
+    generateProtoTasks {
+        all()*.plugins { grpc {} }
+    }
+}
+
+
+//startScripts.enabled = false
+
+
+// =================================
+
+/*
+
+plugins {
     id('enchantedtowers.java-library')
 }
 
 // enchantedtowers.product.common
 group = "${group}.common"
 
+
 dependencies {
+//    implementation('com.google.protobuf:protobuf-java:3.21.12')
     // examples:
     // api('com.example.myproduct.model:release')
     // implementation('com.fasterxml.jackson.core:jackson-databind')
 }
+
+
+ */
