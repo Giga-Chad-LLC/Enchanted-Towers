@@ -1,5 +1,5 @@
-tasks.register('checkFeatures') {
-    // group = 'verification'
-    // description = 'Run all feature tests'
-    dependsOn(gradle.includedBuild('client').task(':app:assembleDebug'))
-}
+//tasks.register('checkFeatures') {
+//     group = 'verification'
+//     description = 'Run all feature tests'
+//    dependsOn(gradle.includedBuild('client').task(':app:assembleDebug'))
+//}
