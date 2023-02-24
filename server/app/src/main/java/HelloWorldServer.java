@@ -37,6 +37,7 @@ public class HelloWorldServer {
                 .addService(new HelloWorldServiceImpl())
                 .build()
                 .start();
+        System.out.println("Server started on port " + server.getPort());
     }
 
     public void blockUntilShutdown() throws InterruptedException {
@@ -49,6 +50,7 @@ public class HelloWorldServer {
 
     public static void main(String[] args)
             throws InterruptedException, IOException {
+        Sample.print();
         HelloWorldServer server = new HelloWorldServer();
         server.start();
         server.blockUntilShutdown();
@@ -56,7 +58,7 @@ public class HelloWorldServer {
 }
 
 
-/*public class Server {
+/*public class HelloWorldServer {
     public static void main(String[] args) {
         Sample.print();
     }
