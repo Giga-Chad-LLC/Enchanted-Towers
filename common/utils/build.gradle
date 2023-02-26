@@ -49,6 +49,18 @@ protobuf {
 }
 
 
+
+task SyncProtobufFiles(type: Sync) {
+        from 'build/generated/source/proto/main/java'
+        into 'src/main/java/generated/proto/java'
+}
+
+
+task SyncProtoGrpcDependencies(type: Sync) {
+    from 'build/generated/source/proto/main/grpc'
+    into 'src/main/java/generated/proto/grpc'
+}
+
 //startScripts.enabled = false
 
 
