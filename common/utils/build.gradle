@@ -18,6 +18,10 @@ repositories {
     mavenLocal()
 }
 
+//tasks.jar.onlyIf {}
+tasks.jar.enabled = false
+
+
 //sourceCompatibility = 1.8
 //targetCompatibility = 1.8
 
