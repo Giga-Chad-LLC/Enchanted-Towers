@@ -1,7 +1,14 @@
 plugins {
     id 'enchantedtowers.java-library'
-    id 'com.google.protobuf' version '0.9.1'
+    id 'com.google.protobuf' version '0.9.1' apply false
 }
+
+def generateProtoFiles = false
+
+if (generateProtoFiles) {
+    apply plugin: 'com.google.protobuf' // version '0.9.1'
+}
+
 
 // enchantedtowers.product.common
 group = "${group}.common"
@@ -37,28 +44,34 @@ sourceSets {
     }
 }
 
-
-protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
-    plugins {
-        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
-    }
-    generateProtoTasks {
-        all()*.plugins { grpc {} }
+if (generateProtoFiles) {
+    protobuf {
+        protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
+        plugins {
+            grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+        }
+        generateProtoTasks {
+            all()*.plugins { grpc {} }
+        }
     }
 }
 
 
-
 task SyncProtobufFiles(type: Sync) {
-        from 'build/generated/source/proto/main/java'
-        into 'src/main/java/generated/proto/java'
+    from 'build/generated/source/proto/main/java'
+    into 'src/main/java/'
+    preserve {
+        include '/**'
+    }
 }
 
 
 task SyncProtoGrpcDependencies(type: Sync) {
     from 'build/generated/source/proto/main/grpc'
-    into 'src/main/java/generated/proto/grpc'
+    into 'src/main/java/'
+    preserve {
+        include '/**'
+    }
 }
 
 //startScripts.enabled = false
