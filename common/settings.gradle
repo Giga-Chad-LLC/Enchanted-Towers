@@ -1,4 +1,4 @@
-// == Define locations for build logic ==
+// Define locations for build logic
 pluginManagement {
     repositories {
         // if pluginManagement.repositories looks like this, it can be omitted as this is the default
@@ -7,7 +7,7 @@ pluginManagement {
     includeBuild('../build-logic')
 }
 
-// == Define locations for components ==
+// Define locations for components
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
@@ -16,6 +16,6 @@ dependencyResolutionManagement {
 includeBuild('../platforms')
 
 
-// == Define the inner structure of this component ==
+// Define the inner structure of this component
 rootProject.name = 'common'
 include('utils')

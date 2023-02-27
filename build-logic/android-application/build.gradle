@@ -4,7 +4,6 @@ plugins {
 
 dependencies {
      implementation(platform('enchantedtowers.platform:plugins-platform'))
-
     implementation(project(':commons'))
 
     implementation('com.android.tools.build:gradle')

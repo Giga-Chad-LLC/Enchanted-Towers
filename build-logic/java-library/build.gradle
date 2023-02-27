@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-     implementation(platform('enchantedtowers.platform:plugins-platform'))
+    implementation(platform('enchantedtowers.platform:plugins-platform'))
     implementation(project(':commons'))
 }

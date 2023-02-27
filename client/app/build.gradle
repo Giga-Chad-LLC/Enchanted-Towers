@@ -2,21 +2,18 @@ plugins {
     id('enchantedtowers.android-application')
 }
 
+// expands to 'enchantedtowers.product.client'
 group = "${group}.client"
 
 def grpcVersion = '1.53.0'
 
+// Note: in case of grpc related errors, consider 'io.grpc:grpc-netty', 'io.grpc:grpc-netty-shaded' and 'io.grpc:grpc-android' packages
 dependencies {
     implementation('enchantedtowers.product.common:utils')
 
     implementation("io.grpc:grpc-stub:${grpcVersion}")
     implementation("io.grpc:grpc-protobuf:${grpcVersion}")
-//    implementation("io.grpc:grpc-android:${grpcVersion}")
     implementation("io.grpc:grpc-okhttp:${grpcVersion}")
-//    implementation("io.grpc:grpc-netty:${grpcVersion}")
-//    implementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
-//    runtimeOnly("io.grpc:grpc-netty-shaded:${grpcVersion}")
-
     // example:
     // implementation('com.example.myproduct.user-feature:table')
 }
