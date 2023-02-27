@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option java_package = "generated.proto.java";
+
 service HelloWorldService {
   rpc hello(HelloRequest) returns (HelloResponse) {}
 }
