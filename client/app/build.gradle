@@ -11,6 +11,12 @@ dependencies {
 
     implementation("io.grpc:grpc-stub:${grpcVersion}")
     implementation("io.grpc:grpc-protobuf:${grpcVersion}")
+//    implementation("io.grpc:grpc-android:${grpcVersion}")
+    implementation("io.grpc:grpc-okhttp:${grpcVersion}")
+//    implementation("io.grpc:grpc-netty:${grpcVersion}")
+//    implementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
+//    runtimeOnly("io.grpc:grpc-netty-shaded:${grpcVersion}")
+
     // example:
     // implementation('com.example.myproduct.user-feature:table')
 }
