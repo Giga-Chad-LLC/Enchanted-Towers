@@ -32,7 +32,7 @@ used by the running server.
 
 It is required to be set to `true` if changes were made in common/utils components (do not know have in works...)
 */
-tasks.jar.enabled = false
+tasks.jar.enabled = true// false
 
 // setting versions of grpc & protobuf
 def grpcVersion = '1.53.0'
