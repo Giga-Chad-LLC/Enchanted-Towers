@@ -3,7 +3,7 @@ package com.example.simple_server_app;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.util.TimeUtils;
+import android.os.StrictMode;
 
 import io.grpc.Channel;
 import io.grpc.Grpc;
@@ -64,7 +64,9 @@ class HelloWorldClient {
     public static void greetWithServer(String[] args) throws Exception {
         String user = "world";
         // Access a service running on the local machine on port 50051
-        String target = "localhost:50051";
+        // See: https://stackoverflow.com/questions/25354723/econnrefused-connection-refused-android-connect-to-webservice
+        String target = "10.0.2.2:50051";// "localhost:50051";
+
         // Allow passing in the user and target strings as command line arguments
         if (args.length > 0) {
             if ("--help".equals(args[0])) {
@@ -109,9 +111,13 @@ class HelloWorldClient {
 public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Sample.print();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        /*StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+                .detectLeakedClosableObjects()
+                .build());*/
+
         String[] args = { "--help" };
         try {
             System.out.println("Using HelloWorldClient...");
