@@ -1,4 +1,4 @@
-package generated.proto.java;
+package enchantedtowers.common.utils.generated.proto;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
 
@@ -18,29 +18,29 @@ public final class GreeterGrpc {
   public static final String SERVICE_NAME = "Greeter";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<generated.proto.java.HelloWorld.HelloRequest,
-      generated.proto.java.HelloWorld.HelloReply> getSayHelloMethod;
+  private static volatile io.grpc.MethodDescriptor<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest,
+      enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply> getSayHelloMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "SayHello",
-      requestType = generated.proto.java.HelloWorld.HelloRequest.class,
-      responseType = generated.proto.java.HelloWorld.HelloReply.class,
+      requestType = enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest.class,
+      responseType = enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<generated.proto.java.HelloWorld.HelloRequest,
-      generated.proto.java.HelloWorld.HelloReply> getSayHelloMethod() {
-    io.grpc.MethodDescriptor<generated.proto.java.HelloWorld.HelloRequest, generated.proto.java.HelloWorld.HelloReply> getSayHelloMethod;
+  public static io.grpc.MethodDescriptor<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest,
+      enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply> getSayHelloMethod() {
+    io.grpc.MethodDescriptor<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest, enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply> getSayHelloMethod;
     if ((getSayHelloMethod = GreeterGrpc.getSayHelloMethod) == null) {
       synchronized (GreeterGrpc.class) {
         if ((getSayHelloMethod = GreeterGrpc.getSayHelloMethod) == null) {
           GreeterGrpc.getSayHelloMethod = getSayHelloMethod =
-              io.grpc.MethodDescriptor.<generated.proto.java.HelloWorld.HelloRequest, generated.proto.java.HelloWorld.HelloReply>newBuilder()
+              io.grpc.MethodDescriptor.<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest, enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "SayHello"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  generated.proto.java.HelloWorld.HelloRequest.getDefaultInstance()))
+                  enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  generated.proto.java.HelloWorld.HelloReply.getDefaultInstance()))
+                  enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply.getDefaultInstance()))
               .setSchemaDescriptor(new GreeterMethodDescriptorSupplier("SayHello"))
               .build();
         }
@@ -105,8 +105,8 @@ public final class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public void sayHello(generated.proto.java.HelloWorld.HelloRequest request,
-        io.grpc.stub.StreamObserver<generated.proto.java.HelloWorld.HelloReply> responseObserver) {
+    public void sayHello(enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest request,
+        io.grpc.stub.StreamObserver<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getSayHelloMethod(), responseObserver);
     }
 
@@ -116,8 +116,8 @@ public final class GreeterGrpc {
             getSayHelloMethod(),
             io.grpc.stub.ServerCalls.asyncUnaryCall(
               new MethodHandlers<
-                generated.proto.java.HelloWorld.HelloRequest,
-                generated.proto.java.HelloWorld.HelloReply>(
+                enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest,
+                enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply>(
                   this, METHODID_SAY_HELLO)))
           .build();
     }
@@ -145,8 +145,8 @@ public final class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public void sayHello(generated.proto.java.HelloWorld.HelloRequest request,
-        io.grpc.stub.StreamObserver<generated.proto.java.HelloWorld.HelloReply> responseObserver) {
+    public void sayHello(enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest request,
+        io.grpc.stub.StreamObserver<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getSayHelloMethod(), getCallOptions()), request, responseObserver);
     }
@@ -174,7 +174,7 @@ public final class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public generated.proto.java.HelloWorld.HelloReply sayHello(generated.proto.java.HelloWorld.HelloRequest request) {
+    public enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply sayHello(enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getSayHelloMethod(), getCallOptions(), request);
     }
@@ -202,8 +202,8 @@ public final class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public com.google.common.util.concurrent.ListenableFuture<generated.proto.java.HelloWorld.HelloReply> sayHello(
-        generated.proto.java.HelloWorld.HelloRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply> sayHello(
+        enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getSayHelloMethod(), getCallOptions()), request);
     }
@@ -229,8 +229,8 @@ public final class GreeterGrpc {
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_SAY_HELLO:
-          serviceImpl.sayHello((generated.proto.java.HelloWorld.HelloRequest) request,
-              (io.grpc.stub.StreamObserver<generated.proto.java.HelloWorld.HelloReply>) responseObserver);
+          serviceImpl.sayHello((enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest) request,
+              (io.grpc.stub.StreamObserver<enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -254,7 +254,7 @@ public final class GreeterGrpc {
 
     @java.lang.Override
     public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
-      return generated.proto.java.HelloWorld.getDescriptor();
+      return enchantedtowers.common.utils.generated.proto.HelloWorld.getDescriptor();
     }
 
     @java.lang.Override

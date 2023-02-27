@@ -26,9 +26,11 @@ if (generateProtoFiles) {
 
 
 /*
-disable common:utils:jar task because when server is running, client cannot execute this task because
+disable `common:utils:jar` task because when server is running, client cannot execute this task because
 the task requires removal of build/libs/utils.jar file which is not possible due to the file being
 used by the running server.
+
+It is required to be set to `true` if changes were made in common/utils components (do not know have in works...)
 */
 tasks.jar.enabled = false
 

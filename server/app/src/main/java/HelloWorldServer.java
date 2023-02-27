@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import enchantedtowers.sample.Sample;
+import enchantedtowers.common.utils.sample.Sample;
 // generated
-import generated.proto.java.HelloWorld.HelloRequest;
-import generated.proto.java.HelloWorld.HelloReply;
-import  generated.proto.java.GreeterGrpc;
+import enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply;
+import enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest;
+import enchantedtowers.common.utils.generated.proto.GreeterGrpc;
 
 
 /**

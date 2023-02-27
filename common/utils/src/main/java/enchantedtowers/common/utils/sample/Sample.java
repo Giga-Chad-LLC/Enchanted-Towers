@@ -1,4 +1,4 @@
-package enchantedtowers.sample;
+package enchantedtowers.common.utils.sample;
 
 
 public class Sample {
