@@ -1,9 +1,10 @@
-package com.example.simple_server_app;
+package enchantedtowers.client;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.widget.TextView;
 
 import io.grpc.Channel;
 import io.grpc.Grpc;
@@ -36,7 +37,7 @@ class HelloWorldClient {
     }
 
     /** Say hello to server. */
-    public void greet(String name) {
+    public String greet(String name) {
         logger.info("Will try to greet " + name + " ...");
         System.out.println("Will try to greet " + name + " ...");
 
@@ -48,17 +49,19 @@ class HelloWorldClient {
         } catch (StatusRuntimeException e) {
             logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
             System.out.println("RPC failed: " + e.getStatus());
-            return;
+            return "[NO RESPONSE]";
         }
         logger.info("Greeting: " + response.getMessage());
         System.out.println("Greeting: " + response.getMessage());
+
+        return response.getMessage();
     }
 
     /**
      * Greet server. If provided, the first element of {@code args} is the name to use in the
      * greeting. The second argument is the target server.
      */
-    public static void greetWithServer(String[] args) throws Exception {
+    public static String greetWithServer(String[] args) throws Exception {
         String user = "world";
         // Access a service running on the local machine on port 50051
         // See: https://stackoverflow.com/questions/25354723/econnrefused-connection-refused-android-connect-to-webservice
@@ -91,7 +94,7 @@ class HelloWorldClient {
                 .build();
         try {
             HelloWorldClient client = new HelloWorldClient(channel);
-            client.greet(user);
+            return client.greet(user);
         } finally {
             // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
             // resources the channel should be shut down when it will no longer be used. If it may be used
@@ -118,7 +121,10 @@ public class MainActivity extends AppCompatActivity {
         String[] args = { "--help" };
         try {
             System.out.println("Using HelloWorldClient...");
-            HelloWorldClient.greetWithServer(args);
+            String name = HelloWorldClient.greetWithServer(args);
+
+            TextView textView = findViewById(R.id.serverMessageTextView);
+            textView.setText(name);
         }
         catch (Exception err) {
             System.out.println(err.getMessage());

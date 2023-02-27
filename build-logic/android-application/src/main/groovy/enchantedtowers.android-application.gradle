@@ -7,11 +7,11 @@ group = 'enchantedtowers.product'
 
 
 android {
-    namespace 'com.example.simple_server_app'
+    namespace 'enchantedtowers.client'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.simple_server_app"
+        applicationId "enchantedtowers.client"
         minSdk 24
         targetSdk 33
         versionCode 1

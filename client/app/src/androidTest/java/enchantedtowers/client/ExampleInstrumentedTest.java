@@ -1,4 +1,4 @@
-package com.example.simple_server_app;
+package enchantedtowers.client;
 
 import android.content.Context;
 
