@@ -8,6 +8,5 @@ group = 'enchantedtowers.platform'
 javaPlatform.allowDependencies()
 
 dependencies {
-
     constraints {}
 }

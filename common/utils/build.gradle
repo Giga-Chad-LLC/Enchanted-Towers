@@ -1,16 +1,10 @@
 plugins {
     id 'enchantedtowers.java-library'
+    // apply plugin according to `generateProtoFiles` variable
     id 'com.google.protobuf' version '0.9.1' apply false
 }
 
-def generateProtoFiles = false
-
-if (generateProtoFiles) {
-    apply plugin: 'com.google.protobuf' // version '0.9.1'
-}
-
-
-// enchantedtowers.product.common
+// expands to 'enchantedtowers.product.common'
 group = "${group}.common"
 
 repositories {
@@ -18,13 +12,27 @@ repositories {
     mavenLocal()
 }
 
-//tasks.jar.onlyIf {}
+/*
+set true to allow generation of proto models during build.
+generates to: 'build/generated/source/proto/main/grpc'
+              'build/generated/source/proto/main/java'
+*/
+def generateProtoFiles = false
+
+if (generateProtoFiles) {
+    // protobuf plugin generates java classes from proto models
+    apply plugin: 'com.google.protobuf'
+}
+
+
+/*
+disable common:utils:jar task because when server is running, client cannot execute this task because
+the task requires removal of build/libs/utils.jar file which is not possible due to the file being
+used by the running server.
+*/
 tasks.jar.enabled = false
 
-
-//sourceCompatibility = 1.8
-//targetCompatibility = 1.8
-
+// setting versions of grpc & protobuf
 def grpcVersion = '1.53.0'
 def protobufVersion = '3.21.7'
 def protocVersion = protobufVersion
@@ -38,7 +46,8 @@ dependencies {
     implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
 }
 
-// Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
+// inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code
+// this will activate highlighting of the mentioned directories as projects
 sourceSets {
     main {
         java {
@@ -48,7 +57,9 @@ sourceSets {
     }
 }
 
+
 if (generateProtoFiles) {
+    // settings of java classes generation
     protobuf {
         protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
         plugins {
@@ -61,6 +72,8 @@ if (generateProtoFiles) {
 }
 
 
+// execute this task to copy java classes generated from proto models into specified directory
+// `preserve` property prevents existing `src/` folder from being deleted
 task SyncProtobufFiles(type: Sync) {
     from 'build/generated/source/proto/main/java'
     into 'src/main/java/'
@@ -70,6 +83,8 @@ task SyncProtobufFiles(type: Sync) {
 }
 
 
+// execute this task to copy grpc classes generated from proto models into specified directory
+// `preserve` property prevents existing `src/` folder from being deleted
 task SyncProtoGrpcDependencies(type: Sync) {
     from 'build/generated/source/proto/main/grpc'
     into 'src/main/java/'
@@ -77,28 +92,3 @@ task SyncProtoGrpcDependencies(type: Sync) {
         include '/**'
     }
 }
-
-//startScripts.enabled = false
-
-
-// =================================
-
-/*
-
-plugins {
-    id('enchantedtowers.java-library')
-}
-
-// enchantedtowers.product.common
-group = "${group}.common"
-
-
-dependencies {
-//    implementation('com.google.protobuf:protobuf-java:3.21.12')
-    // examples:
-    // api('com.example.myproduct.model:release')
-    // implementation('com.fasterxml.jackson.core:jackson-databind')
-}
-
-
- */

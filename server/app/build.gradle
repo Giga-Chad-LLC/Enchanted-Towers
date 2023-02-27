@@ -11,7 +11,7 @@ dependencies {
 
     implementation("io.grpc:grpc-stub:${grpcVersion}")
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
-    // examples:
+
+    // example:
     // implementation('com.example.myproduct.user-feature:table')
-    // implementation('com.example.myproduct.admin-feature:config')
 }
