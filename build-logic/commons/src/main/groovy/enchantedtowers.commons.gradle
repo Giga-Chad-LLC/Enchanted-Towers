@@ -1,0 +1,19 @@
+plugins {
+    id('java')
+}
+
+group = 'enchantedtowers.product'
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
+dependencies {
+     implementation(platform('enchantedtowers.platform:product-platform'))
+
+     testImplementation(platform('enchantedtowers.platform:test-platform'))
+    // testImplementation('org.junit.jupiter:junit-jupiter')
+}
+
