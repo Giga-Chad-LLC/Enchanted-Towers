@@ -6,27 +6,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 // services
-import services.GreeterService;
-
-// generated
+import services.TowersService;
 
 
-/**
- * Server that manages startup/shutdown of a {@code Greeter} server.
- */
 public class HelloWorldServer {
     private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
-
     private Server server;
 
     private void start() throws IOException {
         /* The port on which the server should run */
         int port = 50051;
         server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
-                .addService(new GreeterService())
+                .addService(new TowersService())
                 .build()
                 .start();
-        logger.info("Server started, listening on " + port);
+        logger.info("Server started, listening on port " + port);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
