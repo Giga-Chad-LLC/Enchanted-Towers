@@ -24,6 +24,12 @@ public class CreateTowersResponseInteractor {
         storedTowers.add(new Tower(5, 12));
     }
 
+    private static boolean isInsideRequiredArea(double x, double x0, double y, double y0) {
+        double dx = x - x0;
+        double dy = y - y0;
+        return dx * dx + dy * dy <= MAX_DISTANCE * MAX_DISTANCE;
+    }
+
     public List<TowerResponse> execute(PlayerCoordinatesRequest request) {
         double playerX = request.getX();
         double playerY = request.getY();
@@ -31,7 +37,7 @@ public class CreateTowersResponseInteractor {
         List<TowerResponse> responses = new ArrayList<>();
 
         for (Tower tower : storedTowers) {
-            if (playerX * tower.getX() + playerY * tower.getY() <= MAX_DISTANCE * MAX_DISTANCE) {
+            if (isInsideRequiredArea(playerX, tower.getX(), playerY, tower.getY())) {
                 TowerResponse response = TowerResponse.newBuilder()
                         .setX(tower.getX())
                         .setY(tower.getY()).build();
