@@ -1,10 +1,13 @@
 package services;
 
-import enchantedtowers.common.utils.generated.proto.GreeterGrpc;
-import enchantedtowers.common.utils.generated.proto.HelloWorld;
+import java.util.logging.Logger;
+
 import io.grpc.stub.StreamObserver;
 
-import java.util.logging.Logger;
+// proto
+import enchantedtowers.common.utils.generated.proto.GreeterGrpc;
+import enchantedtowers.common.utils.generated.proto.HelloWorld;
+
 
 public class GreeterService extends GreeterGrpc.GreeterImplBase {
     private static final Logger logger = Logger.getLogger(GreeterService.class.getName());
