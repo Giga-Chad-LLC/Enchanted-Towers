@@ -25,12 +25,12 @@ public final class TowersServiceOuterClass {
     java.lang.String[] descriptorData = {
       "\n\035services/towers-service.proto\022\010service" +
       "s\032)requests/player-coordinates-request.p" +
-      "roto\032\036responses/tower-response.proto2s\n\r" +
-      "TowersService\022b\n\024GetTowersCoordinates\022(." +
+      "roto\032\036responses/tower-response.proto2u\n\r" +
+      "TowersService\022d\n\024GetTowersCoordinates\022(." +
       "request_models.PlayerCoordinatesRequest\032" +
-      "\036.response_models.TowerResponse\"\000B/\n+enc" +
-      "hantedtowers.common.utils.proto.services" +
-      "P\001b\006proto3"
+      "\036.response_models.TowerResponse\"\0000\001B/\n+e" +
+      "nchantedtowers.common.utils.proto.servic" +
+      "esP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

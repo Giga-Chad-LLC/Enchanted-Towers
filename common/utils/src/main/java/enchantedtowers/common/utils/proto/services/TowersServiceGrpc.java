@@ -22,7 +22,7 @@ public final class TowersServiceGrpc {
       fullMethodName = SERVICE_NAME + '/' + "GetTowersCoordinates",
       requestType = enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest.class,
       responseType = enchantedtowers.common.utils.proto.responses.TowerResponse.class,
-      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
   public static io.grpc.MethodDescriptor<enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest,
       enchantedtowers.common.utils.proto.responses.TowerResponse> getGetTowersCoordinatesMethod() {
     io.grpc.MethodDescriptor<enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest, enchantedtowers.common.utils.proto.responses.TowerResponse> getGetTowersCoordinatesMethod;
@@ -31,7 +31,7 @@ public final class TowersServiceGrpc {
         if ((getGetTowersCoordinatesMethod = TowersServiceGrpc.getGetTowersCoordinatesMethod) == null) {
           TowersServiceGrpc.getGetTowersCoordinatesMethod = getGetTowersCoordinatesMethod =
               io.grpc.MethodDescriptor.<enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest, enchantedtowers.common.utils.proto.responses.TowerResponse>newBuilder()
-              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GetTowersCoordinates"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
@@ -105,7 +105,7 @@ public final class TowersServiceGrpc {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
             getGetTowersCoordinatesMethod(),
-            io.grpc.stub.ServerCalls.asyncUnaryCall(
+            io.grpc.stub.ServerCalls.asyncServerStreamingCall(
               new MethodHandlers<
                 enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest,
                 enchantedtowers.common.utils.proto.responses.TowerResponse>(
@@ -132,7 +132,7 @@ public final class TowersServiceGrpc {
      */
     public void getTowersCoordinates(enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest request,
         io.grpc.stub.StreamObserver<enchantedtowers.common.utils.proto.responses.TowerResponse> responseObserver) {
-      io.grpc.stub.ClientCalls.asyncUnaryCall(
+      io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getGetTowersCoordinatesMethod(), getCallOptions()), request, responseObserver);
     }
   }
@@ -153,8 +153,9 @@ public final class TowersServiceGrpc {
 
     /**
      */
-    public enchantedtowers.common.utils.proto.responses.TowerResponse getTowersCoordinates(enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest request) {
-      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+    public java.util.Iterator<enchantedtowers.common.utils.proto.responses.TowerResponse> getTowersCoordinates(
+        enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest request) {
+      return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
           getChannel(), getGetTowersCoordinatesMethod(), getCallOptions(), request);
     }
   }
@@ -171,14 +172,6 @@ public final class TowersServiceGrpc {
     protected TowersServiceFutureStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new TowersServiceFutureStub(channel, callOptions);
-    }
-
-    /**
-     */
-    public com.google.common.util.concurrent.ListenableFuture<enchantedtowers.common.utils.proto.responses.TowerResponse> getTowersCoordinates(
-        enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest request) {
-      return io.grpc.stub.ClientCalls.futureUnaryCall(
-          getChannel().newCall(getGetTowersCoordinatesMethod(), getCallOptions()), request);
     }
   }
 
