@@ -4,7 +4,7 @@ public class Tower {
     private final double x;
     private final double y;
 
-    Tower(double x, double y) {
+    public Tower(double x, double y) {
         this.x = x;
         this.y = y;
     }
