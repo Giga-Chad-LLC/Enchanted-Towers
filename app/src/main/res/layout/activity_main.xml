@@ -9,7 +9,7 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
-        android:name="com.gigachadllc.enchantedtowers.components.canvas.Canvas"
+        android:name="com.gigachadllc.enchantedtowers.components.canvas.CanvasFragment"
         android:layout_width="414dp"
         android:layout_height="534dp"
         app:layout_constraintEnd_toEndOf="parent"

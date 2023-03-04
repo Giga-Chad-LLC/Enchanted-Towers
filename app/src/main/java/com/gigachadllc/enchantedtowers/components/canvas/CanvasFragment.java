@@ -7,25 +7,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
 
 import com.gigachadllc.enchantedtowers.R;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link Canvas#newInstance} factory method to
+ * Use the {@link CanvasFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class Canvas extends Fragment {
+public class CanvasFragment extends Fragment {
     private int currentCanvasBrushColor = 0;
-    private int[] brushColors = { Color.RED, Color.BLUE, Color.GREEN, Color.MAGENTA };
-    private CanvasView canvasView = null;
+    private final int[] brushColors = { Color.RED, Color.BLUE, Color.GREEN, Color.MAGENTA };
+    private CanvasWidget canvasWidget = null;
 
-    public Canvas() {
+    public CanvasFragment() {
         super(R.layout.fragment_canvas);
     }
 
@@ -35,22 +31,22 @@ public class Canvas extends Fragment {
             currentCanvasBrushColor = 0;
         }
 
-        if (canvasView != null) {
-            canvasView.setBrushColor(brushColors[currentCanvasBrushColor]);
+        if (canvasWidget != null) {
+            canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
         }
     }
 
     public void clearCanvas() {
-        if (canvasView != null) {
-            canvasView.clearCanvas();
+        if (canvasWidget != null) {
+            canvasWidget.clearCanvas();
         }
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        canvasView = (CanvasView)(getView().findViewById(R.id.canvasView));
-        canvasView.setBrushColor(brushColors[currentCanvasBrushColor]);
+        canvasWidget = (CanvasWidget)(getView().findViewById(R.id.canvasView));
+        canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
 
         int changeColorButtonId = getResources().getIdentifier("changeColorButton", "id", getContext().getPackageName());
         View changeColorButton = view.findViewById(changeColorButtonId);

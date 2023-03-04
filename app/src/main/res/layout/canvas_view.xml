@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     >
 
-    <com.gigachadllc.enchantedtowers.components.canvas.CanvasView
+    <com.gigachadllc.enchantedtowers.components.canvas.CanvasWidget
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />

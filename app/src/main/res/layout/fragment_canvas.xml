@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".components.canvas.Canvas">
+    tools:context=".components.canvas.CanvasFragment">
 
-    <com.gigachadllc.enchantedtowers.components.canvas.CanvasView
+    <com.gigachadllc.enchantedtowers.components.canvas.CanvasWidget
         android:id="@+id/canvasView"
         android:layout_width="411dp"
         android:layout_height="445dp"
@@ -20,7 +20,7 @@
         android:id="@+id/changeColorButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="5dp"
         android:width="140dp"
         android:text="Next color"
         app:layout_constraintEnd_toStartOf="@+id/clearCanvasButton"
@@ -32,7 +32,7 @@
         android:id="@+id/clearCanvasButton"
         android:layout_width="140dp"
         android:layout_height="49dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="5dp"
         android:text="Clear"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
