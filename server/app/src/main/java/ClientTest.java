@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 // proto
 import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
+import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
 
 
@@ -25,9 +26,10 @@ public class ClientTest {
     public void getTowersCoordinates() {
         PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(0).setY(0).build();
         try {
-            for (Iterator<TowerResponse> it = blockingStub.getTowersCoordinates(request); it.hasNext(); ) {
-                TowerResponse response = it.next();
-                logger.log(Level.INFO, "Tower[ x=" + response.getX() + "; y=" + response.getY() + "]");
+            TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
+
+            for (TowerResponse tower : response.getTowersList()) {
+                logger.log(Level.INFO, "Tower[ x=" + tower.getX() + "; y=" + tower.getY() + "]");
             }
         }
         catch(StatusRuntimeException err) {

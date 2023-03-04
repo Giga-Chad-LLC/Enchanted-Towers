@@ -9,6 +9,7 @@ import enchantedtowers.game_models.Tower;
 
 // proto
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
+import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 
 
 
@@ -30,22 +31,27 @@ public class CreateTowersResponseInteractor {
         return dx * dx + dy * dy <= MAX_DISTANCE * MAX_DISTANCE;
     }
 
-    public List<TowerResponse> execute(PlayerCoordinatesRequest request) {
+    public TowersAggregationResponse execute(PlayerCoordinatesRequest request) {
         double playerX = request.getX();
         double playerY = request.getY();
 
-        List<TowerResponse> responses = new ArrayList<>();
+        List<TowerResponse> towers = new ArrayList<>();
 
         for (Tower tower : storedTowers) {
             if (isInsideRequiredArea(playerX, tower.getX(), playerY, tower.getY())) {
-                TowerResponse response = TowerResponse.newBuilder()
+                TowerResponse towerResponse = TowerResponse.newBuilder()
                         .setX(tower.getX())
                         .setY(tower.getY()).build();
 
-                responses.add(response);
+                towers.add(towerResponse);
             }
         }
 
-        return responses;
+        TowersAggregationResponse response = TowersAggregationResponse
+                .newBuilder()
+                .addAllTowers(towers)
+                .build();
+
+        return response;
     }
 }
