@@ -8,9 +8,9 @@ package services;
 // requests
 import "requests/player-coordinates-request.proto";
 // responses
-import "responses/tower-response.proto";
+import "responses/towers-aggregation-response.proto";
 
 
 service TowersService {
-    rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (stream response_models.TowerResponse) {}
+    rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
 }
