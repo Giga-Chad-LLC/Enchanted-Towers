@@ -2,8 +2,11 @@ package enchantedtowers.client;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import io.grpc.Channel;
@@ -112,23 +115,34 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+//
+//        /*StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+//                .detectLeakedClosableObjects()
+//                .build());*/
+//
+//        String[] args = { "--help" };
+//        try {
+//            System.out.println("Using HelloWorldClient...");
+//            String name = HelloWorldClient.greetWithServer(args);
+//
+//            TextView textView = findViewById(R.id.serverMessageTextView);
+//            textView.setText(name);
+//        }
+//        catch (Exception err) {
+//            System.out.println(err.getMessage());
+//        }
 
-        /*StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
-                .detectLeakedClosableObjects()
-                .build());*/
+    }
 
-        String[] args = { "--help" };
-        try {
-            System.out.println("Using HelloWorldClient...");
-            String name = HelloWorldClient.greetWithServer(args);
-
-            TextView textView = findViewById(R.id.serverMessageTextView);
-            textView.setText(name);
+    public void changeActivity(View view) {
+        if (view instanceof Button && ((Button)view).getId() == R.id.changeToCanvasActivity) {
+            Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
+            startActivity(intent);
         }
-        catch (Exception err) {
-            System.out.println(err.getMessage());
+        else {
+            System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view.toString());
         }
-
     }
 }
