@@ -28,6 +28,10 @@ public class AttackTowerResponseInteractor {
         enchantments.add(new Enchantment(Enchantment.ElementType.WATER));
     }
 
+    private static boolean isPlayerNearTower(double playerX, double playerY, double towerX, double towerY) {
+        return (playerX - towerX) * (playerX - towerX) + (playerY - towerY) * (playerY - towerY) <= MAX_DISTANCE * MAX_DISTANCE;
+    }
+
     public AttackTowerResponse execute(TowerAttackRequest request) {
         int towerId = request.getTowerId();
         double playerX = request.getPlayerCoordinates().getX();
@@ -38,8 +42,7 @@ public class AttackTowerResponseInteractor {
 
 
         // if player is in required area near tower
-        if ((playerX - requestedTower.getX()) * (playerX - requestedTower.getX()) +
-            (playerY - requestedTower.getY()) * (playerY - requestedTower.getY()) <= MAX_DISTANCE * MAX_DISTANCE) {
+        if (isPlayerNearTower(playerX, playerY, requestedTower.getX(), requestedTower.getY())) {
             for (var enchantment : enchantments) {
                 EnchantmentResponse response = enchantmentInteractor.execute(enchantment);
                 responseBuilder.getEnchantmentsBuilder().addEnchantments(response);
