@@ -3,9 +3,6 @@ package interactors;
 // game-models
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.Tower;
-// interactors
-import interactors.BuildEnchantmentResponseInteractor;
-
 // requests
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 // responses
@@ -37,14 +34,14 @@ public class AttackTowerResponseInteractor {
         double playerX = request.getPlayerCoordinates().getX();
         double playerY = request.getPlayerCoordinates().getY();
 
-        BuildEnchantmentResponseInteractor enchantmentInteractor = new BuildEnchantmentResponseInteractor();
+        EnchantmentResponseBuilder enchantmentResponseBuilder = new EnchantmentResponseBuilder();
         AttackTowerResponse.Builder responseBuilder = AttackTowerResponse.newBuilder();
 
 
         // if player is in required area near tower
         if (isPlayerNearTower(playerX, playerY, requestedTower.getX(), requestedTower.getY())) {
             for (var enchantment : enchantments) {
-                EnchantmentResponse response = enchantmentInteractor.execute(enchantment);
+                EnchantmentResponse response = enchantmentResponseBuilder.buildFrom(enchantment);
                 responseBuilder.getEnchantmentsBuilder().addEnchantments(response);
             }
         }

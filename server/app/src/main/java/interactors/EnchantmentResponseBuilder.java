@@ -5,8 +5,8 @@ import enchantedtowers.game_models.Enchantment;
 // responses
 import enchantedtowers.common.utils.proto.responses.EnchantmentResponse;
 
-public class BuildEnchantmentResponseInteractor {
-    public EnchantmentResponse execute(Enchantment enchantment) {
+public class EnchantmentResponseBuilder {
+    public EnchantmentResponse buildFrom(Enchantment enchantment) {
         EnchantmentResponse.ElementType type = switch (enchantment.getType()) {
             case EARTH -> EnchantmentResponse.ElementType.EARTH;
             case AIR -> EnchantmentResponse.ElementType.AIR;
