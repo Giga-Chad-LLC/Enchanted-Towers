@@ -8,8 +8,12 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 
 import enchantedtowers.client.components.canvas.CanvasEnchantment;
+import enchantedtowers.client.components.canvas.CanvasItem;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.enchantment.Enchantment;
+import enchantedtowers.client.components.enchantment.EnchantmentBook;
+import enchantedtowers.client.components.enchantment.EnchantmentsPatternMatchingAlgorithm;
+import enchantedtowers.client.components.enchantment.HausdorffMetric;
 
 import java.util.ArrayList;
 
@@ -42,14 +46,31 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                 path.lineTo(x, y);
                 pathPoints.add(new PointF(x, y));
 
+                Enchantment pattern = new Enchantment(
+                    getNormalizedPoints(pathPoints),
+                    getPathOffset(path)
+                );
 
-                state.addItem(new CanvasEnchantment(
-                        new Path(path),
-                        brush.getColor(),
-                        new Enchantment(
-                            getNormalizedPoints(pathPoints)
-                        )
-                ));
+                CanvasEnchantment canvasPattern = new CanvasEnchantment(
+                    new Path(path),
+                    brush.getColor(),
+                    pattern
+                );
+
+                state.addItem(canvasPattern);
+
+                Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
+                    EnchantmentBook.getInstance().templates,
+                    pattern,
+                    new HausdorffMetric()
+                );
+                CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
+                    matchedEnchantment.getPath(),
+                    canvasPattern.getColor(),
+                    matchedEnchantment
+                );
+
+                state.addItem(canvasMatchedEnchantment);
 
                 path.reset();
                 pathPoints.clear();

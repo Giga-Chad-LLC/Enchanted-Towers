@@ -9,7 +9,7 @@ import enchantedtowers.client.components.enchantment.Enchantment;
 public class CanvasEnchantment implements CanvasItem {
     private final Path path;
     private final int color;
-    private Enchantment enchantment;
+    public Enchantment enchantment;
 
     public CanvasEnchantment(Path path, int color, Enchantment enchantment) {
         this.path = path;
@@ -18,7 +18,7 @@ public class CanvasEnchantment implements CanvasItem {
     }
 
 
-    private void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
+    public void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
         float[] points = enchantment.points;
 
         if (points.length == 0) {

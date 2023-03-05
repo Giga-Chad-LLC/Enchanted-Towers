@@ -6,6 +6,8 @@ import android.graphics.PointF;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import enchantedtowers.client.components.canvas.CanvasEnchantment;
+
 public class EnchantmentBook {
     static ArrayList <PointF> circle = new ArrayList<>(Arrays.asList(
             new PointF(42.978516f, 85.97351f), new PointF(33.248505f, 85.97351f), new PointF(28.283112f, 85.97351f), new PointF(23.356628f, 85.97351f), new PointF(15.797333f, 92.66992f), new PointF(14.996338f, 99.0152f), new PointF(9.014282f, 114.461975f), new PointF(7.198181f, 116.05072f), new PointF(1.9775391f, 130.01038f), new PointF(1.5466919f, 140.28552f), new PointF(0.0f, 189.02222f), new PointF(0.0f, 203.89343f), new PointF(0.0f, 228.1872f), new PointF(0.0f, 250.06671f), new PointF(0.0f, 265.59222f), new PointF(0.0f, 274.96356f), new PointF(0.0f, 285.88806f), new PointF(7.445801f, 300.02197f), new PointF(16.037262f, 313.0276f), new PointF(27.0112f, 331.00568f), new PointF(37.272522f, 339.9646f), new PointF(52.700745f, 356.51202f), new PointF(59.7222f, 368.96118f), new PointF(76.477295f, 378.38788f), new PointF(87.3681f, 385.48938f), new PointF(100.34247f, 397.3158f), new PointF(118.05527f, 399.29346f), new PointF(131.27203f, 405.00366f), new PointF(157.52252f, 407.98462f), new PointF(168.7804f, 407.98462f), new PointF(187.50525f, 407.98462f), new PointF(200.19226f, 407.98462f), new PointF(211.77948f, 407.98462f), new PointF(232.44855f, 407.98462f), new PointF(247.5055f, 399.0078f), new PointF(262.16858f, 397.95776f), new PointF(279.8449f, 387.1239f), new PointF(294.3667f, 382.98523f), new PointF(305.81104f, 375.16364f), new PointF(323.84576f, 368.96118f), new PointF(339.33954f, 356.4461f), new PointF(348.27563f, 347.4383f), new PointF(362.78436f, 339.17346f), new PointF(376.6151f, 320.28973f), new PointF(386.97144f, 297.0291f), new PointF(390.99243f, 283.07397f), new PointF(393.9917f, 258.4964f), new PointF(397.97974f, 242.7442f), new PointF(397.97974f, 229.49982f), new PointF(397.97974f, 210.64886f), new PointF(397.97974f, 193.27649f), new PointF(396.88257f, 175.97339f), new PointF(387.81647f, 152.47906f), new PointF(380.836f, 133.8421f), new PointF(368.0547f, 112.44025f), new PointF(353.93414f, 94.61066f), new PointF(339.79053f, 80.59979f), new PointF(323.16168f, 61.1391f), new PointF(311.89862f, 49.87732f), new PointF(299.30322f, 39.01184f), new PointF(283.46375f, 25.507507f), new PointF(281.5077f, 23.517883f), new PointF(272.99927f, 17.509338f), new PointF(256.96857f, 10.975342f), new PointF(248.62885f, 10.975342f), new PointF(233.7276f, 6.9781494f), new PointF(226.107f, 0.10748291f), new PointF(214.12146f, 0.0f), new PointF(197.49023f, 0.0f), new PointF(183.46619f, 0.0f), new PointF(168.8164f, 0.0f), new PointF(157.38324f, 0.0f), new PointF(140.50415f, 0.0f), new PointF(136.72003f, 6.4315796f), new PointF(122.91931f, 10.441223f), new PointF(114.341156f, 10.975342f), new PointF(104.51294f, 10.975342f), new PointF(96.99829f, 16.615234f), new PointF(86.88931f, 22.018433f), new PointF(83.34488f, 24.6474f), new PointF(78.27368f, 25.970947f), new PointF(72.15982f, 28.996582f), new PointF(69.971924f, 28.996582f), new PointF(65.867584f, 38.809204f), new PointF(53.11386f, 43.39972f), new PointF(45.172546f, 51.36438f), new PointF(42.978516f, 55.994568f), new PointF(39.01709f, 53.99597f), new PointF(27.514832f, 65.82318f), new PointF(29.003906f, 68.736084f), new PointF(24.98291f, 68.02002f), new PointF(20.194153f, 76.79175f), new PointF(13.496704f, 84.99115f), new PointF(14.996338f, 86.639404f), new PointF(14.996338f, 85.97351f)
@@ -20,44 +22,21 @@ public class EnchantmentBook {
     ));
 
 
-    static private EnchantmentBook book = new EnchantmentBook();
+    static private EnchantmentBook book = null;
     public ArrayList<Enchantment> templates;
 
     static public EnchantmentBook getInstance() {
+        if (book == null) {
+            book = new EnchantmentBook();
+        }
         return book;
     }
 
     private EnchantmentBook() {
-//        templates = new ArrayList<>(Arrays.asList(
-//            new Enchantment(createPathFromPoints(circle), Color.CYAN, circle, new PointF(0f, 0f)),
-//            new Enchantment(createPathFromPoints(angleLeft), Color.CYAN, angleLeft, new PointF(0f, 0f)),
-//            new Enchantment(createPathFromPoints(angleRight), Color.CYAN, angleRight, new PointF(0f, 0f))
-//        ));
-        templates = new ArrayList<>();
-    }
-
-    private Path createPathFromPoints(ArrayList<PointF> points) {
-        Path p = new Path();
-
-        if (points.isEmpty()) {
-            return p;
-        }
-
-        p.moveTo(points.get(0).x, points.get(0).y);
-
-        for (int i = 1; i < points.size(); i++) {
-            PointF pt = points.get(i);
-            p.lineTo(pt.x, pt.y);
-        }
-
-        return p;
-    }
-
-    public static Enchantment getMatchedTemplate(Enchantment pattern) {
-        return null;
-    }
-
-    private float getHausdorffDistance(Enchantment A, Enchantment B) {
-        return 0f;
+        templates = new ArrayList<>(Arrays.asList(
+            new Enchantment(circle),
+            new Enchantment(angleLeft),
+            new Enchantment(angleRight)
+        ));
     }
 }
