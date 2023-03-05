@@ -1,0 +1,3 @@
+# exclude java classes generated from proto models
+utils/src/main/java/enchantedtowers/common/utils/generated
+utils/src/main/java/enchantedtowers/common/utils/proto
