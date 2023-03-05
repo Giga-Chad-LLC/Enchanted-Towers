@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+message EnchantmentResponse {
+  enum ElementType {
+    EARTH = 0;
+    AIR = 1;
+    FIRE = 2;
+    WATER = 3;
+  }
+
+  ElementType element = 1;
+};
