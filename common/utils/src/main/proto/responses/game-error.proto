@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+message GameError {
+  enum ErrorType {
+    TOWER_TOO_FAR = 0;
+  }
+
+  bool hasError = 1;
+  ErrorType type = 2;
+  string message = 3;
+};
