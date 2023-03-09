@@ -1,4 +1,4 @@
-package com.gigachadllc.enchantedtowers;
+package com.gigachadllc.enchanted_towers;
 
 import org.junit.Test;
 
