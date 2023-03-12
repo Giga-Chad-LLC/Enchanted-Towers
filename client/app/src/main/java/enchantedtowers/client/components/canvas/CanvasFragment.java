@@ -1,13 +1,13 @@
 package enchantedtowers.client.components.canvas;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
-import android.view.View;
 
 import enchantedtowers.client.R;
 
@@ -45,25 +45,21 @@ public class CanvasFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        canvasWidget = (CanvasWidget)(getView().findViewById(R.id.canvasView));
+        canvasWidget = (CanvasWidget)(requireView().findViewById(R.id.canvasView));
         canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
 
-        int changeColorButtonId = getResources().getIdentifier("changeColorButton", "id", getContext().getPackageName());
-        View changeColorButton = view.findViewById(changeColorButtonId);
-        changeColorButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                nextColor();
-            }
-        });
+        registerOnClickActionOnView(view, "changeColorButton", this::nextColor);
+        registerOnClickActionOnView(view, "clearCanvasButton", this::clearCanvas);
+    }
 
-
-        int clearCanvasButtonId = getResources().getIdentifier("clearCanvasButton", "id", getContext().getPackageName());
-        View clearCanvasButton = view.findViewById(clearCanvasButtonId);
+    private void registerOnClickActionOnView(View view, String itemId, Runnable action) {
+        @SuppressLint("DiscouragedApi")
+        int canvasFragmentItemId = getResources().getIdentifier(itemId, "id", requireContext().getPackageName());
+        View clearCanvasButton = view.findViewById(canvasFragmentItemId);
         clearCanvasButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                clearCanvas();
+                action.run();
             }
         });
     }
