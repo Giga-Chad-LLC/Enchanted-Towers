@@ -5,7 +5,8 @@ option java_multiple_files = true;
 
 package response_models;
 
+import "common/point.proto";
+
 message TowerResponse {
-  double x = 1;
-  double y = 2;
+  common_models.Point location = 1;
 };

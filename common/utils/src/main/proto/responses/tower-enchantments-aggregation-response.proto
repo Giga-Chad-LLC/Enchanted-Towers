@@ -5,13 +5,8 @@ option java_multiple_files = true;
 
 package response_models;
 
-message EnchantmentResponse {
-  enum ElementType {
-    EARTH = 0;
-    AIR = 1;
-    FIRE = 2;
-    WATER = 3;
-  }
+import "common/enchantment-model.proto";
 
-  ElementType element = 1;
+message TowerEnchantmentsAggregationResponse {
+  repeated common_models.EnchantmentModel enchantments = 1;
 };
