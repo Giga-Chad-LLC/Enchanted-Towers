@@ -5,16 +5,10 @@ option java_multiple_files = true;
 
 package common_models;
 
+// proto/common
+import "common/spell-model.proto";
+
+
 message EnchantmentModel {
-  // this enum is related to spells that compose enchantment
-  // TODO: update the message to describe Enchantment correctly
-
-  enum ElementType {
-    EARTH = 0;
-    AIR = 1;
-    FIRE = 2;
-    WATER = 3;
-  }
-
-  ElementType element = 1;
+  repeated common_models.SpellModel spells = 1;
 };

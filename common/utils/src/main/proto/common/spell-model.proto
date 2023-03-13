@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.common";
+option java_multiple_files = true;
+
+package common_models;
+
+// proto/common
+import "common/point-model.proto";
+
+
+message SpellModel {
+  ElementType element = 1;
+  SpellForm form = 2;
+  common_models.PointModel center = 3;
+
+  enum ElementType {
+    EARTH = 0;
+    AIR = 1;
+    FIRE = 2;
+    WATER = 3;
+  }
+
+  enum SpellForm {
+      CIRCLE = 0;
+      ELLIPSE = 1;
+      L_SHAPE = 2;
+  }
+};
