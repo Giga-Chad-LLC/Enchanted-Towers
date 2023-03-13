@@ -5,6 +5,9 @@ import builders.EnchantmentModelBuilder;
 // game-models
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.Tower;
+import enchantedtowers.game_models.Spell;
+// game-models.utils
+import enchantedtowers.game_models.utils.Point;
 // requests
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 // responses
@@ -23,10 +26,14 @@ public class AttackTowerResponseInteractor {
     private final Tower requestedTower = new Tower(0, 0);
 
     public AttackTowerResponseInteractor() {
-        enchantments.add(new Enchantment(Enchantment.ElementType.EARTH));
-        enchantments.add(new Enchantment(Enchantment.ElementType.AIR));
-        enchantments.add(new Enchantment(Enchantment.ElementType.FIRE));
-        enchantments.add(new Enchantment(Enchantment.ElementType.WATER));
+        Spell airSpell = new Spell(Spell.ElementType.AIR, Spell.SpellForm.CIRCLE, new Point());
+        Spell fireSpell = new Spell(Spell.ElementType.FIRE, Spell.SpellForm.CIRCLE, new Point());
+        Spell earthSpell = new Spell(Spell.ElementType.EARTH, Spell.SpellForm.ELLIPSE, new Point());
+
+        enchantments.add(new Enchantment(10, List.of(airSpell, airSpell, fireSpell)));
+        enchantments.add(new Enchantment(32, List.of(fireSpell, fireSpell, earthSpell)));
+        enchantments.add(new Enchantment(1, List.of(earthSpell, airSpell)));
+        enchantments.add(new Enchantment(11, List.of(airSpell, fireSpell)));
     }
 
     private static boolean isPlayerNearTower(double playerX, double playerY, double towerX, double towerY) {
