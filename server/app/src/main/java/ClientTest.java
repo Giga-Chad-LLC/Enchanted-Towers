@@ -69,7 +69,7 @@ public class ClientTest {
 
                 for (var enchantment : enchantments) {
                     // create Enchantment game class
-                    logger.log(Level.INFO, "EnchantmentModel[element=" + enchantment.getElement().name() + "]");
+                    logger.log(Level.INFO, "EnchantmentModel[spells=" + enchantment.getSpellsList() + "]");
                 }
             }
         }
