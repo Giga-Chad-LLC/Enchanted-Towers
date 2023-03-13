@@ -14,6 +14,11 @@ import "responses/attack-tower-response.proto";
 
 
 service TowersService {
+    // retrieve coordinates of all existing towers
     rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
+
+    // TODO: is `AttackTower` rpc-method needed? it returns data associated with Tower that could be returned by basic GetTower rpc-method
+    // checks distance between player and tower,
+    // returns tower's data if distance is appropriate, error otherwise.
     rpc AttackTower(request_models.TowerAttackRequest) returns (response_models.AttackTowerResponse) {}
 }
