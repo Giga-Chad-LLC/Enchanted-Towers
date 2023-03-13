@@ -6,16 +6,18 @@ import enchantedtowers.game_models.Tower;
 // requests
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 // responses
-import enchantedtowers.common.utils.proto.responses.EnchantmentResponse;
 import enchantedtowers.common.utils.proto.responses.AttackTowerResponse;
 import enchantedtowers.common.utils.proto.responses.GameError;
+// proto/common
+import enchantedtowers.common.utils.proto.common.EnchantmentModel;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AttackTowerResponseInteractor {
     private static final double MAX_DISTANCE = 10;
-    private final List<Enchantment> enchantments = new ArrayList<>();
+    private final List<enchantedtowers.game_models.Enchantment> enchantments = new ArrayList<>();
     private final Tower requestedTower = new Tower(0, 0);
 
     public AttackTowerResponseInteractor() {
@@ -31,18 +33,18 @@ public class AttackTowerResponseInteractor {
 
     public AttackTowerResponse execute(TowerAttackRequest request) {
         int towerId = request.getTowerId();
-        double playerX = request.getPlayerCoordinates().getX();
-        double playerY = request.getPlayerCoordinates().getY();
+        double playerX = request.getPlayerCoordinates().getLocation().getX();
+        double playerY = request.getPlayerCoordinates().getLocation().getY();
 
-        EnchantmentResponseBuilder enchantmentResponseBuilder = new EnchantmentResponseBuilder();
+        EnchantmentModelBuilder enchantmentModelBuilder = new EnchantmentModelBuilder();
         AttackTowerResponse.Builder responseBuilder = AttackTowerResponse.newBuilder();
 
 
         // if player is in required area near tower
         if (isPlayerNearTower(playerX, playerY, requestedTower.getX(), requestedTower.getY())) {
             for (var enchantment : enchantments) {
-                EnchantmentResponse response = enchantmentResponseBuilder.buildFrom(enchantment);
-                responseBuilder.getEnchantmentsBuilder().addEnchantments(response);
+                EnchantmentModel model = enchantmentModelBuilder.buildFrom(enchantment);
+                responseBuilder.getEnchantmentsBuilder().addEnchantments(model);
             }
         }
         else {

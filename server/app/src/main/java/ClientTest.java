@@ -1,12 +1,11 @@
-import enchantedtowers.common.utils.proto.responses.EnchantmentResponse;
 import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 
-import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +19,8 @@ import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.responses.AttackTowerResponse;
 // services
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+// proto/common
+import enchantedtowers.common.utils.proto.common.EnchantmentModel;
 
 
 public class ClientTest {
@@ -30,12 +31,17 @@ public class ClientTest {
     }
 
     public void getTowersCoordinates() {
-        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(0).setY(0).build();
+//        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(0).setY(0).build();
+        PlayerCoordinatesRequest.Builder builder = PlayerCoordinatesRequest.newBuilder();
+        builder.getLocationBuilder().setX(0).setY(0);
+        PlayerCoordinatesRequest request = builder.build();
+
         try {
             TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
 
             for (TowerResponse tower : response.getTowersList()) {
-                logger.log(Level.INFO, "Tower[ x=" + tower.getX() + "; y=" + tower.getY() + "]");
+                logger.log(Level.INFO, "Tower[ x=" + tower.getLocation().getX()
+                        + "; y=" + tower.getLocation().getY() + "]");
             }
         }
         catch(StatusRuntimeException err) {
@@ -46,24 +52,24 @@ public class ClientTest {
     public void attackTower() {
         TowerAttackRequest.Builder requestBuilder = TowerAttackRequest.newBuilder();
         requestBuilder.setTowerId(0);
-        requestBuilder.getPlayerCoordinatesBuilder().setX(0).setY(0);
+        requestBuilder.getPlayerCoordinatesBuilder().getLocationBuilder().setX(0).setY(0);
 
         TowerAttackRequest request = requestBuilder.build();
 
         try {
             AttackTowerResponse response = blockingStub.attackTower(request);
             if (response.getError().getHasError()) {
-                logger.log(Level.INFO, "Error[ type="
+                logger.log(Level.INFO, "Error[type="
                         + response.getError().getType().name()
                         + ", message='" + response.getError().getMessage()
                         + "']");
             }
             else {
-                List<EnchantmentResponse> enchantments = response.getEnchantments().getEnchantmentsList();
+                List<EnchantmentModel> enchantments = response.getEnchantments().getEnchantmentsList();
 
                 for (var enchantment : enchantments) {
                     // create Enchantment game class
-                    logger.log(Level.INFO, "EnchantmentResponse[ element=" + enchantment.getElement().name() + "]");
+                    logger.log(Level.INFO, "EnchantmentModel[element=" + enchantment.getElement().name() + "]");
                 }
             }
         }

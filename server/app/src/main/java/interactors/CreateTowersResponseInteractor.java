@@ -32,18 +32,19 @@ public class CreateTowersResponseInteractor {
     }
 
     public TowersAggregationResponse execute(PlayerCoordinatesRequest request) {
-        double playerX = request.getX();
-        double playerY = request.getY();
+        double playerX = request.getLocation().getX();
+        double playerY = request.getLocation().getY();
 
         List<TowerResponse> towers = new ArrayList<>();
 
         for (Tower tower : storedTowers) {
             if (isInsideRequiredArea(playerX, tower.getX(), playerY, tower.getY())) {
-                TowerResponse towerResponse = TowerResponse.newBuilder()
-                        .setX(tower.getX())
-                        .setY(tower.getY()).build();
+                TowerResponse.Builder towerBuilder = TowerResponse.newBuilder();
 
-                towers.add(towerResponse);
+                // setting coordinates
+                towerBuilder.getLocationBuilder().setX(tower.getX()).setY(tower.getY());
+
+                towers.add(towerBuilder.build());
             }
         }
 
