@@ -1,0 +1,14 @@
+
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// proto/common
+import "common/protection-wall-model.proto";
+
+message ProtectionWallsAggregationResponse {
+  repeated common_models.ProtectionWallModel protectionWalls = 1;
+}

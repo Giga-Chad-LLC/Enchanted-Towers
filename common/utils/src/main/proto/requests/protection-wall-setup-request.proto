@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.requests";
+option java_multiple_files = true;
+
+package request_models;
+
+// requests
+import "requests/player-credentials.proto";
+// proto/common
+import "common/enchantment-model.proto";
+
+
+message ProtectionWallSetupRequest {
+  int32 towerId = 1;
+  request_models.PlayerCredentials playerCredentials = 2;
+  common_models.EnchantmentModel enchantment = 3;
+};
