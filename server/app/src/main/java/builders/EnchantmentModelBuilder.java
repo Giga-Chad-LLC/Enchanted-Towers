@@ -2,19 +2,20 @@ package builders;
 
 // game-models
 import enchantedtowers.game_models.Enchantment;
+import enchantedtowers.game_models.Spell;
 // responses
 import enchantedtowers.common.utils.proto.common.EnchantmentModel;
 
+
 public class EnchantmentModelBuilder {
     public EnchantmentModel buildFrom(Enchantment enchantment) {
-        EnchantmentModel.ElementType type = switch (enchantment.getType()) {
-            case EARTH -> EnchantmentModel.ElementType.EARTH;
-            case AIR -> EnchantmentModel.ElementType.AIR;
-            case FIRE -> EnchantmentModel.ElementType.FIRE;
-            case WATER -> EnchantmentModel.ElementType.WATER;
-        };
+        EnchantmentModel.Builder enchantmentBuilder = EnchantmentModel.newBuilder();
 
-        EnchantmentModel model = EnchantmentModel.newBuilder().setElement(type).build();
-        return model;
+        SpellModelBuilder spellBuilder = new SpellModelBuilder();
+        for (Spell spell : enchantment.getSpells()) {
+            enchantmentBuilder.addSpells(spellBuilder.buildFrom(spell));
+        }
+
+        return enchantmentBuilder.build();
     }
 }
