@@ -1,21 +1,26 @@
 package enchantedtowers.game_models;
 
+import java.util.ArrayList;
+import  java.util.List;
+
+// game_models
+import enchantedtowers.game_models.Spell;
+
 public class Enchantment {
-    public enum ElementType {
-        EARTH,
-        AIR,
-        FIRE,
-        WATER,
+    private final List<Spell> spells;
+    private final int casterLevel;
+
+
+    public Enchantment(int casterLevel, List<Spell> spells) {
+        this.casterLevel = casterLevel;
+        this.spells = spells;
     }
 
-    private final ElementType type;
-
-    public Enchantment(ElementType type) {
-        this.type = type;
+    public List<Spell> getSpells() {
+        return spells;
     }
 
-    public ElementType getType() {
-        return type;
+    public int getCasterLevel() {
+        return casterLevel;
     }
-
 }
