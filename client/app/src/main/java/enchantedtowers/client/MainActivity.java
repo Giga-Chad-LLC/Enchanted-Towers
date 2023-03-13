@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void changeActivity(View view) {
-        if (view instanceof Button && ((Button)view).getId() == R.id.changeToCanvasActivity) {
+        if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
             startActivity(intent);
         }
