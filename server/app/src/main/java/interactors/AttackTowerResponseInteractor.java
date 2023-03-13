@@ -1,5 +1,7 @@
 package interactors;
 
+// builders
+import builders.EnchantmentModelBuilder;
 // game-models
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.Tower;

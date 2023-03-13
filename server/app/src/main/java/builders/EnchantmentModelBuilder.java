@@ -1,4 +1,4 @@
-package interactors;
+package builders;
 
 // game-models
 import enchantedtowers.game_models.Enchantment;
