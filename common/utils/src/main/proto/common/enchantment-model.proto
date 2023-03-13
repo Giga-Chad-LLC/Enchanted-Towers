@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.common";
+option java_multiple_files = true;
+
+package common_models;
+
+// proto/common
+import "common/spell-model.proto";
+
+
+message EnchantmentModel {
+  repeated common_models.SpellModel spells = 1;
+};

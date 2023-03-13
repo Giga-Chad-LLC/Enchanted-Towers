@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/protection-walls-request.proto";
+import "requests/protection-wall-setup-request.proto";
+// responses
+import "responses/protection-walls-aggregation-response.proto";
+// proto/common
+import "common/protection-wall-model.proto";
+
+
+service ProtectionWallService {
+  // retrieve protection walls of a tower
+  rpc GetTowerProtectionWalls(request_models.ProtectionWallsRequest) returns (response_models.ProtectionWallsAggregationResponse) {}
+  // sets up protection wall on tower and returns the set wall
+  rpc SetUpProtectionWallOnTower(request_models.ProtectionWallSetupRequest) returns (common_models.ProtectionWallModel) {}
+}

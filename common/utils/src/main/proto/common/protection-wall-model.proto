@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.common";
+option java_multiple_files = true;
+
+package common_models;
+
+import "common/enchantment-model.proto";
+
+message ProtectionWallModel {
+  WallState state = 1;
+  common_models.EnchantmentModel enchantment = 2;
+};
+
+
+// contains state metrics of protection wall
+message WallState {
+  // shows whether protection wall has enchantment
+  bool isEnchanted = 1;
+  bool isDestroyed = 2;
+};
