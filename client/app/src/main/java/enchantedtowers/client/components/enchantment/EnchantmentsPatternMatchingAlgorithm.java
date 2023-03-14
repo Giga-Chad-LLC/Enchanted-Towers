@@ -24,10 +24,10 @@ public class EnchantmentsPatternMatchingAlgorithm {
             // scale is required ONLY for computing the metric,
             // thus, should not be considered in any other pattern-transformations
             float[] scaledPoints = patternCopy.getScaledPoints(
-                templateBounds.width() / patternBounds.width(),
-                templateBounds.height() / patternBounds.height(),
-                0,
-                0
+                    templateBounds.width() / patternBounds.width(),
+                    templateBounds.height() / patternBounds.height(),
+                    0,
+                    0
             );
 
             float cost = metric.calculate(template.points, scaledPoints);
@@ -44,10 +44,10 @@ public class EnchantmentsPatternMatchingAlgorithm {
 
         PointF patternOffset = pattern.getOffset();
         matchedTemplate.setOffset(
-            new PointF(
-                patternOffset.x + (patternBounds.width() - templateBounds.width()) / 2,
-                patternOffset.y + (patternBounds.height() - templateBounds.height()) / 2
-            )
+                new PointF(
+                        patternOffset.x + (patternBounds.width() - templateBounds.width()) / 2,
+                        patternOffset.y + (patternBounds.height() - templateBounds.height()) / 2
+                )
         );
 
         return matchedTemplate;

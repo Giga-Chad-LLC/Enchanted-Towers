@@ -8,7 +8,6 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 
 import enchantedtowers.client.components.canvas.CanvasEnchantment;
-import enchantedtowers.client.components.canvas.CanvasItem;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.enchantment.Enchantment;
 import enchantedtowers.client.components.enchantment.EnchantmentBook;
@@ -47,27 +46,27 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                 pathPoints.add(new PointF(x, y));
 
                 Enchantment pattern = new Enchantment(
-                    getNormalizedPoints(pathPoints),
-                    getPathOffset(path)
+                        getNormalizedPoints(pathPoints),
+                        getPathOffset(path)
                 );
 
                 CanvasEnchantment canvasPattern = new CanvasEnchantment(
-                    new Path(path),
-                    brush.getColor(),
-                    pattern
+                        new Path(path),
+                        brush.getColor(),
+                        pattern
                 );
 
                 state.addItem(canvasPattern);
 
                 Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
-                    EnchantmentBook.getInstance().templates,
-                    pattern,
-                    new HausdorffMetric()
+                        EnchantmentBook.getInstance().templates,
+                        pattern,
+                        new HausdorffMetric()
                 );
                 CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
-                    matchedEnchantment.getPath(),
-                    canvasPattern.getColor(),
-                    matchedEnchantment
+                        matchedEnchantment.getPath(),
+                        canvasPattern.getColor(),
+                        matchedEnchantment
                 );
 
                 state.addItem(canvasMatchedEnchantment);

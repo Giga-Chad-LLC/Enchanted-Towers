@@ -19,6 +19,8 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         for (CanvasItem item : state.items) {
             brush.setColor(item.getColor());
             item.draw(canvas, brush);
+
+            // For DEBUG purposes (will be removed later)
 //            if (item instanceof CanvasEnchantment) {
 //                //((CanvasEnchantment)item).drawOnCanvasByPoints(canvas, brush);
 //                //canvas.drawPath(((CanvasEnchantment)item).enchantment.getPath(), brush);

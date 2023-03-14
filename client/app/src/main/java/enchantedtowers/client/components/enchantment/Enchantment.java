@@ -4,7 +4,6 @@ import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.PointF;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
