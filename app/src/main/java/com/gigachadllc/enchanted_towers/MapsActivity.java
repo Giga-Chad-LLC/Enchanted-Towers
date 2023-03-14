@@ -2,6 +2,8 @@ package com.gigachadllc.enchanted_towers;
 
 import android.annotation.SuppressLint;
 
+import com.gigachadllc.enchanted_towers.R;
+//import com.gigachadllc.enchanted_towers.MapsActivity;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationClickListener;
@@ -13,17 +15,22 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.provider.Settings;
 import android.widget.Toast;
 
 public class MapsActivity extends AppCompatActivity
@@ -34,8 +41,6 @@ public class MapsActivity extends AppCompatActivity
         ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    Location location;
-
 
     private GoogleMap map;
 
@@ -59,26 +64,51 @@ public class MapsActivity extends AppCompatActivity
 
         map.setOnMyLocationButtonClickListener(this);
         map.setOnMyLocationClickListener(this);
-        if (!map.isMyLocationEnabled()){
+        while (!map.isMyLocationEnabled()) {
             enableMyLocation();
         }
 
-
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        //Toast.makeText(this, "Please turn on GPS", Toast.LENGTH_SHORT).show();
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("GPS is disabled. Do you want to enable it?");
+            builder.setPositiveButton("Enable GPS", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                }
+            });
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Please turn on GPS", Toast.LENGTH_SHORT).show();
-            return;
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    //Nothing
+                }
+            });
+
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Please turn on GPS", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
-        //Toast.makeText(this, "Please turn on GPS", Toast.LENGTH_SHORT).show();
 
-        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-        Toast.makeText(this, "my coordinates " + latitude + ", " + longitude, Toast.LENGTH_SHORT).show();
-        drawCircle(new LatLng(latitude, longitude));
+        LocationListener locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                map.clear();
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                drawCircle(new LatLng(latitude, longitude));
+            }
+        };
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
     }
 
     private void drawCircle(LatLng point){
@@ -95,8 +125,8 @@ public class MapsActivity extends AppCompatActivity
     private void enableMyLocation() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED /*|| ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED*/) {
+                == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
         } else {
             ActivityCompat.requestPermissions(this,
