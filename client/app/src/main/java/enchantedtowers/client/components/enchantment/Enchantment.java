@@ -40,11 +40,6 @@ public class Enchantment {
         return points.clone();
     }
 
-    public void substitute(Enchantment that) {
-        setPoints(that.points);
-        setOffset(that.offset);
-    }
-
     public PointF getOffset() {
         return offset;
     }
