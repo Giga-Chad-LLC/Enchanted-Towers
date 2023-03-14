@@ -3,7 +3,6 @@ package com.gigachadllc.enchanted_towers;
 import android.annotation.SuppressLint;
 
 import com.gigachadllc.enchanted_towers.R;
-//import com.gigachadllc.enchanted_towers.MapsActivity;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationClickListener;
