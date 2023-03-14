@@ -45,7 +45,7 @@ public class CanvasFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        canvasWidget = (CanvasWidget)(requireView().findViewById(R.id.canvasView));
+        canvasWidget = (CanvasWidget) (requireView().findViewById(R.id.canvasView));
         canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
 
         registerOnClickActionOnView(view, "changeColorButton", this::nextColor);
