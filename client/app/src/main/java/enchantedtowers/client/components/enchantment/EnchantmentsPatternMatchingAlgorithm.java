@@ -30,7 +30,7 @@ public class EnchantmentsPatternMatchingAlgorithm {
                     0
             );
 
-            float cost = metric.calculate(template.points, scaledPoints);
+            float cost = metric.calculate(template.getPoints(), scaledPoints);
             System.out.println("Template " + i + ", cost " + cost);
 
             if (minCost > cost) {

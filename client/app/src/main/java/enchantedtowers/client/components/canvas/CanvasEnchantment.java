@@ -3,13 +3,14 @@ package enchantedtowers.client.components.canvas;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 
 import enchantedtowers.client.components.enchantment.Enchantment;
 
 public class CanvasEnchantment implements CanvasItem {
     private final Path path;
     private final int color;
-    public Enchantment enchantment;
+    private Enchantment enchantment;
 
     public CanvasEnchantment(Path path, int color, Enchantment enchantment) {
         this.path = path;
@@ -18,18 +19,18 @@ public class CanvasEnchantment implements CanvasItem {
     }
 
 
-    public void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
-        float[] points = enchantment.points;
-
-        if (points.length == 0) {
+    private void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
+        if (enchantment.getPointsCount() == 0) {
             return;
         }
 
         Path newPath = new Path();
-        newPath.moveTo(points[0], points[1]);
+        PointF point = enchantment.getPointAt(0);
+        newPath.moveTo(point.x, point.y);
 
-        for (int i = 2; i < points.length; i += 2) {
-            newPath.lineTo(points[i], points[i + 1]);
+        for (int i = 1; i < enchantment.getPointsCount(); ++i) {
+            point = enchantment.getPointAt(i);
+            newPath.lineTo(point.x, point.y);
         }
 
         brush.setColor(color);

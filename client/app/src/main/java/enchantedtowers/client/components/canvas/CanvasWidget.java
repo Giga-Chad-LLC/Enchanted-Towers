@@ -56,16 +56,16 @@ public class CanvasWidget extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean result = false;
+        boolean eventHandled = false;
         for (CanvasInteractor interactor : interactors) {
-            result |= interactor.onTouchEvent(state, event.getX(), event.getY(), event.getAction());
+            eventHandled |= interactor.onTouchEvent(state, event.getX(), event.getY(), event.getAction());
         }
 
-        if (result) {
+        if (eventHandled) {
             invalidate();
         }
 
-        return result;
+        return eventHandled;
     }
 
     public void setBrushColor(int newColor) {

@@ -10,7 +10,7 @@ import java.util.List;
 public class Enchantment {
     // must be relative to the bounded box of path
     // format [ x_0, y_0, x_1, y_1, ... ]
-    public float[] points;
+    private float[] points;
     // specifies offset for drawing path
     private PointF offset = new PointF(0f, 0f);
 
@@ -26,6 +26,18 @@ public class Enchantment {
 
     public Enchantment(List<PointF> points) {
         setPoints(points);
+    }
+
+    public int getPointsCount() {
+        return points.length / 2;
+    }
+
+    public PointF getPointAt(int index) {
+        return new PointF(points[2 * index], points[2 * index + 1]);
+    }
+
+    public float[] getPoints() {
+        return points.clone();
     }
 
     public void substitute(Enchantment that) {
