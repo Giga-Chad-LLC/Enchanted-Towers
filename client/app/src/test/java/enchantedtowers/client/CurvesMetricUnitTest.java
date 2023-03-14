@@ -19,7 +19,7 @@ public class CurvesMetricUnitTest {
             float[] points = generateRandomFloatArray(size, 0f, 300f);
 
             // must be exact zero
-            assertEquals(metric.calculate(points, points), 0f, EPS);
+            assertEquals(metric.calculate(points, points), 1.0f, EPS);
         }
 
 

@@ -3,20 +3,10 @@ package enchantedtowers.client.components.enchantment;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
-import org.locationtech.jts.algorithm.distance.DiscreteFrechetDistance;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class EnchantmentsPatternMatchingAlgorithm {
-    private static float getNormalizedMatchCoefficientByTemplateBounds(RectF bounds, float cost) {
-        float tw = bounds.width();
-        float th = bounds.height();
-        float maxCostNumber = (float) Math.sqrt(tw * tw + th * th);
-        return cost / maxCostNumber;
-    }
-
-    private static float MATCH_COEFFICIENT_THRESHOLD = 0.2f;
+    private static float SIMILARITY_THRESHOLD = 0.80f;
 
     public static <Metric extends CurvesMatchingMetric>
     Enchantment getMatchedTemplate(List<Enchantment> templates, Enchantment pattern, Metric metric) {
@@ -26,8 +16,7 @@ public class EnchantmentsPatternMatchingAlgorithm {
         patternCopy.getPath().computeBounds(patternBounds, true);
 
         RectF templateBounds = new RectF();
-        float minCost = Float.POSITIVE_INFINITY;
-        float minMatchCoefficient = Float.POSITIVE_INFINITY;
+        float maxSimilarity = 0f;
         int matchedTemplateIndex = 0;
 
         for (int i = 0; i < templates.size(); i++) {
@@ -43,21 +32,16 @@ public class EnchantmentsPatternMatchingAlgorithm {
                     0
             );
 
-            float cost = metric.calculate(template.getPoints(), scaledPoints);
-            System.out.println("Template " + i + ", cost " + cost);
+            float similarity = metric.calculate(template.getPoints(), scaledPoints);
+            System.out.println("Template " + i + " similarity: " + similarity);
 
-            // threshold: at least one template <= 0.2 is good, otherwise we say no template found and delete the enchantment
-            float matchCoefficient = getNormalizedMatchCoefficientByTemplateBounds(templateBounds, cost);
-            System.out.println("Normalized match coefficient: " + matchCoefficient);
-            minMatchCoefficient = Math.min(minMatchCoefficient, matchCoefficient);
-
-            if (minCost > cost) {
-                minCost = cost;
+            if (maxSimilarity < similarity) {
+                maxSimilarity = similarity;
                 matchedTemplateIndex = i;
             }
         }
 
-        if (minMatchCoefficient > MATCH_COEFFICIENT_THRESHOLD) {
+        if (maxSimilarity < SIMILARITY_THRESHOLD) {
             System.out.println("Matched template: none");
             return null;
         }
