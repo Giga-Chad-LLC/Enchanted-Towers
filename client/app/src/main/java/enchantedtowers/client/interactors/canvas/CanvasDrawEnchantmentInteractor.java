@@ -23,6 +23,14 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
     private final ArrayList<PointF> pathPoints = new ArrayList<>();
     private final Paint brush;
 
+    private boolean isValidPath() {
+        // The condition is required for the correct Hausdorff distance calculation
+        if (pathPoints.size() < 2 || (pathPoints.size() == 2 && pathPoints.get(0).equals(pathPoints.get(1)))) {
+            return false;
+        }
+        return true;
+    }
+
     public CanvasDrawEnchantmentInteractor(CanvasState state) {
         brush = state.getBrush();
     }
@@ -47,31 +55,34 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                 path.lineTo(x, y);
                 pathPoints.add(new PointF(x, y));
 
-                Enchantment pattern = new Enchantment(
-                        getNormalizedPoints(pathPoints),
-                        getPathOffset(path)
-                );
+                if (isValidPath()) {
+                    Enchantment pattern = new Enchantment(
+                            getNormalizedPoints(pathPoints),
+                            getPathOffset(path)
+                    );
 
-                CanvasEnchantment canvasPattern = new CanvasEnchantment(
-                        new Path(path),
-                        brush.getColor(),
-                        pattern
-                );
+                    CanvasEnchantment canvasPattern = new CanvasEnchantment(
+                            new Path(path),
+                            brush.getColor(),
+                            pattern
+                    );
 
-                state.addItem(canvasPattern);
+                    Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
+                            EnchantmentBook.getTemplates(),
+                            pattern,
+                            new HausdorffMetric()
+                    );
 
-                Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
-                        EnchantmentBook.getTemplates(),
-                        pattern,
-                        new HausdorffMetric()
-                );
-                CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
-                        matchedEnchantment.getPath(),
-                        canvasPattern.getColor(),
-                        matchedEnchantment
-                );
+                    if (matchedEnchantment != null) {
+                        CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
+                                matchedEnchantment.getPath(),
+                                canvasPattern.getColor(),
+                                matchedEnchantment
+                        );
 
-                state.addItem(canvasMatchedEnchantment);
+                        state.addItem(canvasMatchedEnchantment);
+                    }
+                }
 
                 path.reset();
                 pathPoints.clear();

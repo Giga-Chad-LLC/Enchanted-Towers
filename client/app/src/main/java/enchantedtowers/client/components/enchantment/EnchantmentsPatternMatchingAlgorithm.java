@@ -9,6 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EnchantmentsPatternMatchingAlgorithm {
+    private static float getNormalizedMatchCoefficientByTemplateBounds(RectF bounds, float cost) {
+        float tw = bounds.width();
+        float th = bounds.height();
+        float maxCostNumber = (float) Math.sqrt(tw * tw + th * th);
+        return cost / maxCostNumber;
+    }
+
+    private static float MATCH_COEFFICIENT_THRESHOLD = 0.2f;
+
     public static <Metric extends CurvesMatchingMetric>
     Enchantment getMatchedTemplate(List<Enchantment> templates, Enchantment pattern, Metric metric) {
         Enchantment patternCopy = new Enchantment(pattern);
@@ -18,6 +27,7 @@ public class EnchantmentsPatternMatchingAlgorithm {
 
         RectF templateBounds = new RectF();
         float minCost = Float.POSITIVE_INFINITY;
+        float minMatchCoefficient = Float.POSITIVE_INFINITY;
         int matchedTemplateIndex = 0;
 
         for (int i = 0; i < templates.size(); i++) {
@@ -36,17 +46,20 @@ public class EnchantmentsPatternMatchingAlgorithm {
             float cost = metric.calculate(template.getPoints(), scaledPoints);
             System.out.println("Template " + i + ", cost " + cost);
 
-            /* // threshold: at least one template <= 0.2 is good, otherwise we say no template found and delete the enchantment
-            float tw = templateBounds.width();
-            float th = templateBounds.height();
-            float templateNorm = (float) Math.sqrt(tw * tw + th * th);
-            System.out.println("Hausdorff mapped value: " + cost / templateNorm);
-            */
+            // threshold: at least one template <= 0.2 is good, otherwise we say no template found and delete the enchantment
+            float matchCoefficient = getNormalizedMatchCoefficientByTemplateBounds(templateBounds, cost);
+            System.out.println("Normalized match coefficient: " + matchCoefficient);
+            minMatchCoefficient = Math.min(minMatchCoefficient, matchCoefficient);
 
             if (minCost > cost) {
                 minCost = cost;
                 matchedTemplateIndex = i;
             }
+        }
+
+        if (minMatchCoefficient > MATCH_COEFFICIENT_THRESHOLD) {
+            System.out.println("Matched template: none");
+            return null;
         }
 
         System.out.println("Matched template: " + matchedTemplateIndex);
