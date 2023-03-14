@@ -7,6 +7,8 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 
+import org.json.JSONException;
+
 import enchantedtowers.client.components.canvas.CanvasEnchantment;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.enchantment.Enchantment;
@@ -59,7 +61,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                 state.addItem(canvasPattern);
 
                 Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
-                        EnchantmentBook.getInstance().templates,
+                        EnchantmentBook.getTemplates(),
                         pattern,
                         new HausdorffMetric()
                 );

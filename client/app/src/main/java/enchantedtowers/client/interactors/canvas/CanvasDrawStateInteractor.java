@@ -3,6 +3,8 @@ package enchantedtowers.client.interactors.canvas;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
+import java.util.List;
+
 import enchantedtowers.client.components.canvas.CanvasEnchantment;
 import enchantedtowers.client.components.canvas.CanvasItem;
 import enchantedtowers.client.components.canvas.CanvasState;
@@ -34,10 +36,10 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
     }
 
     private void drawTemplates(CanvasState state, Canvas canvas) {
-        EnchantmentBook book = EnchantmentBook.getInstance();
+        List<Enchantment> templates = EnchantmentBook.getTemplates();
         Paint brush = state.getBrush();
 
-        for (Enchantment ench : book.templates) {
+        for (Enchantment ench : templates) {
             canvas.drawPath(ench.getPath(), brush);
         }
     }

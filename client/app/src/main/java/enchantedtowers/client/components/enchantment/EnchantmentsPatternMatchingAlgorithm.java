@@ -3,11 +3,14 @@ package enchantedtowers.client.components.enchantment;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
+import org.locationtech.jts.algorithm.distance.DiscreteFrechetDistance;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class EnchantmentsPatternMatchingAlgorithm {
     public static <Metric extends CurvesMatchingMetric>
-    Enchantment getMatchedTemplate(ArrayList<Enchantment> templates, Enchantment pattern, Metric metric) {
+    Enchantment getMatchedTemplate(List<Enchantment> templates, Enchantment pattern, Metric metric) {
         Enchantment patternCopy = new Enchantment(pattern);
         RectF patternBounds = new RectF();
         patternCopy.setOffset(new PointF(0f, 0f));
@@ -32,6 +35,13 @@ public class EnchantmentsPatternMatchingAlgorithm {
 
             float cost = metric.calculate(template.getPoints(), scaledPoints);
             System.out.println("Template " + i + ", cost " + cost);
+
+            /* // threshold: at least one template <= 0.2 is good, otherwise we say no template found and delete the enchantment
+            float tw = templateBounds.width();
+            float th = templateBounds.height();
+            float templateNorm = (float) Math.sqrt(tw * tw + th * th);
+            System.out.println("Hausdorff mapped value: " + cost / templateNorm);
+            */
 
             if (minCost > cost) {
                 minCost = cost;

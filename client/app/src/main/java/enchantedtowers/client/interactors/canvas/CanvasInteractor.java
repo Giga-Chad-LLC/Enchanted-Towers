@@ -2,6 +2,8 @@ package enchantedtowers.client.interactors.canvas;
 
 import android.graphics.Canvas;
 
+import org.json.JSONException;
+
 import enchantedtowers.client.components.canvas.CanvasState;
 
 public interface CanvasInteractor {
