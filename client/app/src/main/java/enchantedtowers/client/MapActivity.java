@@ -51,19 +51,20 @@ public class MapActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        // initialize fragment
-        Fragment mapFragment = new MapFragment();
+        // create fragment
+        Fragment mapFragment = MapFragment.newInstance();
 
         // open fragment
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.map_frame_layout, mapFragment)
+                .add(R.id.map_frame_layout, mapFragment)
                 .commit();
 
         /*
         SupportMapFragment mapFragment =
-                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map);
+                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map_fragment);
          assert mapFragment != null;
+
          mapFragment.getMapAsync(this);
          */
     }
