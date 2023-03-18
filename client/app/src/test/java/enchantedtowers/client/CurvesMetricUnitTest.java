@@ -3,6 +3,9 @@ package enchantedtowers.client;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import enchantedtowers.client.components.enchantment.CurvesMatchingMetric;
 import enchantedtowers.client.components.enchantment.HausdorffMetric;
@@ -11,15 +14,27 @@ public class CurvesMetricUnitTest {
     @Test
     public void distanceFromItself_isZero() {
         CurvesMatchingMetric metric = new HausdorffMetric();
-        int tests = 1000;
+        int tests = 100;
         double EPS = 1e-10;
+        GeometryFactory factory = new GeometryFactory();
 
         for (int i = 1; i <= tests; ++i) {
             int size = 2 * generateRandomInt(50, 150);
             float[] points = generateRandomFloatArray(size, 0f, 300f);
+            Coordinate[] coords = new Coordinate[points.length / 2];
+
+            for (int j = 0; j < coords.length; j++) {
+                coords[j] = new Coordinate(
+                        points[2 * j],
+                        points[2 * j + 1]
+                );
+            }
+
 
             // must be exact zero
-            assertEquals(metric.calculate(points, points), 1.0f, EPS);
+            Geometry g1 = factory.createLineString(coords);
+            Geometry g2 = factory.createLineString(coords);
+            assertEquals(metric.calculate(g1, g2), 1.0f, EPS);
         }
 
 

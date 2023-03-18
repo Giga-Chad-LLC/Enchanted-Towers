@@ -3,17 +3,17 @@ package enchantedtowers.client.components.enchantment;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
+import org.locationtech.jts.geom.Geometry;
+
 import java.util.List;
 
 public class EnchantmentsPatternMatchingAlgorithm {
-    private static float SIMILARITY_THRESHOLD = 0.80f;
+    private static final float SIMILARITY_THRESHOLD = 0.80f;
 
     public static <Metric extends CurvesMatchingMetric>
     Enchantment getMatchedTemplate(List<Enchantment> templates, Enchantment pattern, Metric metric) {
-        Enchantment patternCopy = new Enchantment(pattern);
         RectF patternBounds = new RectF();
-        patternCopy.setOffset(new PointF(0f, 0f));
-        patternCopy.getPath().computeBounds(patternBounds, true);
+        pattern.getPath().computeBounds(patternBounds, true);
 
         RectF templateBounds = new RectF();
         float maxSimilarity = 0f;
@@ -25,14 +25,14 @@ public class EnchantmentsPatternMatchingAlgorithm {
 
             // scale is required ONLY for computing the metric,
             // thus, should not be considered in any other pattern-transformations
-            float[] scaledPoints = patternCopy.getScaledPoints(
+            Geometry scaledPatternCurve = pattern.getScaledCurve(
                     templateBounds.width() / patternBounds.width(),
                     templateBounds.height() / patternBounds.height(),
                     0,
                     0
             );
 
-            float similarity = metric.calculate(template.getPoints(), scaledPoints);
+            float similarity = metric.calculate(template.getCurve(), scaledPatternCurve);
             System.out.println("Template " + i + " similarity: " + similarity);
 
             if (maxSimilarity < similarity) {

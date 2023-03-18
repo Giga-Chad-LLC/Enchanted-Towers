@@ -4,18 +4,22 @@ import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.PointF;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.util.AffineTransformation;
+
 import java.util.List;
 
 
 public class Enchantment {
     // must be relative to the bounded box of path
-    // format [ x_0, y_0, x_1, y_1, ... ]
-    private float[] points;
+    private Geometry curve;
     // specifies offset for drawing path
-    private PointF offset = new PointF(0f, 0f);
+    private final PointF offset = new PointF(0f, 0f);
 
     public Enchantment(Enchantment that) {
-        setPoints(that.points);
+        curve = that.curve.copy();
         setOffset(that.offset);
     }
 
@@ -29,15 +33,24 @@ public class Enchantment {
     }
 
     public int getPointsCount() {
-        return points.length / 2;
+        return curve.getNumPoints();
     }
 
     public PointF getPointAt(int index) {
-        return new PointF(points[2 * index], points[2 * index + 1]);
+        Coordinate point = curve.getCoordinates()[index];
+        return new PointF((float) point.getX(), (float) point.getY());
     }
 
     public float[] getPoints() {
-        return points.clone();
+        Coordinate[] coordinates = curve.getCoordinates();
+        float[] pts = new float[coordinates.length * 2];
+
+        for (int i = 0; i < coordinates.length; i++) {
+            pts[2 * i] = (float) coordinates[i].getX();
+            pts[2 * i + 1] = (float) coordinates[i].getY();
+        }
+
+        return pts;
     }
 
     public PointF getOffset() {
@@ -46,12 +59,13 @@ public class Enchantment {
 
     public Path getPath() {
         Path path = new Path();
+        Coordinate[] coordinates = curve.getCoordinates();
 
-        if (points.length != 0) {
-            path.moveTo(points[0], points[1]);
+        if (coordinates.length != 0) {
+            path.moveTo((float) coordinates[0].getX(), (float) coordinates[0].getY());
 
-            for (int i = 2; i < points.length; i += 2) {
-                path.lineTo(points[i], points[i + 1]);
+            for (int i = 1; i < coordinates.length; i++) {
+                path.lineTo((float) coordinates[i].getX(), (float) coordinates[i].getY());
             }
         }
 
@@ -62,13 +76,16 @@ public class Enchantment {
         return path;
     }
 
-    public float[] getScaledPoints(float scaleX, float scaleY, float originX, float originY) {
-        Matrix mat = new Matrix();
-        float[] dst = new float[points.length];
-        mat.setScale(scaleX, scaleY, originX, originY);
-        mat.mapPoints(dst, this.points);
+    public Geometry getCurve() {
+        return curve.copy();
+    }
 
-        return dst;
+    public Geometry getScaledCurve(float scaleX, float scaleY, float originX, float originY) {
+        Geometry geometry = curve.copy();
+        geometry.apply(
+                AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)
+        );
+        return geometry;
     }
 
     public void setOffset(PointF offset) {
@@ -77,15 +94,25 @@ public class Enchantment {
     }
 
     private void setPoints(List<PointF> points) {
-        this.points = new float[points.size() * 2];
+        float[] pointsCopy = new float[points.size() * 2];
+
         for (int i = 0; i < points.size(); i++) {
             PointF point = points.get(i);
-            this.points[2 * i] = point.x;
-            this.points[2 * i + 1] = point.y;
+            pointsCopy[2 * i] = point.x;
+            pointsCopy[2 * i + 1] = point.y;
         }
+
+        setPoints(pointsCopy);
     }
 
     private void setPoints(float[] points) {
-        this.points = points.clone();
+        GeometryFactory factory = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[points.length / 2];
+
+        for (int i = 0; i < coordinates.length; i++) {
+            coordinates[i] = new Coordinate(points[2 * i], points[2 * i + 1]);
+        }
+
+        curve = factory.createLineString(coordinates);
     }
 }

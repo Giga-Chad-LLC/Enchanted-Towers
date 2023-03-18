@@ -24,8 +24,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
 
             // For DEBUG purposes (will be removed later)
 //            if (item instanceof CanvasEnchantment) {
-//                //((CanvasEnchantment)item).drawOnCanvasByPoints(canvas, brush);
-//                //canvas.drawPath(((CanvasEnchantment)item).enchantment.getPath(), brush);
+//                ((CanvasEnchantment)item).drawOnCanvasByPoints(canvas, brush);
 //            }
         }
     }

@@ -7,7 +7,8 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 
-import org.json.JSONException;
+import java.util.ArrayList;
+import java.util.List;
 
 import enchantedtowers.client.components.canvas.CanvasEnchantment;
 import enchantedtowers.client.components.canvas.CanvasState;
@@ -16,11 +17,9 @@ import enchantedtowers.client.components.enchantment.EnchantmentBook;
 import enchantedtowers.client.components.enchantment.EnchantmentsPatternMatchingAlgorithm;
 import enchantedtowers.client.components.enchantment.HausdorffMetric;
 
-import java.util.ArrayList;
-
 public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
     private final Path path = new Path();
-    private final ArrayList<PointF> pathPoints = new ArrayList<>();
+    private final List<PointF> pathPoints = new ArrayList<>();
     private final Paint brush;
 
     private boolean isValidPath() {
@@ -61,12 +60,6 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                             getPathOffset(path)
                     );
 
-                    CanvasEnchantment canvasPattern = new CanvasEnchantment(
-                            new Path(path),
-                            brush.getColor(),
-                            pattern
-                    );
-
                     Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
                             EnchantmentBook.getTemplates(),
                             pattern,
@@ -76,7 +69,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                     if (matchedEnchantment != null) {
                         CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
                                 matchedEnchantment.getPath(),
-                                canvasPattern.getColor(),
+                                brush.getColor(),
                                 matchedEnchantment
                         );
 
@@ -100,11 +93,12 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
         }
     }
 
-    private ArrayList<PointF> getNormalizedPoints(
-            ArrayList<PointF> points
+    // returns new list of points that are relative to their bound-box
+    private List<PointF> getNormalizedPoints(
+            List<PointF> points
     ) {
         PointF offset = getPathOffset(path);
-        ArrayList<PointF> translatedPoints = new ArrayList<>(points);
+        List<PointF> translatedPoints = new ArrayList<>(points);
 
         offset.negate();
         // translate each point

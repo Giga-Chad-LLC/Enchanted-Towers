@@ -1,6 +1,7 @@
 package enchantedtowers.client.components.canvas;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -19,7 +20,7 @@ public class CanvasEnchantment implements CanvasItem {
     }
 
 
-    private void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
+    public void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
         if (enchantment.getPointsCount() == 0) {
             return;
         }
@@ -33,7 +34,7 @@ public class CanvasEnchantment implements CanvasItem {
             newPath.lineTo(point.x, point.y);
         }
 
-        brush.setColor(color);
+        brush.setColor(Color.BLUE);
         canvas.drawPath(newPath, brush);
     }
 
