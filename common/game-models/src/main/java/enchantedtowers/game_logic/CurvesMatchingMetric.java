@@ -1,4 +1,4 @@
-package enchantedtowers.client.components.spell;
+package enchantedtowers.game_logic;
 
 import org.locationtech.jts.geom.Geometry;
 

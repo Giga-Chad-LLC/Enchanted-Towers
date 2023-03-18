@@ -1,10 +1,12 @@
-package enchantedtowers.client.components.spell;
+package enchantedtowers.game_logic;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
 
+import enchantedtowers.game_logic.CurvesMatchingMetric;
+import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Point;
 
 public class SpellsPatternMatchingAlgorithm {

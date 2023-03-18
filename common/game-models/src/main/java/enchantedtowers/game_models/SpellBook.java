@@ -1,14 +1,19 @@
-package enchantedtowers.client.components.spell;
+package enchantedtowers.game_models;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Point;
 
 public class SpellBook {
     static private boolean isInstantiated = false;
     static private final List<Spell> templates = new ArrayList<>();
+
+    static public boolean isInstantiated() {
+        return isInstantiated;
+    }
 
     static public void instantiate(List<List<Point>> data) throws RuntimeException {
         if (isInstantiated) {

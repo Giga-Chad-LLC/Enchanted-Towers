@@ -9,8 +9,8 @@ import java.util.List;
 import enchantedtowers.client.components.canvas.CanvasDrawable;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
-import enchantedtowers.client.components.spell.Spell;
-import enchantedtowers.client.components.spell.SpellBook;
+import enchantedtowers.game_models.Spell;
+import enchantedtowers.game_models.SpellBook;
 
 public class CanvasDrawStateInteractor implements CanvasInteractor {
 

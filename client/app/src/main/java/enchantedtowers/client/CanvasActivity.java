@@ -10,7 +10,7 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.List;
 
-import enchantedtowers.client.components.spell.SpellBook;
+import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
 import enchantedtowers.game_models.utils.Point;
 
@@ -20,13 +20,15 @@ public class CanvasActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_canvas);
 
-        try {
-            EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
-            List<List<Point>> data = reader.processFile(R.raw.canvas_templates_config);
-            SpellBook.instantiate(data);
-        } catch (JSONException | IOException e) {
-            Log.e("JSON-CONFIG", e.getMessage());
-            System.err.println(e.getMessage());
+        if (!SpellBook.isInstantiated()) {
+            try {
+                EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
+                List<List<Point>> data = reader.processFile(R.raw.canvas_templates_config);
+                SpellBook.instantiate(data);
+            } catch (JSONException | IOException e) {
+                Log.e("JSON-CONFIG", e.getMessage());
+                System.err.println(e.getMessage());
+            }
         }
     }
 }

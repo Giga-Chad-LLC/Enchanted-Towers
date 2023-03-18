@@ -9,7 +9,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import enchantedtowers.client.interactors.canvas.CanvasDrawEnchantmentInteractor;
+import enchantedtowers.client.interactors.canvas.CanvasDrawSpellInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasInteractor;
 
@@ -43,7 +43,7 @@ public class CanvasWidget extends View {
                 new CanvasDrawStateInteractor()
         );
         interactors.add(
-                new CanvasDrawEnchantmentInteractor(state)
+                new CanvasDrawSpellInteractor(state)
         );
     }
 

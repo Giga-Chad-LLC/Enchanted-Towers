@@ -11,13 +11,13 @@ import java.util.List;
 
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
-import enchantedtowers.client.components.spell.Spell;
-import enchantedtowers.client.components.spell.SpellBook;
-import enchantedtowers.client.components.spell.SpellsPatternMatchingAlgorithm;
-import enchantedtowers.client.components.spell.HausdorffMetric;
+import enchantedtowers.game_models.Spell;
+import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_models.utils.Point;
 
-public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
+public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Point> pathPoints = new ArrayList<>();
     private final Paint brush;
@@ -30,7 +30,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
         return true;
     }
 
-    public CanvasDrawEnchantmentInteractor(CanvasState state) {
+    public CanvasDrawSpellInteractor(CanvasState state) {
         brush = state.getBrush();
     }
 

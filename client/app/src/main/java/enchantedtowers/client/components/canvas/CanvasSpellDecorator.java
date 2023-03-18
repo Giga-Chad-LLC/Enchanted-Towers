@@ -6,7 +6,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import enchantedtowers.client.components.spell.Spell;
+import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Point;
 
 public class CanvasSpellDecorator implements CanvasDrawable {
