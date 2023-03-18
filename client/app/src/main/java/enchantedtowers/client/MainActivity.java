@@ -1,6 +1,7 @@
 package enchantedtowers.client;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -112,6 +113,7 @@ class HelloWorldClient {
 
 
 public class MainActivity extends AppCompatActivity {
+    //Fragment fragment = new MapFragment();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,6 +141,10 @@ public class MainActivity extends AppCompatActivity {
     public void changeActivity(View view) {
         if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
+            startActivity(intent);
+        } else if(view.getId() == R.id.changeToMapActivity){
+            //getSupportFragmentManager().beginTransaction().replace(R.id.frame_layout, fragment).commit();
+            Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         }
         else {
