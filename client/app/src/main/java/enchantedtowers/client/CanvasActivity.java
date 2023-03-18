@@ -10,7 +10,7 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.List;
 
-import enchantedtowers.client.components.enchantment.SpellBook;
+import enchantedtowers.client.components.spell.SpellBook;
 import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
 import enchantedtowers.game_models.utils.Point;
 

@@ -1,4 +1,4 @@
-package enchantedtowers.client.components.enchantment;
+package enchantedtowers.client.components.spell;
 
 import java.util.ArrayList;
 import java.util.Collections;

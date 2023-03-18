@@ -11,10 +11,10 @@ import java.util.List;
 
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
-import enchantedtowers.client.components.enchantment.Spell;
-import enchantedtowers.client.components.enchantment.SpellBook;
-import enchantedtowers.client.components.enchantment.SpellsPatternMatchingAlgorithm;
-import enchantedtowers.client.components.enchantment.HausdorffMetric;
+import enchantedtowers.client.components.spell.Spell;
+import enchantedtowers.client.components.spell.SpellBook;
+import enchantedtowers.client.components.spell.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.client.components.spell.HausdorffMetric;
 import enchantedtowers.game_models.utils.Point;
 
 public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
