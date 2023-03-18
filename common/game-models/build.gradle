@@ -1,0 +1,6 @@
+plugins {
+    id 'enchantedtowers.java-library'
+}
+
+// expands to 'enchantedtowers.product.common'
+group = "${group}.common"

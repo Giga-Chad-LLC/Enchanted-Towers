@@ -1,0 +1,25 @@
+// Define locations for build logic
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    includeBuild('../build-logic')
+}
+
+// Define locations for components
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+includeBuild('../platforms')
+includeBuild('../common')
+
+
+// Define the inner structure of this component
+rootProject.name = "client"
+include('app')

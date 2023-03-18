@@ -1,0 +1,22 @@
+// Define locations for build logic
+pluginManagement {
+    repositories {
+        // if pluginManagement.repositories looks like this, it can be omitted as this is the default
+        gradlePluginPortal()
+    }
+    includeBuild('../build-logic')
+}
+
+// Define locations for components
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+includeBuild('../platforms')
+
+
+// Define the inner structure of this component
+rootProject.name = 'common'
+include('utils')
+include('game-models')

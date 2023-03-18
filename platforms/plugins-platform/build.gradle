@@ -1,0 +1,11 @@
+plugins {
+    id('java-platform')
+}
+
+group = 'enchantedtowers.platform'
+
+dependencies {
+    constraints {
+        api('com.android.tools.build:gradle:7.3.0')
+    }
+}

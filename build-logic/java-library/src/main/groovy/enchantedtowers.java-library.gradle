@@ -1,0 +1,4 @@
+plugins {
+    id('enchantedtowers.commons')
+    id('java-library')
+}

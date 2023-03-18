@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".components.canvas.CanvasFragment">
+
+    <enchantedtowers.client.components.canvas.CanvasWidget
+        android:id="@+id/canvasView"
+        android:layout_width="411dp"
+        android:layout_height="445dp"
+        android:background="#FFD5A4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.666"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/changeColorButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:width="140dp"
+        android:text="Next color"
+        app:layout_constraintEnd_toStartOf="@+id/clearCanvasButton"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/canvasView" />
+
+    <Button
+        android:id="@+id/clearCanvasButton"
+        android:layout_width="140dp"
+        android:layout_height="49dp"
+        android:layout_marginTop="5dp"
+        android:text="Clear"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/changeColorButton"
+        app:layout_constraintTop_toBottomOf="@+id/canvasView" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

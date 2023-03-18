@@ -1,16 +1,10 @@
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-rootProject.name = "Enchanted-Towers"
-include ':app'
+// This is an empty umbrella build including all the component builds.
+// This build is not necessarily needed. The component builds work independently.
+
+includeBuild('platforms')
+includeBuild('build-logic')
+
+includeBuild('common')
+
+includeBuild('client')
+includeBuild('server')

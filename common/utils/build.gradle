@@ -1,0 +1,96 @@
+plugins {
+    id 'enchantedtowers.java-library'
+    // apply plugin according to `generateProtoFiles` variable
+    id 'com.google.protobuf' version '0.9.1' apply false
+}
+
+// expands to 'enchantedtowers.product.common'
+group = "${group}.common"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+/*
+set true to allow generation of proto models during build.
+generates to: 'build/generated/source/proto/main/grpc'
+              'build/generated/source/proto/main/java'
+*/
+def generateProtoFiles = false
+
+if (generateProtoFiles) {
+    // protobuf plugin generates java classes from proto models
+    apply plugin: 'com.google.protobuf'
+}
+
+
+/*
+disable `common:utils:jar` task because when server is running, client cannot execute this task because
+the task requires removal of build/libs/utils.jar file which is not possible due to the file being
+used by the running server.
+
+It is required to be set to `true` if changes were made in common/utils components (do not know have in works...)
+*/
+tasks.jar.enabled = true// false
+
+// setting versions of grpc & protobuf
+def grpcVersion = '1.53.0'
+def protobufVersion = '3.21.7'
+def protocVersion = protobufVersion
+
+dependencies {
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    compileOnly "org.apache.tomcat:annotations-api:6.0.53"
+
+    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+}
+
+// inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code
+// this will activate highlighting of the mentioned directories as projects
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+
+if (generateProtoFiles) {
+    // settings of java classes generation
+    protobuf {
+        protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
+        plugins {
+            grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+        }
+        generateProtoTasks {
+            all()*.plugins { grpc {} }
+        }
+    }
+}
+
+
+// execute this task to copy java classes generated from proto models into specified directory
+// `preserve` property prevents existing `src/` folder from being deleted
+task SyncProtobufFiles(type: Sync) {
+    from 'build/generated/source/proto/main/java'
+    into 'src/main/java/'
+    preserve {
+        include '/**'
+    }
+}
+
+
+// execute this task to copy grpc classes generated from proto models into specified directory
+// `preserve` property prevents existing `src/` folder from being deleted
+task SyncProtoGrpcDependencies(type: Sync) {
+    from 'build/generated/source/proto/main/grpc'
+    into 'src/main/java/'
+    preserve {
+        include '/**'
+    }
+}
