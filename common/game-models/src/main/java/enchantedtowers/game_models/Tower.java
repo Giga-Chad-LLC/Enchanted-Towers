@@ -55,4 +55,32 @@ public class Tower {
     public Point getPosition() {
         return position;
     }
+
+    public boolean hasProtection() {
+        for (var wall : protectionWalls) {
+            if (wall.isEnchanted()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * This methods finds 1st enchanted protection wall and returns it.
+     * If not enchanted protection walls found, return null
+     * @return {@link ProtectionWall}
+     */
+    public ProtectionWall getCurrentEnchantedProtectionWall() {
+        for (var wall : protectionWalls) {
+            if (wall.isEnchanted()) {
+                return wall;
+            }
+        }
+        return null;
+    }
+
+    List<ProtectionWall> getProtectionWalls() {
+        return protectionWalls;
+    }
 }
