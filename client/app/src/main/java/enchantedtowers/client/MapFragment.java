@@ -2,17 +2,31 @@ package enchantedtowers.client;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.LocationManager;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Objects;
 
@@ -22,15 +36,10 @@ public class MapFragment extends Fragment {
         // Required empty public constructor
     }
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment MapFragment.
-     */
     public static MapFragment newInstance() {
         return new MapFragment();
     }
@@ -63,14 +72,81 @@ public class MapFragment extends Fragment {
                 logger.log(Level.WARNING, "Map style applying failed");
             }
 
-            googleMap.setOnMapClickListener(latLng -> {
-                // remove all markers
-                // googleMap.clear();
-                // animating to zoom the marker
-                // googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
+            // setting 'OnMyLocation' click handlers
+            googleMap.setOnMyLocationButtonClickListener(() -> {
+                String message = "MyLocation button clicked";
+                logger.log(Level.INFO, message);
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                return false;
+            });
+            googleMap.setOnMyLocationClickListener(location -> {
+                String message = "Current location: " + location;
+                logger.log(Level.INFO, message);
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+            });
+
+            // TODO: figure out how to solve this problem
+            /*while (!map.isMyLocationEnabled()) {
+                enableMyLocation();
+            }*/
+            enableMyLocation(googleMap);
+
+            // TODO: what does it do?
+            LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+                builder.setMessage("GPS is disabled. Do you want to enable it?");
+
+                builder.setPositiveButton("Enable GPS", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                });
+
+                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                    //Nothing
+                });
+
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+
+                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(requireContext(), "Please turn on GPS", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 0, 0, location -> {
+                googleMap.clear();
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                drawCircle(googleMap, new LatLng(latitude, longitude));
             });
         });
 
         return view;
+    }
+
+    private void enableMyLocation(GoogleMap map) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            map.setMyLocationEnabled(true);
+        } else {
+            ActivityCompat.requestPermissions(requireActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    private void drawCircle(GoogleMap map, LatLng point) {
+        CircleOptions circleOptions = new CircleOptions();
+        circleOptions.center(point);
+        circleOptions.radius(200);
+        circleOptions.strokeColor(Color.BLACK);
+        circleOptions.fillColor(0x30ff0000);
+        circleOptions.strokeWidth(2);
+        map.addCircle(circleOptions);
     }
 }
