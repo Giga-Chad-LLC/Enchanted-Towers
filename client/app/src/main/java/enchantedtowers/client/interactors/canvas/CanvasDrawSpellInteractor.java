@@ -23,7 +23,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Paint brush;
 
     private boolean isValidPath() {
-        // The condition is required for the correct Hausdorff distance calculation
+        // The condition is required for the correct metric distance calculation
         if (pathPoints.size() < 2 || (pathPoints.size() == 2 && pathPoints.get(0).equals(pathPoints.get(1)))) {
             return false;
         }
@@ -68,7 +68,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
                     if (matchedSpell != null) {
                         CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                // matchedSpell.getPath(),
                                 brush.getColor(),
                                 matchedSpell
                         );
