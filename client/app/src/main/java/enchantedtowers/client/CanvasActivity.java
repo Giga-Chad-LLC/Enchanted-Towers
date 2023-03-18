@@ -1,6 +1,5 @@
 package enchantedtowers.client;
 
-import android.graphics.PointF;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -9,10 +8,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import enchantedtowers.client.components.enchantment.EnchantmentBook;
+import enchantedtowers.client.components.enchantment.SpellBook;
 import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
 import enchantedtowers.game_models.utils.Point;
 
@@ -25,7 +23,7 @@ public class CanvasActivity extends AppCompatActivity {
         try {
             EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
             List<List<Point>> data = reader.processFile(R.raw.canvas_templates_config);
-            EnchantmentBook.instantiate(data);
+            SpellBook.instantiate(data);
         }
         catch(JSONException | IOException e) {
             Log.e("JSON-CONFIG", e.getMessage());

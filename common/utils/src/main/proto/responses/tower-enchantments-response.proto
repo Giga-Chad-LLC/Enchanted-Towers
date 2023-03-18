@@ -5,7 +5,7 @@ option java_multiple_files = true;
 
 package response_models;
 
-import "responses/enchantment-response.proto";
+import "responses/spell-response.proto";
 
 message TowerEnchantmentsResponse {
   repeated response_models.EnchantmentResponse enchantments = 1;

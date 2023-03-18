@@ -3,7 +3,6 @@ package enchantedtowers.client.interactors.canvas;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 
@@ -12,9 +11,9 @@ import java.util.List;
 
 import enchantedtowers.client.components.canvas.CanvasEnchantment;
 import enchantedtowers.client.components.canvas.CanvasState;
-import enchantedtowers.client.components.enchantment.Enchantment;
-import enchantedtowers.client.components.enchantment.EnchantmentBook;
-import enchantedtowers.client.components.enchantment.EnchantmentsPatternMatchingAlgorithm;
+import enchantedtowers.client.components.enchantment.Spell;
+import enchantedtowers.client.components.enchantment.SpellBook;
+import enchantedtowers.client.components.enchantment.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.client.components.enchantment.HausdorffMetric;
 import enchantedtowers.game_models.utils.Point;
 
@@ -56,22 +55,22 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                 pathPoints.add(new Point(x, y));
 
                 if (isValidPath()) {
-                    Enchantment pattern = new Enchantment(
+                    Spell pattern = new Spell(
                             getNormalizedPoints(pathPoints),
                             getPathOffset(path)
                     );
 
-                    Enchantment matchedEnchantment = EnchantmentsPatternMatchingAlgorithm.getMatchedTemplate(
-                            EnchantmentBook.getTemplates(),
+                    Spell matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
+                            SpellBook.getTemplates(),
                             pattern,
                             new HausdorffMetric()
                     );
 
-                    if (matchedEnchantment != null) {
+                    if (matchedSpell != null) {
                         CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
-                                matchedEnchantment.getPath(),
+                                matchedSpell.getPath(),
                                 brush.getColor(),
-                                matchedEnchantment
+                                matchedSpell
                         );
 
                         state.addItem(canvasMatchedEnchantment);

@@ -5,11 +5,10 @@ import android.graphics.Paint;
 
 import java.util.List;
 
-import enchantedtowers.client.components.canvas.CanvasEnchantment;
 import enchantedtowers.client.components.canvas.CanvasItem;
 import enchantedtowers.client.components.canvas.CanvasState;
-import enchantedtowers.client.components.enchantment.Enchantment;
-import enchantedtowers.client.components.enchantment.EnchantmentBook;
+import enchantedtowers.client.components.enchantment.Spell;
+import enchantedtowers.client.components.enchantment.SpellBook;
 
 public class CanvasDrawStateInteractor implements CanvasInteractor {
 
@@ -35,10 +34,10 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
     }
 
     private void drawTemplates(CanvasState state, Canvas canvas) {
-        List<Enchantment> templates = EnchantmentBook.getTemplates();
+        List<Spell> templates = SpellBook.getTemplates();
         Paint brush = state.getBrush();
 
-        for (Enchantment ench : templates) {
+        for (Spell ench : templates) {
             canvas.drawPath(ench.getPath(), brush);
         }
     }

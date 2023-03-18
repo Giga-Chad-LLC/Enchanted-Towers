@@ -2,7 +2,6 @@ package enchantedtowers.client.components.enchantment;
 
 import android.graphics.Matrix;
 import android.graphics.Path;
-import android.graphics.PointF;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -14,23 +13,23 @@ import java.util.List;
 import enchantedtowers.game_models.utils.Point;
 
 
-public class Enchantment {
+public class Spell {
     // must be relative to the bounded box of path
     private Geometry curve;
     // specifies offset for drawing path
     private final Point offset = new Point(0, 0);
 
-    public Enchantment(Enchantment that) {
+    public Spell(Spell that) {
         curve = that.curve.copy();
         setOffset(that.offset);
     }
 
-    public Enchantment(List<Point> points, Point offset) {
+    public Spell(List<Point> points, Point offset) {
         setPoints(points);
         setOffset(offset);
     }
 
-    public Enchantment(List<Point> points) {
+    public Spell(List<Point> points) {
         setPoints(points);
     }
 

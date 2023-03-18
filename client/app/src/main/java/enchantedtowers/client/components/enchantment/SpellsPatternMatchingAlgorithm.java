@@ -1,6 +1,5 @@
 package enchantedtowers.client.components.enchantment;
 
-import android.graphics.PointF;
 import android.graphics.RectF;
 
 import org.locationtech.jts.geom.Geometry;
@@ -9,11 +8,11 @@ import java.util.List;
 
 import enchantedtowers.game_models.utils.Point;
 
-public class EnchantmentsPatternMatchingAlgorithm {
+public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
     public static <Metric extends CurvesMatchingMetric>
-    Enchantment getMatchedTemplate(List<Enchantment> templates, Enchantment pattern, Metric metric) {
+    Spell getMatchedTemplate(List<Spell> templates, Spell pattern, Metric metric) {
         RectF patternBounds = new RectF();
         pattern.getPath().computeBounds(patternBounds, true);
 
@@ -22,7 +21,7 @@ public class EnchantmentsPatternMatchingAlgorithm {
         int matchedTemplateIndex = 0;
 
         for (int i = 0; i < templates.size(); i++) {
-            Enchantment template = templates.get(i);
+            Spell template = templates.get(i);
             template.getPath().computeBounds(templateBounds, true);
 
             // scale is required ONLY for computing the metric,
@@ -49,7 +48,7 @@ public class EnchantmentsPatternMatchingAlgorithm {
         }
 
         System.out.println("Matched template: " + matchedTemplateIndex);
-        Enchantment matchedTemplate = new Enchantment(templates.get(matchedTemplateIndex));
+        Spell matchedTemplate = new Spell(templates.get(matchedTemplateIndex));
 
         Point patternOffset = pattern.getOffset();
         matchedTemplate.setOffset(

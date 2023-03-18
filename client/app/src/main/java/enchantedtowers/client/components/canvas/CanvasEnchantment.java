@@ -4,34 +4,33 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 
-import enchantedtowers.client.components.enchantment.Enchantment;
+import enchantedtowers.client.components.enchantment.Spell;
 import enchantedtowers.game_models.utils.Point;
 
 public class CanvasEnchantment implements CanvasItem {
     private final Path path;
     private final int color;
-    private final Enchantment enchantment;
+    private final Spell spell;
 
-    public CanvasEnchantment(Path path, int color, Enchantment enchantment) {
+    public CanvasEnchantment(Path path, int color, Spell spell) {
         this.path = path;
         this.color = color;
-        this.enchantment = enchantment;
+        this.spell = spell;
     }
 
 
     public void drawOnCanvasByPoints(Canvas canvas, Paint brush) {
-        if (enchantment.getPointsCount() == 0) {
+        if (spell.getPointsCount() == 0) {
             return;
         }
 
         Path newPath = new Path();
-        Point point = enchantment.getPointAt(0);
+        Point point = spell.getPointAt(0);
         newPath.moveTo((float)point.x, (float)point.y);
 
-        for (int i = 1; i < enchantment.getPointsCount(); ++i) {
-            point = enchantment.getPointAt(i);
+        for (int i = 1; i < spell.getPointsCount(); ++i) {
+            point = spell.getPointAt(i);
             newPath.lineTo((float)point.x, (float)point.y);
         }
 
