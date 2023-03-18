@@ -68,7 +68,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
 
                     if (matchedSpell != null) {
                         CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                matchedSpell.getPath(),
+                                // matchedSpell.getPath(),
                                 brush.getColor(),
                                 matchedSpell
                         );

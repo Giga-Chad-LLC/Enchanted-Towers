@@ -2,18 +2,15 @@ package enchantedtowers.client.components.fs;
 
 import android.content.Context;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class JSONFileReader {
+public class FileReader {
     private final Context context;
 
-    JSONFileReader(Context context) {
+    FileReader(Context context) {
         this.context = context;
     }
 

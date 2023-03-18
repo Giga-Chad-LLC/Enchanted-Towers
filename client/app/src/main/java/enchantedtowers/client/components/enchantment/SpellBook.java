@@ -27,5 +27,6 @@ public class SpellBook {
         return Collections.unmodifiableList(templates);
     }
 
-    private SpellBook() {}
+    private SpellBook() {
+    }
 }

@@ -1,9 +1,7 @@
 package enchantedtowers.client.components.enchantment;
 
-import android.graphics.Matrix;
-import android.graphics.Path;
-
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
@@ -15,7 +13,7 @@ import enchantedtowers.game_models.utils.Point;
 
 public class Spell {
     // must be relative to the bounded box of path
-    private Geometry curve;
+    public Geometry curve;
     // specifies offset for drawing path
     private final Point offset = new Point(0, 0);
 
@@ -31,6 +29,10 @@ public class Spell {
 
     public Spell(List<Point> points) {
         setPoints(points);
+    }
+
+    public Envelope getBoundary() {
+        return curve.getEnvelopeInternal();
     }
 
     public int getPointsCount() {
@@ -58,30 +60,11 @@ public class Spell {
         return offset;
     }
 
-    public Path getPath() {
-        Path path = new Path();
-        Coordinate[] coordinates = curve.getCoordinates();
-
-        if (coordinates.length != 0) {
-            path.moveTo((float) coordinates[0].getX(), (float) coordinates[0].getY());
-
-            for (int i = 1; i < coordinates.length; i++) {
-                path.lineTo((float) coordinates[i].getX(), (float) coordinates[i].getY());
-            }
-        }
-
-        Matrix mat = new Matrix();
-        mat.setTranslate((float)offset.x, (float)offset.y);
-        path.transform(mat);
-
-        return path;
-    }
-
     public Geometry getCurve() {
         return curve.copy();
     }
 
-    public Geometry getScaledCurve(float scaleX, float scaleY, float originX, float originY) {
+    public Geometry getScaledCurve(double scaleX, double scaleY, double originX, double originY) {
         Geometry geometry = curve.copy();
         geometry.apply(
                 AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)

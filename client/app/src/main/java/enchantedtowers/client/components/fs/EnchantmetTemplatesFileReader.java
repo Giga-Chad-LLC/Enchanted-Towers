@@ -1,7 +1,6 @@
 package enchantedtowers.client.components.fs;
 
 import android.content.Context;
-import android.graphics.PointF;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import enchantedtowers.game_models.utils.Point;
 
-public class EnchantmetTemplatesFileReader extends JSONFileReader {
+public class EnchantmetTemplatesFileReader extends FileReader {
 
     public EnchantmetTemplatesFileReader(Context context) {
         super(context);
@@ -28,7 +27,7 @@ public class EnchantmetTemplatesFileReader extends JSONFileReader {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templates = content.getJSONArray("canvasTemplates");
 
-        List <List<Point>> templatePoints = new ArrayList<>();
+        List<List<Point>> templatePoints = new ArrayList<>();
 
         for (int i = 0; i < templates.length(); i++) {
             JSONObject template = templates.getJSONObject(i);

@@ -1,7 +1,6 @@
 package enchantedtowers.client.components.enchantment;
 
-import android.graphics.RectF;
-
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
@@ -13,22 +12,22 @@ public class SpellsPatternMatchingAlgorithm {
 
     public static <Metric extends CurvesMatchingMetric>
     Spell getMatchedTemplate(List<Spell> templates, Spell pattern, Metric metric) {
-        RectF patternBounds = new RectF();
-        pattern.getPath().computeBounds(patternBounds, true);
+        Envelope patternBounds = pattern.getBoundary();
 
-        RectF templateBounds = new RectF();
+        Envelope templateBounds = new Envelope();
         float maxSimilarity = 0f;
         int matchedTemplateIndex = 0;
 
         for (int i = 0; i < templates.size(); i++) {
             Spell template = templates.get(i);
-            template.getPath().computeBounds(templateBounds, true);
+            templateBounds = template.getBoundary();
+
 
             // scale is required ONLY for computing the metric,
             // thus, should not be considered in any other pattern-transformations
             Geometry scaledPatternCurve = pattern.getScaledCurve(
-                    templateBounds.width() / patternBounds.width(),
-                    templateBounds.height() / patternBounds.height(),
+                    templateBounds.getWidth() / patternBounds.getWidth(),
+                    templateBounds.getHeight() / patternBounds.getHeight(),
                     0,
                     0
             );
@@ -53,8 +52,8 @@ public class SpellsPatternMatchingAlgorithm {
         Point patternOffset = pattern.getOffset();
         matchedTemplate.setOffset(
                 new Point(
-                        patternOffset.x + (patternBounds.width() - templateBounds.width()) / 2,
-                        patternOffset.y + (patternBounds.height() - templateBounds.height()) / 2
+                        patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,
+                        patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
                 )
         );
 

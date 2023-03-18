@@ -6,6 +6,6 @@ import org.locationtech.jts.geom.Geometry;
 public class HausdorffMetric implements CurvesMatchingMetric {
     @Override
     public float calculate(Geometry template, Geometry pattern) {
-        return (float)(new HausdorffSimilarityMeasure()).measure(template, pattern);
+        return (float) (new HausdorffSimilarityMeasure()).measure(template, pattern);
     }
 }

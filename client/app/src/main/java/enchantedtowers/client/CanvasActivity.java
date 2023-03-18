@@ -24,8 +24,7 @@ public class CanvasActivity extends AppCompatActivity {
             EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
             List<List<Point>> data = reader.processFile(R.raw.canvas_templates_config);
             SpellBook.instantiate(data);
-        }
-        catch(JSONException | IOException e) {
+        } catch (JSONException | IOException e) {
             Log.e("JSON-CONFIG", e.getMessage());
             System.err.println(e.getMessage());
         }
