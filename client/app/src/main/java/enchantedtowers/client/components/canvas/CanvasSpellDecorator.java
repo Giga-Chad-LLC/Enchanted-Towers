@@ -8,12 +8,12 @@ import android.graphics.Path;
 import enchantedtowers.client.components.enchantment.Spell;
 import enchantedtowers.game_models.utils.Point;
 
-public class CanvasEnchantment implements CanvasItem {
+public class CanvasSpellDecorator implements CanvasDrawable {
     private final Path path;
     private final int color;
     private final Spell spell;
 
-    public CanvasEnchantment(Path path, int color, Spell spell) {
+    public CanvasSpellDecorator(Path path, int color, Spell spell) {
         this.path = path;
         this.color = color;
         this.spell = spell;

@@ -5,7 +5,7 @@ import android.graphics.Paint;
 
 import java.util.List;
 
-import enchantedtowers.client.components.canvas.CanvasItem;
+import enchantedtowers.client.components.canvas.CanvasDrawable;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.enchantment.Spell;
 import enchantedtowers.client.components.enchantment.SpellBook;
@@ -17,7 +17,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         Paint brush = state.getBrush();
         drawTemplates(state, canvas);
 
-        for (CanvasItem item : state.items) {
+        for (CanvasDrawable item : state.items) {
             brush.setColor(item.getColor());
             item.draw(canvas, brush);
 

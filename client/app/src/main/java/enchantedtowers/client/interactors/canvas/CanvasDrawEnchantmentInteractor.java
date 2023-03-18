@@ -9,7 +9,7 @@ import android.view.MotionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import enchantedtowers.client.components.canvas.CanvasEnchantment;
+import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.enchantment.Spell;
 import enchantedtowers.client.components.enchantment.SpellBook;
@@ -67,7 +67,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
                     );
 
                     if (matchedSpell != null) {
-                        CanvasEnchantment canvasMatchedEnchantment = new CanvasEnchantment(
+                        CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
                                 matchedSpell.getPath(),
                                 brush.getColor(),
                                 matchedSpell
