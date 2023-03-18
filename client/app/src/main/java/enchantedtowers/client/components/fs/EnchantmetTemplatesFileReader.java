@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class EnchantmetTemplatesFileReader extends JSONFileReader {
 
@@ -16,21 +17,21 @@ public class EnchantmetTemplatesFileReader extends JSONFileReader {
         super(context);
     }
 
-    public ArrayList<ArrayList<PointF>> processFile(int resourceId) throws IOException, JSONException {
+    public List<List<PointF>> processFile(int resourceId) throws IOException, JSONException {
         String json = readRawFile(resourceId);
         return parseJsonFromString(json);
     }
 
-    private ArrayList<ArrayList<PointF>> parseJsonFromString(String jsonString) throws JSONException {
+    private List<List<PointF>> parseJsonFromString(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templates = content.getJSONArray("canvasTemplates");
 
-        ArrayList <ArrayList<PointF>> templatePoints = new ArrayList<>();
+        List <List<PointF>> templatePoints = new ArrayList<>();
 
         for (int i = 0; i < templates.length(); i++) {
             JSONObject template = templates.getJSONObject(i);
 
-            ArrayList<PointF> currentPointsArray = new ArrayList<>();
+            List<PointF> currentPointsArray = new ArrayList<>();
 
             if (!template.isNull("points")) {
                 JSONArray points = template.getJSONArray("points");

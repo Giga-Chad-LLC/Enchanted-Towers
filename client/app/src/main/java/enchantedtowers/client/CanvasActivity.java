@@ -10,6 +10,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import enchantedtowers.client.components.enchantment.EnchantmentBook;
 import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
@@ -22,7 +23,7 @@ public class CanvasActivity extends AppCompatActivity {
 
         try {
             EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
-            ArrayList <ArrayList<PointF>> data = reader.processFile(R.raw.canvas_templates_config);
+            List<List<PointF>> data = reader.processFile(R.raw.canvas_templates_config);
             EnchantmentBook.instantiate(data);
         }
         catch(JSONException | IOException e) {

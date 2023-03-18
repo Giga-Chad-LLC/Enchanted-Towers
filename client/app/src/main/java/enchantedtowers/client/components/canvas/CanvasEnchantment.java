@@ -11,7 +11,7 @@ import enchantedtowers.client.components.enchantment.Enchantment;
 public class CanvasEnchantment implements CanvasItem {
     private final Path path;
     private final int color;
-    private Enchantment enchantment;
+    private final Enchantment enchantment;
 
     public CanvasEnchantment(Path path, int color, Enchantment enchantment) {
         this.path = path;
