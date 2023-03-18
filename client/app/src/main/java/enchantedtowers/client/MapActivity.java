@@ -29,35 +29,46 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 
 import android.provider.Settings;
 import android.widget.Toast;
 
 public class MapActivity extends AppCompatActivity
+        /*
         implements
         OnMyLocationButtonClickListener,
         OnMyLocationClickListener,
         OnMapReadyCallback,
-        ActivityCompat.OnRequestPermissionsResultCallback {
+        ActivityCompat.OnRequestPermissionsResultCallback
+        */ {
 
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private GoogleMap map;
+//    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+//    private GoogleMap map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-//        var fragmentTest = getResources().getIdentifier("google_map", "id", requireContext().getPackageName());
+        // initialize fragment
+        Fragment mapFragment = new MapFragment();
+
+        // open fragment
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.map_frame_layout, mapFragment)
+                .commit();
+
+        /*
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map);
-
-        // getResources().getIdentifier(itemId, "id", requireContext().getPackageName());
-
-        // assert mapFragment != null;
-        // mapFragment.getMapAsync(this);
+         assert mapFragment != null;
+         mapFragment.getMapAsync(this);
+         */
     }
 
+    /*
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
@@ -148,5 +159,5 @@ public class MapActivity extends AppCompatActivity
     public void onMyLocationClick(@NonNull Location location) {
         Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
     }
-
+    */
 }
