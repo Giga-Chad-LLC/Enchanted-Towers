@@ -41,7 +41,6 @@ public class MapActivity extends AppCompatActivity
         ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-
     private GoogleMap map;
 
     @Override
@@ -50,16 +49,13 @@ public class MapActivity extends AppCompatActivity
         setContentView(R.layout.activity_map);
 
 //        var fragmentTest = getResources().getIdentifier("google_map", "id", requireContext().getPackageName());
-
-
-
         SupportMapFragment mapFragment =
-                (SupportMapFragment) getSupportFragmentManager().findFragmentById(getResources().getIdentifier("mapView2", "id", )); // R.id.google_map
+                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map);
 
         // getResources().getIdentifier(itemId, "id", requireContext().getPackageName());
 
-        assert mapFragment != null;
-        mapFragment.getMapAsync(this);
+        // assert mapFragment != null;
+        // mapFragment.getMapAsync(this);
     }
 
     @Override
