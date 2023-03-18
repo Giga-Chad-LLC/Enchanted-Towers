@@ -20,12 +20,12 @@ public class ProtectionWallService extends ProtectionWallServiceGrpc.ProtectionW
     @Override
     public void getTowerProtectionWalls(ProtectionWallsRequest request,
                                         StreamObserver<ProtectionWallsAggregationResponse> responseObserver) {
-        // TODO: implement
+
     }
 
     @Override
     public void setUpProtectionWallOnTower(ProtectionWallSetupRequest request,
                                            StreamObserver<ProtectionWallModel> responseObserver) {
-        // TODO: implement
+
     }
 }
