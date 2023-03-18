@@ -3,6 +3,7 @@ package enchantedtowers.game_models;
 // game_models.utils
 import enchantedtowers.game_models.utils.Point;
 
+// TODO: convert to a record?
 public class Spell {
     private final ElementType element;
     private final SpellForm form;

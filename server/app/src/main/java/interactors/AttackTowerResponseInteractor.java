@@ -23,7 +23,7 @@ import java.util.List;
 public class AttackTowerResponseInteractor {
     private static final double MAX_DISTANCE = 10;
     private final List<enchantedtowers.game_models.Enchantment> enchantments = new ArrayList<>();
-    private final Tower requestedTower = new Tower(0, 0);
+    private final Tower requestedTower = new Tower(1, Tower.TowerType.CASTLE, new Point(0, 0));
 
     public AttackTowerResponseInteractor() {
         Spell airSpell = new Spell(Spell.ElementType.AIR, Spell.SpellForm.CIRCLE, new Point());
@@ -50,7 +50,7 @@ public class AttackTowerResponseInteractor {
 
 
         // if player is in required area near tower
-        if (isPlayerNearTower(playerX, playerY, requestedTower.getX(), requestedTower.getY())) {
+        if (isPlayerNearTower(playerX, playerY, requestedTower.getPosition().getX(), requestedTower.getPosition().getY())) {
             for (var enchantment : enchantments) {
                 EnchantmentModel model = enchantmentModelBuilder.buildFrom(enchantment);
                 responseBuilder.getEnchantmentsBuilder().addEnchantments(model);
