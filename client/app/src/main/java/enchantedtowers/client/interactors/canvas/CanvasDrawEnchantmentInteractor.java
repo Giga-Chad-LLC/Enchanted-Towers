@@ -16,10 +16,11 @@ import enchantedtowers.client.components.enchantment.Enchantment;
 import enchantedtowers.client.components.enchantment.EnchantmentBook;
 import enchantedtowers.client.components.enchantment.EnchantmentsPatternMatchingAlgorithm;
 import enchantedtowers.client.components.enchantment.HausdorffMetric;
+import enchantedtowers.game_models.utils.Point;
 
 public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
     private final Path path = new Path();
-    private final List<PointF> pathPoints = new ArrayList<>();
+    private final List<Point> pathPoints = new ArrayList<>();
     private final Paint brush;
 
     private boolean isValidPath() {
@@ -44,7 +45,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
         switch (motionEventType) {
             case MotionEvent.ACTION_DOWN: {
                 path.moveTo(x, y);
-                pathPoints.add(new PointF(x, y));
+                pathPoints.add(new Point(x, y));
                 // update color only when started the new shape
                 brush.setColor(state.getBrushColor());
 
@@ -52,7 +53,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
             }
             case MotionEvent.ACTION_UP: {
                 path.lineTo(x, y);
-                pathPoints.add(new PointF(x, y));
+                pathPoints.add(new Point(x, y));
 
                 if (isValidPath()) {
                     Enchantment pattern = new Enchantment(
@@ -84,7 +85,7 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
             }
             case MotionEvent.ACTION_MOVE: {
                 path.lineTo(x, y);
-                pathPoints.add(new PointF(x, y));
+                pathPoints.add(new Point(x, y));
                 return true;
             }
             default: {
@@ -93,27 +94,26 @@ public class CanvasDrawEnchantmentInteractor implements CanvasInteractor {
         }
     }
 
-    // returns new list of points that are relative to their bound-box
-    private List<PointF> getNormalizedPoints(
-            List<PointF> points
+    // returns new list of points that are relative to their bounding-box
+    private List<Point> getNormalizedPoints(
+            List<Point> points
     ) {
-        PointF offset = getPathOffset(path);
-        List<PointF> translatedPoints = new ArrayList<>(points);
+        Point offset = getPathOffset(path);
+        List<Point> translatedPoints = new ArrayList<>(points);
 
-        offset.negate();
         // translate each point
-        for (PointF p : translatedPoints) {
-            p.offset(offset.x, offset.y);
+        for (Point p : translatedPoints) {
+            p.move(-offset.x, -offset.y);
         }
 
         return translatedPoints;
     }
 
-    private PointF getPathOffset(Path path) {
+    private Point getPathOffset(Path path) {
         // calculate bounding box for the path
         RectF bounds = new RectF();
         path.computeBounds(bounds, true);
 
-        return new PointF(bounds.left, bounds.top);
+        return new Point(bounds.left, bounds.top);
     }
 }

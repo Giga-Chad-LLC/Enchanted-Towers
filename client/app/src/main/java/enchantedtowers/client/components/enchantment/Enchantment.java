@@ -11,24 +11,26 @@ import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.util.List;
 
+import enchantedtowers.game_models.utils.Point;
+
 
 public class Enchantment {
     // must be relative to the bounded box of path
     private Geometry curve;
     // specifies offset for drawing path
-    private final PointF offset = new PointF(0f, 0f);
+    private final Point offset = new Point(0, 0);
 
     public Enchantment(Enchantment that) {
         curve = that.curve.copy();
         setOffset(that.offset);
     }
 
-    public Enchantment(List<PointF> points, PointF offset) {
+    public Enchantment(List<Point> points, Point offset) {
         setPoints(points);
         setOffset(offset);
     }
 
-    public Enchantment(List<PointF> points) {
+    public Enchantment(List<Point> points) {
         setPoints(points);
     }
 
@@ -36,24 +38,24 @@ public class Enchantment {
         return curve.getNumPoints();
     }
 
-    public PointF getPointAt(int index) {
+    public Point getPointAt(int index) {
         Coordinate point = curve.getCoordinates()[index];
-        return new PointF((float) point.getX(), (float) point.getY());
+        return new Point(point.getX(), point.getY());
     }
 
-    public float[] getPoints() {
+    public double[] getPoints() {
         Coordinate[] coordinates = curve.getCoordinates();
-        float[] pts = new float[coordinates.length * 2];
+        double[] pts = new double[coordinates.length * 2];
 
         for (int i = 0; i < coordinates.length; i++) {
-            pts[2 * i] = (float) coordinates[i].getX();
-            pts[2 * i + 1] = (float) coordinates[i].getY();
+            pts[2 * i] = coordinates[i].getX();
+            pts[2 * i + 1] = coordinates[i].getY();
         }
 
         return pts;
     }
 
-    public PointF getOffset() {
+    public Point getOffset() {
         return offset;
     }
 
@@ -70,7 +72,7 @@ public class Enchantment {
         }
 
         Matrix mat = new Matrix();
-        mat.setTranslate(offset.x, offset.y);
+        mat.setTranslate((float)offset.x, (float)offset.y);
         path.transform(mat);
 
         return path;
@@ -88,16 +90,16 @@ public class Enchantment {
         return geometry;
     }
 
-    public void setOffset(PointF offset) {
+    public void setOffset(Point offset) {
         this.offset.x = offset.x;
         this.offset.y = offset.y;
     }
 
-    private void setPoints(List<PointF> points) {
-        float[] pointsCopy = new float[points.size() * 2];
+    private void setPoints(List<Point> points) {
+        double[] pointsCopy = new double[points.size() * 2];
 
         for (int i = 0; i < points.size(); i++) {
-            PointF point = points.get(i);
+            Point point = points.get(i);
             pointsCopy[2 * i] = point.x;
             pointsCopy[2 * i + 1] = point.y;
         }
@@ -105,7 +107,7 @@ public class Enchantment {
         setPoints(pointsCopy);
     }
 
-    private void setPoints(float[] points) {
+    private void setPoints(double[] points) {
         GeometryFactory factory = new GeometryFactory();
         Coordinate[] coordinates = new Coordinate[points.length / 2];
 

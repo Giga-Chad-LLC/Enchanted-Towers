@@ -7,6 +7,8 @@ import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
 
+import enchantedtowers.game_models.utils.Point;
+
 public class EnchantmentsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
@@ -49,9 +51,9 @@ public class EnchantmentsPatternMatchingAlgorithm {
         System.out.println("Matched template: " + matchedTemplateIndex);
         Enchantment matchedTemplate = new Enchantment(templates.get(matchedTemplateIndex));
 
-        PointF patternOffset = pattern.getOffset();
+        Point patternOffset = pattern.getOffset();
         matchedTemplate.setOffset(
-                new PointF(
+                new Point(
                         patternOffset.x + (patternBounds.width() - templateBounds.width()) / 2,
                         patternOffset.y + (patternBounds.height() - templateBounds.height()) / 2
                 )

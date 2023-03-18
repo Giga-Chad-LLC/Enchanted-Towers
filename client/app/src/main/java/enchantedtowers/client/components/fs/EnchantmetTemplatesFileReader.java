@@ -11,27 +11,29 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import enchantedtowers.game_models.utils.Point;
+
 public class EnchantmetTemplatesFileReader extends JSONFileReader {
 
     public EnchantmetTemplatesFileReader(Context context) {
         super(context);
     }
 
-    public List<List<PointF>> processFile(int resourceId) throws IOException, JSONException {
+    public List<List<Point>> processFile(int resourceId) throws IOException, JSONException {
         String json = readRawFile(resourceId);
         return parseJsonFromString(json);
     }
 
-    private List<List<PointF>> parseJsonFromString(String jsonString) throws JSONException {
+    private List<List<Point>> parseJsonFromString(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templates = content.getJSONArray("canvasTemplates");
 
-        List <List<PointF>> templatePoints = new ArrayList<>();
+        List <List<Point>> templatePoints = new ArrayList<>();
 
         for (int i = 0; i < templates.length(); i++) {
             JSONObject template = templates.getJSONObject(i);
 
-            List<PointF> currentPointsArray = new ArrayList<>();
+            List<Point> currentPointsArray = new ArrayList<>();
 
             if (!template.isNull("points")) {
                 JSONArray points = template.getJSONArray("points");
@@ -39,10 +41,10 @@ public class EnchantmetTemplatesFileReader extends JSONFileReader {
                 for (int j = 0; j < points.length(); ++j) {
                     JSONArray pointArray = points.getJSONArray(j);
 
-                    float x = (float)pointArray.getDouble(0);
-                    float y = (float)pointArray.getDouble(1);
+                    double x = pointArray.getDouble(0);
+                    double y = pointArray.getDouble(1);
 
-                    currentPointsArray.add(new PointF(x, y));
+                    currentPointsArray.add(new Point(x, y));
                 }
             }
 

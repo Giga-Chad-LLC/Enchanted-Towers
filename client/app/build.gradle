@@ -11,6 +11,7 @@ def jtsVersion = '1.19.0'
 // Note: in case of grpc related errors, consider 'io.grpc:grpc-netty', 'io.grpc:grpc-netty-shaded' and 'io.grpc:grpc-android' packages
 dependencies {
     implementation('enchantedtowers.product.common:utils')
+    implementation('enchantedtowers.product.common:game-models')
 
     // jts (2d geometry)
     implementation(group: "org.locationtech.jts", name: "jts-core", version: "${jtsVersion}")

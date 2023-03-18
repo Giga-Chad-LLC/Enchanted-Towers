@@ -14,6 +14,7 @@ import java.util.List;
 
 import enchantedtowers.client.components.enchantment.EnchantmentBook;
 import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
+import enchantedtowers.game_models.utils.Point;
 
 public class CanvasActivity extends AppCompatActivity {
     @Override
@@ -23,7 +24,7 @@ public class CanvasActivity extends AppCompatActivity {
 
         try {
             EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
-            List<List<PointF>> data = reader.processFile(R.raw.canvas_templates_config);
+            List<List<Point>> data = reader.processFile(R.raw.canvas_templates_config);
             EnchantmentBook.instantiate(data);
         }
         catch(JSONException | IOException e) {
