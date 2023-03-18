@@ -1,5 +1,7 @@
 package enchantedtowers.client;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -10,6 +12,7 @@ import android.view.ViewGroup;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.Objects;
 
@@ -18,6 +21,9 @@ public class MapFragment extends Fragment {
     public MapFragment() {
         // Required empty public constructor
     }
+
+    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+
 
     /**
      * Use this factory method to create a new instance of
@@ -32,6 +38,7 @@ public class MapFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        logger.log(Level.INFO, "Created with context '" + requireContext().getClass().getName() + "'");
     }
 
     @Override
@@ -46,11 +53,21 @@ public class MapFragment extends Fragment {
 
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
             // When map is loaded
+            boolean mapStyleAppliedSuccessfully = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
+
+            if (mapStyleAppliedSuccessfully) {
+                logger.log(Level.INFO, "Map style applied successfully");
+            }
+            else {
+                logger.log(Level.WARNING, "Map style applying failed");
+            }
+
             googleMap.setOnMapClickListener(latLng -> {
                 // remove all markers
-                googleMap.clear();
+                // googleMap.clear();
                 // animating to zoom the marker
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
+                // googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
             });
         });
 
