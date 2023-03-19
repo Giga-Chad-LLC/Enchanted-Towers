@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import enchantedtowers.client.components.permissions.PermissionManager;
+
 
 public class MapActivity extends AppCompatActivity {
     @Override
@@ -17,7 +19,7 @@ public class MapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        ActivityResultLauncher<String[]> locationPermissionRequest =
+        ActivityResultLauncher<String[]> locationPermissionLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                     System.out.println("INFO: " + result);
 
@@ -43,10 +45,7 @@ public class MapActivity extends AppCompatActivity {
                 }
         );
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                        PackageManager.PERMISSION_GRANTED) {
+        if (PermissionManager.checkLocationPermission(this)) {
             // You can use the API that requires the permission.
             System.out.println("INFO: ACCESS_FINE_LOCATION & ACCESS_COARSE_LOCATION granted");
             mountGoogleMapsFragment();
@@ -62,14 +61,14 @@ public class MapActivity extends AppCompatActivity {
             boolean rationalCoarseLocation = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION);
             System.out.println("INFO: rationalFineLocation=" + rationalFineLocation + ", rationalCoarseLocation=" + rationalCoarseLocation);
 
-            locationPermissionRequest.launch(new String[] {
+            locationPermissionLauncher.launch(new String[] {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             });
         } else {
             // You can directly ask for the permission.
             // The registered ActivityResultCallback gets the result of this request.
-            locationPermissionRequest.launch(new String[] {
+            locationPermissionLauncher.launch(new String[] {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             });
@@ -86,5 +85,4 @@ public class MapActivity extends AppCompatActivity {
                 .add(R.id.map_frame_layout, mapFragment)
                 .commit();
     }
-
 }

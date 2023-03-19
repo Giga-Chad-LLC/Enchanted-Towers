@@ -33,6 +33,8 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Objects;
 
+import enchantedtowers.client.components.permissions.PermissionManager;
+
 
 public class MapFragment extends Fragment {
     // TODO: make the following fields Optional<T>
@@ -81,7 +83,7 @@ public class MapFragment extends Fragment {
             registerOnMyLocationClickListener();
 
             // enabling user location
-            if (checkRequiredLocationPermission()) {
+            if (PermissionManager.checkLocationPermission(requireContext())) {
                 googleMap.setMyLocationEnabled(true);
 
                 registerOnLocationUpdatesListener();
@@ -102,25 +104,6 @@ public class MapFragment extends Fragment {
         });
 
         return view;
-    }
-
-    /**
-     * Returns {@code true} if either of
-     *      {@link Manifest.permission#ACCESS_FINE_LOCATION} or
-     *      {@link Manifest.permission#ACCESS_COARSE_LOCATION}
-     *  permissions are granted,
-     * otherwise returns {@code false}.
-     *
-     * @Note Name of function <b>must start</b> with <b><i>'check'</i></b> and <b>end</b> with <b><i>'permission'</i></b>, otherwise linter complains (see: <a href="https://stackoverflow.com/questions/36031218/check-android-permissions-in-a-method">Check Android Permissions in a Method</a>)
-     */
-    private boolean checkRequiredLocationPermission() {
-        boolean accessFineLocationPermissionGranted =
-                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-        boolean accessCoarseLocationPermissionGranted =
-                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-        return accessFineLocationPermissionGranted || accessCoarseLocationPermissionGranted;
     }
 
     private void registerOnLocationUpdatesListener() throws SecurityException {
