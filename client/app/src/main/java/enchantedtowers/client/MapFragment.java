@@ -220,10 +220,12 @@ public class MapFragment extends Fragment {
         // this.GPSAlertDialog = null;
 
         // TODO: figure out whether it is even correct
-        // unregistering location listener
-        logger.log(Level.INFO, "Unregistering location listener");
-        LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.removeUpdates(locationUpdatesListener);
+        // unregistering location listener if not null
+        if (locationUpdatesListener != null) {
+            logger.log(Level.INFO, "Unregistering location listener");
+            LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+            locationManager.removeUpdates(locationUpdatesListener);
+        }
 
         super.onDestroy();
     }
