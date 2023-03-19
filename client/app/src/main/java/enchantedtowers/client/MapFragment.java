@@ -36,13 +36,12 @@ import java.util.Objects;
 
 
 public class MapFragment extends Fragment {
+    private GoogleMap googleMap;
+    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+
     public MapFragment() {
         // Required empty public constructor
     }
-
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-
-    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
     public static MapFragment newInstance() {
         return new MapFragment();
@@ -71,31 +70,14 @@ public class MapFragment extends Fragment {
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.google_map_fragment);
 
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
-            // map is loaded
+            // for convenient use if methods
+            this.googleMap = googleMap;
 
-            // applying map style
-            boolean mapStyleAppliedSuccessfully = googleMap.setMapStyle(
-                    MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
+            applyCustomGoogleMapStyle();
 
-            if (mapStyleAppliedSuccessfully) {
-                logger.log(Level.INFO, "Map style applied successfully");
-            }
-            else {
-                logger.log(Level.WARNING, "Map style applying failed");
-            }
-
-            // setting 'OnMyLocation' click handlers
-            googleMap.setOnMyLocationButtonClickListener(() -> {
-                String message = "MyLocation button clicked";
-                logger.log(Level.INFO, message);
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                return false;
-            });
-            googleMap.setOnMyLocationClickListener(location -> {
-                String message = "Current location: " + location;
-                logger.log(Level.INFO, message);
-                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-            });
+            // registering click listeners on MyLocation button and location point
+            registerOnMyLocationButtonClickListener();
+            registerOnMyLocationClickListener();
 
             // enabling user location
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -105,7 +87,7 @@ public class MapFragment extends Fragment {
                 googleMap.setMyLocationEnabled(true);
 
                 // setting location features
-                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+                 LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
 
                 // if not null may be used to draw 1st circle
                 Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -120,7 +102,7 @@ public class MapFragment extends Fragment {
                                 googleMap.clear();
                                 double latitude = location.getLatitude();
                                 double longitude = location.getLongitude();
-                                drawCircle(googleMap, new LatLng(latitude, longitude));
+                                drawCircleRoundPoint(new LatLng(latitude, longitude));
                             }
 
                             @Override
@@ -154,13 +136,49 @@ public class MapFragment extends Fragment {
         return view;
     }
 
-    private void drawCircle(GoogleMap map, LatLng point) {
+    private void registerOnMyLocationButtonClickListener() {
+        Objects.requireNonNull(googleMap);
+        googleMap.setOnMyLocationButtonClickListener(() -> {
+            String message = "MyLocation button clicked";
+            logger.log(Level.INFO, message);
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            return false;
+        });
+    }
+
+    private void registerOnMyLocationClickListener() {
+        Objects.requireNonNull(googleMap);
+        googleMap.setOnMyLocationClickListener(location -> {
+            String message = "Current location: " + location;
+            logger.log(Level.INFO, message);
+            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+        });
+    }
+
+    private void applyCustomGoogleMapStyle() {
+
+        // applying map style
+        boolean mapStyleAppliedSuccessfully = googleMap.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
+
+        if (mapStyleAppliedSuccessfully) {
+            logger.log(Level.INFO, "Map style applied successfully");
+        }
+        else {
+            logger.log(Level.WARNING, "Map style applying failed");
+        }
+    }
+
+    private void drawCircleRoundPoint(LatLng point) {
+        Objects.requireNonNull(googleMap);
+
         CircleOptions circleOptions = new CircleOptions();
         circleOptions.center(point);
         circleOptions.radius(200);
         circleOptions.strokeColor(Color.BLACK);
         circleOptions.fillColor(0x30ff0000);
         circleOptions.strokeWidth(2);
-        map.addCircle(circleOptions);
+
+        googleMap.addCircle(circleOptions);
     }
 }
