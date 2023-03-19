@@ -185,19 +185,6 @@ public class MapFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onDestroy() {
-        // this.GPSAlertDialog = null;
-
-        // TODO: figure out whether it is even correct
-        // unregistering location listener
-        logger.log(Level.INFO, "Unregistering location listener");
-        LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.removeUpdates(locationUpdatesListener);
-
-        super.onDestroy();
-    }
-
     private void registerOnMyLocationButtonClickListener() {
         Objects.requireNonNull(googleMap);
 
@@ -243,5 +230,18 @@ public class MapFragment extends Fragment {
         circleOptions.strokeWidth(2);
 
         googleMap.addCircle(circleOptions);
+    }
+
+    @Override
+    public void onDestroy() {
+        // this.GPSAlertDialog = null;
+
+        // TODO: figure out whether it is even correct
+        // unregistering location listener
+        logger.log(Level.INFO, "Unregistering location listener");
+        LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager.removeUpdates(locationUpdatesListener);
+
+        super.onDestroy();
     }
 }
