@@ -49,7 +49,9 @@ public class MapActivity extends AppCompatActivity {
                         PackageManager.PERMISSION_GRANTED) {
             // You can use the API that requires the permission.
             System.out.println("INFO: ACCESS_FINE_LOCATION & ACCESS_COARSE_LOCATION granted");
-        } else if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
+            mountGoogleMapsFragment();
+        }
+        else if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
                 shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
             // In an educational UI, explain to the user why your app requires this
             // permission for a specific feature to behave as expected, and what
@@ -61,8 +63,8 @@ public class MapActivity extends AppCompatActivity {
             System.out.println("INFO: rationalFineLocation=" + rationalFineLocation + ", rationalCoarseLocation=" + rationalCoarseLocation);
 
             locationPermissionRequest.launch(new String[] {
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             });
         } else {
             // You can directly ask for the permission.
