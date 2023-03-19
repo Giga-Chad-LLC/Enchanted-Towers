@@ -120,9 +120,15 @@ public class MapFragment extends Fragment {
 
         LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
 
+        final int minTimeIntervalBetweenUpdatesMs = 30;
+        final int minDistanceBetweenUpdateMeters = 1;
+
         // registering event listener for location updates
         locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 0, 0, new LocationListenerCompat() {
+                LocationManager.GPS_PROVIDER,
+                minTimeIntervalBetweenUpdatesMs,
+                minDistanceBetweenUpdateMeters,
+                new LocationListenerCompat() {
                     @Override
                     public void onLocationChanged(@NonNull Location location) {
                         logger.log(Level.INFO, "New location: " + location);
