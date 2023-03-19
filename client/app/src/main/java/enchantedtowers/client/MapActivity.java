@@ -1,19 +1,26 @@
 package enchantedtowers.client;
 
 import android.Manifest;
-import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import enchantedtowers.client.components.permissions.PermissionManager;
 
 
 public class MapActivity extends AppCompatActivity {
+    private final String[] locationPermissions = new String[] {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,31 +28,50 @@ public class MapActivity extends AppCompatActivity {
 
         ActivityResultLauncher<String[]> locationPermissionLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                    System.out.println("INFO: " + result);
-
-                    Boolean fineLocationGranted = result.getOrDefault(
+                    Boolean fineLocationPermissionGranted = result.getOrDefault(
                             Manifest.permission.ACCESS_FINE_LOCATION, false);
 
-                    Boolean coarseLocationGranted = result.getOrDefault(
+                    Boolean coarseLocationPermissionGranted = result.getOrDefault(
                             Manifest.permission.ACCESS_COARSE_LOCATION,false);
 
-                    assert fineLocationGranted != null;
-                    assert coarseLocationGranted != null;
+                    assert fineLocationPermissionGranted != null;
+                    assert coarseLocationPermissionGranted != null;
 
-                    if (/*fineLocationGranted != null &&*/ fineLocationGranted) {
-                        System.out.println("INFO: fineLocationGranted");
+                    if (fineLocationPermissionGranted && coarseLocationPermissionGranted) {
+                        Toast.makeText(this,
+                                "All required permissions granted. Thanks, enjoy the game!", Toast.LENGTH_LONG).show();
                         mountGoogleMapsFragment();
+                        // System.out.println("INFO: fineLocationGranted && coarseLocationGranted");
                     }
-                    else if (/*coarseLocationGranted != null &&*/ coarseLocationGranted) {
-                        System.out.println("INFO: coarseLocationGranted");
+                    else if (coarseLocationPermissionGranted) {
+                        Toast.makeText(this,
+                                "Access of coarse location granted. Content might be limited", Toast.LENGTH_LONG).show();
+                        mountGoogleMapsFragment();
+                        // System.out.println("INFO: Access of coarse location granted. Content might be limited");
                     }
                     else {
-                        System.out.println("INFO: No location access granted");
+                        Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
+                        // System.out.println("INFO: No location access granted");
                     }
                 }
         );
 
-        if (PermissionManager.checkLocationPermission(this)) {
+        new PermissionManager()
+                .withPermissions(locationPermissions, this, () -> {
+                    // System.out.println("INFO: ACCESS_FINE_LOCATION & ACCESS_COARSE_LOCATION granted");
+                    mountGoogleMapsFragment();
+                })
+                .otherwise(() -> {
+                    if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                        showLocationRequestPermissionRationale(locationPermissionLauncher);
+                    }
+                    else {
+                        locationPermissionLauncher.launch(locationPermissions);
+                    }
+                });
+
+        /*if (PermissionManager.checkLocationPermission(this)) {
             // You can use the API that requires the permission.
             System.out.println("INFO: ACCESS_FINE_LOCATION & ACCESS_COARSE_LOCATION granted");
             mountGoogleMapsFragment();
@@ -61,18 +87,35 @@ public class MapActivity extends AppCompatActivity {
             boolean rationalCoarseLocation = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION);
             System.out.println("INFO: rationalFineLocation=" + rationalFineLocation + ", rationalCoarseLocation=" + rationalCoarseLocation);
 
-            locationPermissionLauncher.launch(new String[] {
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            });
+            locationPermissionLauncher.launch(locationPermissions);
         } else {
             // You can directly ask for the permission.
             // The registered ActivityResultCallback gets the result of this request.
-            locationPermissionLauncher.launch(new String[] {
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            });
-        }
+            locationPermissionLauncher.launch(locationPermissions);
+        }*/
+    }
+
+    private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {
+        // show rationale
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        final String rationale = """
+                                Access to device location is required for the application to function properly,
+                                e.g. to show your precise location on a map and determine distances between towers.
+                                
+                                Please, grant the device location permission to the application to gain full-fledged user experience.
+                                """;
+        builder.setMessage(rationale);
+
+        builder.setPositiveButton("Continue", (dialog, which) -> {
+            locationPermissionLauncher.launch(locationPermissions);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
+        });
+
+        builder.create().show();
     }
 
     private void mountGoogleMapsFragment() {
