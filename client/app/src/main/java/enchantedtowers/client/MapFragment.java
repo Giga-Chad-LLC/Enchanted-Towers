@@ -9,13 +9,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.location.LocationListenerCompat;
 import androidx.fragment.app.Fragment;
@@ -53,12 +51,6 @@ public class MapFragment extends Fragment {
         logger.log(Level.INFO, "Created with context '" + requireContext().getClass().getName() + "'");
     }
 
-    /*
-    * TODO: read this: https://developer.android.com/training/permissions/requesting#java
-    * TODO: read this: https://developer.android.com/training/location/permissions
-    * TODO: read this: https://developer.android.com/reference/androidx/core/app/ActivityCompat
-    * */
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -69,6 +61,7 @@ public class MapFragment extends Fragment {
         SupportMapFragment supportMapFragment =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.google_map_fragment);
 
+        // applying miscellaneous features on map view
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
             // for convenient use if methods
             this.googleMap = googleMap;
@@ -85,12 +78,15 @@ public class MapFragment extends Fragment {
 
                 registerOnLocationUpdatesListener();
 
-                // setting location features
-                // LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-                // if not null may be used to draw 1st circle
-                // Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                // logger.log(Level.INFO, "lastKnownLocation: " + lastKnownLocation);
+                // draw circle around last known location
+                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
+                if (lastKnownLocation != null) {
+                     double latitude = lastKnownLocation.getLatitude();
+                     double longitude = lastKnownLocation.getLongitude();
+                    drawCircleAroundPoint(new LatLng(latitude, longitude));
+                }
             }
             else {
                 logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
@@ -120,6 +116,8 @@ public class MapFragment extends Fragment {
     }
 
     private void registerOnLocationUpdatesListener() throws SecurityException {
+        Objects.requireNonNull(googleMap);
+
         LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
 
         // registering event listener for location updates
@@ -131,7 +129,7 @@ public class MapFragment extends Fragment {
                         googleMap.clear();
                         double latitude = location.getLatitude();
                         double longitude = location.getLongitude();
-                        drawCircleRoundPoint(new LatLng(latitude, longitude));
+                        drawCircleAroundPoint(new LatLng(latitude, longitude));
                     }
 
                     @Override
@@ -160,6 +158,7 @@ public class MapFragment extends Fragment {
 
     private void registerOnMyLocationButtonClickListener() {
         Objects.requireNonNull(googleMap);
+
         googleMap.setOnMyLocationButtonClickListener(() -> {
             String message = "MyLocation button clicked";
             logger.log(Level.INFO, message);
@@ -191,7 +190,7 @@ public class MapFragment extends Fragment {
         }
     }
 
-    private void drawCircleRoundPoint(LatLng point) {
+    private void drawCircleAroundPoint(LatLng point) {
         Objects.requireNonNull(googleMap);
 
         CircleOptions circleOptions = new CircleOptions();
