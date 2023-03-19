@@ -35,10 +35,12 @@ import java.util.Objects;
 
 
 public class MapFragment extends Fragment {
+    // TODO: make the following fields Optional<T>
     private GoogleMap googleMap;
     private AlertDialog GPSAlertDialog;
-    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
     private LocationListener locationUpdatesListener;
+    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+
 
     public MapFragment() {
         // Required empty public constructor
