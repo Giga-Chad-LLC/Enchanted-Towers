@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
@@ -35,7 +36,9 @@ import java.util.Objects;
 
 public class MapFragment extends Fragment {
     private GoogleMap googleMap;
+    private AlertDialog GPSAlertDialog;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+    private LocationListener locationUpdatesListener;
 
     public MapFragment() {
         // Required empty public constructor
@@ -60,6 +63,9 @@ public class MapFragment extends Fragment {
         // initialize map fragment
         SupportMapFragment supportMapFragment =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.google_map_fragment);
+
+        // creating GPS alert dialog in advance
+        createGPSEnableAlertDialog();
 
         // applying miscellaneous features on map view
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
@@ -123,43 +129,71 @@ public class MapFragment extends Fragment {
         final int minTimeIntervalBetweenUpdatesMs = 30;
         final int minDistanceBetweenUpdateMeters = 1;
 
+        this.locationUpdatesListener = new LocationListenerCompat() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                logger.log(Level.INFO, "New location: " + location);
+                googleMap.clear();
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                drawCircleAroundPoint(new LatLng(latitude, longitude));
+            }
+
+            @Override
+            public void onProviderDisabled(@NonNull String provider) {
+                logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
+                showGPSEnableDialogIfCreated();
+            }
+        };
+
         // registering event listener for location updates
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 minTimeIntervalBetweenUpdatesMs,
                 minDistanceBetweenUpdateMeters,
-                new LocationListenerCompat() {
-                    @Override
-                    public void onLocationChanged(@NonNull Location location) {
-                        logger.log(Level.INFO, "New location: " + location);
-                        googleMap.clear();
-                        double latitude = location.getLatitude();
-                        double longitude = location.getLongitude();
-                        drawCircleAroundPoint(new LatLng(latitude, longitude));
-                    }
+                locationUpdatesListener);
+    }
 
-                    @Override
-                    public void onProviderDisabled(@NonNull String provider) {
-                        logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
 
-                        // asking to enable GPS provider
-                        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-                        builder.setMessage(
-                                "GPS is disabled. GPS is required to let application function properly. Would you mind enabling it?");
+    private void createGPSEnableAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setMessage(
+                "GPS is disabled. GPS is required to let application function properly.\nWould you mind enabling it?");
 
-                        builder.setPositiveButton("Enable GPS", (dialog, which) -> {
-                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                            startActivity(intent);
-                        });
+        builder.setPositiveButton("Enable GPS", (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        });
 
-                        builder.setNegativeButton("Cancel", (dialog, which) -> {
-                            // Nothing
-                        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            // Nothing
+        });
 
-                        AlertDialog alertDialog = builder.create();
-                        alertDialog.show();
-                    }
-                });
+        this.GPSAlertDialog = builder.create();
+    }
+
+    private void showGPSEnableDialogIfCreated() {
+        if (GPSAlertDialog != null) {
+            if (!GPSAlertDialog.isShowing()) {
+                GPSAlertDialog.show();
+            }
+        }
+        else {
+            logger.log(Level.WARNING, "GPSAlertDialog is null (call 'createGPSEnableAlertDialog' to create)");
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        // this.GPSAlertDialog = null;
+
+        // TODO: figure out whether it is even correct
+        // unregistering location listener
+        logger.log(Level.INFO, "Unregistering location listener");
+        LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager.removeUpdates(locationUpdatesListener);
+
+        super.onDestroy();
     }
 
     private void registerOnMyLocationButtonClickListener() {
