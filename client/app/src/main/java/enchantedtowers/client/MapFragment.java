@@ -8,12 +8,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.location.LocationListenerCompat;
 import androidx.fragment.app.Fragment;
 
 import android.provider.Settings;
@@ -67,7 +71,7 @@ public class MapFragment extends Fragment {
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.google_map_fragment);
 
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
-            // When map is loaded
+            // map is loaded
 
             // applying map style
             boolean mapStyleAppliedSuccessfully = googleMap.setMapStyle(
@@ -93,59 +97,61 @@ public class MapFragment extends Fragment {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
             });
 
-            // TODO: figure out how to solve this problem
-            /*while (!googleMap.isMyLocationEnabled()) {
-                enableMyLocation(googleMap);
-            }*/
-            enableMyLocation(googleMap);
+            // enabling user location
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                googleMap.setMyLocationEnabled(true);
 
-            // TODO: what does it do?
-            LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+                // setting location features
+                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
 
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-                builder.setMessage("GPS is disabled. Do you want to enable it?");
+                // if not null may be used to draw 1st circle
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                logger.log(Level.INFO, "lastKnownLocation: " + lastKnownLocation);
 
-                builder.setPositiveButton("Enable GPS", (dialog, which) -> {
-                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    startActivity(intent);
-                });
+                // registering event listener for location updates
+                locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 0, 0, new LocationListenerCompat() {
+                            @Override
+                            public void onLocationChanged(@NonNull Location location) {
+                                logger.log(Level.INFO, "New location: " + location);
+                                googleMap.clear();
+                                double latitude = location.getLatitude();
+                                double longitude = location.getLongitude();
+                                drawCircle(googleMap, new LatLng(latitude, longitude));
+                            }
 
-                builder.setNegativeButton("Cancel", (dialog, which) -> {
-                    //Nothing
-                });
+                            @Override
+                            public void onProviderDisabled(@NonNull String provider) {
+                                logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
 
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
+                                // asking to enable GPS provider
+                                AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+                                builder.setMessage(
+                                    "GPS is disabled. GPS is required to let application function properly. Would you mind enabling it?");
 
-                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(requireContext(), "Please turn on GPS", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                                builder.setPositiveButton("Enable GPS", (dialog, which) -> {
+                                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    startActivity(intent);
+                                });
+
+                                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                                    // Nothing
+                                });
+
+                                AlertDialog alertDialog = builder.create();
+                                alertDialog.show();
+                            }
+                        });
             }
-
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 0, 0, location -> {
-                googleMap.clear();
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                drawCircle(googleMap, new LatLng(latitude, longitude));
-            });
+            else {
+                logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
+            }
         });
 
         return view;
-    }
-
-    private void enableMyLocation(GoogleMap map) {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            map.setMyLocationEnabled(true);
-        } else {
-            ActivityCompat.requestPermissions(requireActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    LOCATION_PERMISSION_REQUEST_CODE);
-        }
     }
 
     private void drawCircle(GoogleMap map, LatLng point) {
