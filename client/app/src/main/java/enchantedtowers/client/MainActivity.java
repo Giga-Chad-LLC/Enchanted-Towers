@@ -32,8 +32,7 @@ public class MainActivity extends AppCompatActivity {
         if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
             startActivity(intent);
-        } else if(view.getId() == R.id.changeToMapActivity){
-            //getSupportFragmentManager().beginTransaction().replace(R.id.frame_layout, fragment).commit();
+        } else if(view.getId() == R.id.changeToMapActivity) {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         }
