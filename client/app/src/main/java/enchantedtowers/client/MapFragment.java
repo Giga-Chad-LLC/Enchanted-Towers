@@ -83,47 +83,14 @@ public class MapFragment extends Fragment {
             if (checkRequiredLocationPermission()) {
                 googleMap.setMyLocationEnabled(true);
 
+                registerOnLocationUpdatesListener();
+
                 // setting location features
-                 LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-
+                // LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
                 // if not null may be used to draw 1st circle
-                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                logger.log(Level.INFO, "lastKnownLocation: " + lastKnownLocation);
+                // Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                // logger.log(Level.INFO, "lastKnownLocation: " + lastKnownLocation);
 
-                // registering event listener for location updates
-                locationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, 0, 0, new LocationListenerCompat() {
-                            @Override
-                            public void onLocationChanged(@NonNull Location location) {
-                                logger.log(Level.INFO, "New location: " + location);
-                                googleMap.clear();
-                                double latitude = location.getLatitude();
-                                double longitude = location.getLongitude();
-                                drawCircleRoundPoint(new LatLng(latitude, longitude));
-                            }
-
-                            @Override
-                            public void onProviderDisabled(@NonNull String provider) {
-                                logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
-
-                                // asking to enable GPS provider
-                                AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-                                builder.setMessage(
-                                    "GPS is disabled. GPS is required to let application function properly. Would you mind enabling it?");
-
-                                builder.setPositiveButton("Enable GPS", (dialog, which) -> {
-                                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                    startActivity(intent);
-                                });
-
-                                builder.setNegativeButton("Cancel", (dialog, which) -> {
-                                    // Nothing
-                                });
-
-                                AlertDialog alertDialog = builder.create();
-                                alertDialog.show();
-                            }
-                        });
             }
             else {
                 logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
@@ -150,6 +117,45 @@ public class MapFragment extends Fragment {
                 ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
         return accessFineLocationPermissionGranted || accessCoarseLocationPermissionGranted;
+    }
+
+    private void registerOnLocationUpdatesListener() throws SecurityException {
+        LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+
+        // registering event listener for location updates
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, 0, 0, new LocationListenerCompat() {
+                    @Override
+                    public void onLocationChanged(@NonNull Location location) {
+                        logger.log(Level.INFO, "New location: " + location);
+                        googleMap.clear();
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        drawCircleRoundPoint(new LatLng(latitude, longitude));
+                    }
+
+                    @Override
+                    public void onProviderDisabled(@NonNull String provider) {
+                        logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
+
+                        // asking to enable GPS provider
+                        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+                        builder.setMessage(
+                                "GPS is disabled. GPS is required to let application function properly. Would you mind enabling it?");
+
+                        builder.setPositiveButton("Enable GPS", (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(intent);
+                        });
+
+                        builder.setNegativeButton("Cancel", (dialog, which) -> {
+                            // Nothing
+                        });
+
+                        AlertDialog alertDialog = builder.create();
+                        alertDialog.show();
+                    }
+                });
     }
 
     private void registerOnMyLocationButtonClickListener() {
