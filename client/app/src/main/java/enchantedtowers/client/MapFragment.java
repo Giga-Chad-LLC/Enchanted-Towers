@@ -50,6 +50,12 @@ public class MapFragment extends Fragment {
         logger.log(Level.INFO, "Created with context '" + requireContext().getClass().getName() + "'");
     }
 
+    /*
+    * TODO: read this: https://developer.android.com/training/permissions/requesting#java
+    * TODO: read this: https://developer.android.com/training/location/permissions
+    * TODO: read this: https://developer.android.com/reference/androidx/core/app/ActivityCompat
+    * */
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -62,6 +68,8 @@ public class MapFragment extends Fragment {
 
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
             // When map is loaded
+
+            // applying map style
             boolean mapStyleAppliedSuccessfully = googleMap.setMapStyle(
                     MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
 
@@ -86,8 +94,8 @@ public class MapFragment extends Fragment {
             });
 
             // TODO: figure out how to solve this problem
-            /*while (!map.isMyLocationEnabled()) {
-                enableMyLocation();
+            /*while (!googleMap.isMyLocationEnabled()) {
+                enableMyLocation(googleMap);
             }*/
             enableMyLocation(googleMap);
 
