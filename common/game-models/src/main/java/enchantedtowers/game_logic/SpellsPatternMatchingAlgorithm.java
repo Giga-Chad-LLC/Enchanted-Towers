@@ -6,9 +6,8 @@ import org.locationtech.jts.geom.Geometry;
 import java.util.List;
 import java.util.Optional;
 
-import enchantedtowers.game_logic.CurvesMatchingMetric;
 import enchantedtowers.game_models.Spell;
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
@@ -52,9 +51,9 @@ public class SpellsPatternMatchingAlgorithm {
         System.out.println("Matched template: " + matchedTemplateIndex);
         Spell matchedTemplate = new Spell(templates.get(matchedTemplateIndex));
 
-        Point patternOffset = pattern.getOffset();
+        Vector2 patternOffset = pattern.getOffset();
         matchedTemplate.setOffset(
-                new Point(
+                new Vector2(
                         patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,
                         patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
                 )

@@ -1,15 +1,15 @@
 package enchantedtowers.game_models.utils;
 
-public class Point {
+public class Vector2 {
     public double x;
     public double y;
 
-    public Point(double x, double y) {
+    public Vector2(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
-    public Point(Point that) {
+    public Vector2(Vector2 that) {
         x = that.x;
         y = that.y;
     }

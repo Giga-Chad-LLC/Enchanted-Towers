@@ -8,26 +8,26 @@ import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.util.List;
 
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 
 public class Spell {
     // must be relative to the bounded box of path
     public Geometry curve;
     // specifies offset for drawing path
-    private final Point offset = new Point(0, 0);
+    private final Vector2 offset = new Vector2(0, 0);
 
     public Spell(Spell that) {
         curve = that.curve.copy();
         setOffset(that.offset);
     }
 
-    public Spell(List<Point> points, Point offset) {
+    public Spell(List<Vector2> points, Vector2 offset) {
         setPoints(points);
         setOffset(offset);
     }
 
-    public Spell(List<Point> points) {
+    public Spell(List<Vector2> points) {
         setPoints(points);
     }
 
@@ -39,12 +39,12 @@ public class Spell {
         return curve.getNumPoints();
     }
 
-    public Point getPointAt(int index) {
+    public Vector2 getPointAt(int index) {
         Coordinate point = curve.getCoordinates()[index];
-        return new Point(point.getX(), point.getY());
+        return new Vector2(point.getX(), point.getY());
     }
 
-    public Point getOffset() {
+    public Vector2 getOffset() {
         return offset;
     }
 
@@ -60,16 +60,16 @@ public class Spell {
         return geometry;
     }
 
-    public void setOffset(Point offset) {
+    public void setOffset(Vector2 offset) {
         this.offset.x = offset.x;
         this.offset.y = offset.y;
     }
 
-    private void setPoints(List<Point> points) {
+    private void setPoints(List<Vector2> points) {
         double[] pointsCopy = new double[points.size() * 2];
 
         for (int i = 0; i < points.size(); i++) {
-            Point point = points.get(i);
+            Vector2 point = points.get(i);
             pointsCopy[2 * i] = point.x;
             pointsCopy[2 * i + 1] = point.y;
         }

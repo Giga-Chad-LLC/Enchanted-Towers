@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 
 import enchantedtowers.game_models.Spell;
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class CanvasSpellDecorator implements CanvasDrawable {
     private final Path path;
@@ -24,7 +24,7 @@ public class CanvasSpellDecorator implements CanvasDrawable {
         Path path = new Path();
 
         if (spell.getPointsCount() != 0) {
-            Point point = spell.getPointAt(0);
+            Vector2 point = spell.getPointAt(0);
             path.moveTo((float) point.x, (float) point.y);
 
             for (int i = 1; i < spell.getPointsCount(); i++) {

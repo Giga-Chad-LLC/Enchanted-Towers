@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import enchantedtowers.game_models.Spell;
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class SpellBook {
     static private boolean isInstantiated = false;
@@ -15,7 +14,7 @@ public class SpellBook {
         return isInstantiated;
     }
 
-    static public void instantiate(List<List<Point>> data) throws RuntimeException {
+    static public void instantiate(List<List<Vector2>> data) throws RuntimeException {
         if (isInstantiated) {
             throw new RuntimeException("EnchantmentBook singleton is already instantiated");
         }

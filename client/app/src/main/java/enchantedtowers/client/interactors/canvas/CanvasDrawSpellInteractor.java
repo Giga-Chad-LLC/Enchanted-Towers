@@ -16,11 +16,11 @@ import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_logic.HausdorffMetric;
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Path path = new Path();
-    private final List<Point> pathPoints = new ArrayList<>();
+    private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
 
     private boolean isValidPath() {
@@ -51,31 +51,31 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     }
 
     // returns new list of points that are relative to their bounding-box
-    private List<Point> getNormalizedPoints(
-            List<Point> points
+    private List<Vector2> getNormalizedPoints(
+            List<Vector2> points
     ) {
-        Point offset = getPathOffset(path);
-        List<Point> translatedPoints = new ArrayList<>(points);
+        Vector2 offset = getPathOffset(path);
+        List<Vector2> translatedPoints = new ArrayList<>(points);
 
         // translate each point
-        for (Point p : translatedPoints) {
+        for (Vector2 p : translatedPoints) {
             p.move(-offset.x, -offset.y);
         }
 
         return translatedPoints;
     }
 
-    private Point getPathOffset(Path path) {
+    private Vector2 getPathOffset(Path path) {
         // calculate bounding box for the path
         RectF bounds = new RectF();
         path.computeBounds(bounds, true);
 
-        return new Point(bounds.left, bounds.top);
+        return new Vector2(bounds.left, bounds.top);
     }
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
         path.moveTo(x, y);
-        pathPoints.add(new Point(x, y));
+        pathPoints.add(new Vector2(x, y));
         // update color only when started the new shape
         brush.setColor(state.getBrushColor());
 
@@ -84,7 +84,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     private boolean onActionUpFinishPathAndSubstitute(CanvasState state, float x, float y) {
         path.lineTo(x, y);
-        pathPoints.add(new Point(x, y));
+        pathPoints.add(new Vector2(x, y));
 
         if (isValidPath()) {
             Spell pattern = new Spell(
@@ -116,7 +116,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     private boolean onActionMoveContinuePath(float x, float y) {
         path.lineTo(x, y);
-        pathPoints.add(new Point(x, y));
+        pathPoints.add(new Vector2(x, y));
         return true;
     }
 }

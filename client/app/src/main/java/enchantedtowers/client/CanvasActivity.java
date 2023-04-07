@@ -12,7 +12,7 @@ import java.util.List;
 
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class CanvasActivity extends AppCompatActivity {
     @Override
@@ -23,7 +23,7 @@ public class CanvasActivity extends AppCompatActivity {
         if (!SpellBook.isInstantiated()) {
             try {
                 EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
-                List<List<Point>> data = reader.processFile(R.raw.canvas_templates_config);
+                List<List<Vector2>> data = reader.processFile(R.raw.canvas_templates_config);
                 SpellBook.instantiate(data);
             } catch (JSONException | IOException e) {
                 Log.e("JSON-CONFIG", e.getMessage());

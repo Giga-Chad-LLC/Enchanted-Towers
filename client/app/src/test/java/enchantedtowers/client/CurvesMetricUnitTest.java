@@ -38,9 +38,6 @@ public class CurvesMetricUnitTest {
             Geometry g2 = factory.createLineString(coords);
             assertEquals(metric.calculate(g1, g2), 1.0f, EPS);
         }
-
-
-        assertEquals(4, 2 + 2);
     }
 
     private float[] generateRandomFloatArray(int size, float mn, float mx) {

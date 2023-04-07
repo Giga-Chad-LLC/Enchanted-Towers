@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import enchantedtowers.game_models.utils.Point;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class EnchantmetTemplatesFileReader extends FileReader {
 
@@ -18,21 +18,21 @@ public class EnchantmetTemplatesFileReader extends FileReader {
         super(context);
     }
 
-    public List<List<Point>> processFile(int resourceId) throws IOException, JSONException {
+    public List<List<Vector2>> processFile(int resourceId) throws IOException, JSONException {
         String json = readRawFile(resourceId);
         return parseJsonFromString(json);
     }
 
-    private List<List<Point>> parseJsonFromString(String jsonString) throws JSONException {
+    private List<List<Vector2>> parseJsonFromString(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templates = content.getJSONArray("canvasTemplates");
 
-        List<List<Point>> templatePoints = new ArrayList<>();
+        List<List<Vector2>> templatePoints = new ArrayList<>();
 
         for (int i = 0; i < templates.length(); i++) {
             JSONObject template = templates.getJSONObject(i);
 
-            List<Point> currentPointsArray = new ArrayList<>();
+            List<Vector2> currentPointsArray = new ArrayList<>();
 
             if (!template.isNull("points")) {
                 JSONArray points = template.getJSONArray("points");
@@ -43,7 +43,7 @@ public class EnchantmetTemplatesFileReader extends FileReader {
                     double x = pointArray.getDouble(0);
                     double y = pointArray.getDouble(1);
 
-                    currentPointsArray.add(new Point(x, y));
+                    currentPointsArray.add(new Vector2(x, y));
                 }
             }
 
