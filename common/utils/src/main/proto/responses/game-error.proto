@@ -8,6 +8,7 @@ package response_models;
 message GameError {
   enum ErrorType {
     TOWER_TOO_FAR = 0;
+    ATTACK_SESSION_NOT_FOUND = 1;
   }
 
   bool hasError = 1;
