@@ -1,6 +1,7 @@
 package services;
 
-import io.grpc.stub.StreamObserver;
+/*
+* import io.grpc.stub.StreamObserver;
 
 // interactors
 import interactors.CreateTowersResponseInteractor;
@@ -13,8 +14,10 @@ import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.responses.AttackTowerResponse;
 // services
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+* */
 
 
+/*
 public class TowersService extends TowersServiceGrpc.TowersServiceImplBase {
     @Override
     public void getTowersCoordinates(PlayerCoordinatesRequest request, StreamObserver<TowersAggregationResponse> responseObserver) {
@@ -41,3 +44,4 @@ public class TowersService extends TowersServiceGrpc.TowersServiceImplBase {
         responseObserver.onCompleted();
     }
 }
+ */

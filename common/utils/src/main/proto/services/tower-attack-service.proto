@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/player-coordinates-request.proto";
+import "requests/tower-attack-request.proto";
+// responses
+import "responses/action-result-response.proto";
+
+
+service TowerAttackService {
+//  rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
+  rpc AttackTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
+  rpc LeaveAttack(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
+}
