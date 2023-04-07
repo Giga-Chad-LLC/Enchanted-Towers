@@ -3,10 +3,12 @@ import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 // services
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import services.TowerAttackService;
 
 
@@ -17,8 +19,11 @@ public class EnchantedTowersServer {
 
     private void start() throws IOException {
         /* The port on which the server should run */
+        String host = "localhost"; // 192.168.0.103
         int port = 8080;// 50051;
-        server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
+
+        server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
+                // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
                 .addService(new TowerAttackService())
                 .build()
                 .start();
