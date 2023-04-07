@@ -42,51 +42,16 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         switch (motionEventType) {
-            case MotionEvent.ACTION_DOWN: {
-                path.moveTo(x, y);
-                pathPoints.add(new Point(x, y));
-                // update color only when started the new shape
-                brush.setColor(state.getBrushColor());
-
-                return true;
+            case MotionEvent.ACTION_DOWN -> {
+                return onActionDownStartNewPath(state, x, y);
             }
-            case MotionEvent.ACTION_UP: {
-                path.lineTo(x, y);
-                pathPoints.add(new Point(x, y));
-
-                if (isValidPath()) {
-                    Spell pattern = new Spell(
-                            getNormalizedPoints(pathPoints),
-                            getPathOffset(path)
-                    );
-
-                    Spell matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
-                            SpellBook.getTemplates(),
-                            pattern,
-                            new HausdorffMetric()
-                    );
-
-                    if (matchedSpell != null) {
-                        CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                brush.getColor(),
-                                matchedSpell
-                        );
-
-                        state.addItem(canvasMatchedEnchantment);
-                    }
-                }
-
-                path.reset();
-                pathPoints.clear();
-
-                return true;
+            case MotionEvent.ACTION_UP -> {
+                return onActionUpFinishPath(state, x, y);
             }
-            case MotionEvent.ACTION_MOVE: {
-                path.lineTo(x, y);
-                pathPoints.add(new Point(x, y));
-                return true;
+            case MotionEvent.ACTION_MOVE -> {
+                return onActionMoveContinuePath(x, y);
             }
-            default: {
+            default -> {
                 return false;
             }
         }
@@ -113,5 +78,52 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         path.computeBounds(bounds, true);
 
         return new Point(bounds.left, bounds.top);
+    }
+
+    private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
+        path.moveTo(x, y);
+        pathPoints.add(new Point(x, y));
+        // update color only when started the new shape
+        brush.setColor(state.getBrushColor());
+
+        return true;
+    }
+
+    private boolean onActionUpFinishPath(CanvasState state, float x, float y) {
+        path.lineTo(x, y);
+        pathPoints.add(new Point(x, y));
+
+        if (isValidPath()) {
+            Spell pattern = new Spell(
+                    getNormalizedPoints(pathPoints),
+                    getPathOffset(path)
+            );
+
+            Spell matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
+                    SpellBook.getTemplates(),
+                    pattern,
+                    new HausdorffMetric()
+            );
+
+            if (matchedSpell != null) {
+                CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
+                        brush.getColor(),
+                        matchedSpell
+                );
+
+                state.addItem(canvasMatchedEnchantment);
+            }
+        }
+
+        path.reset();
+        pathPoints.clear();
+
+        return true;
+    }
+
+    private boolean onActionMoveContinuePath(float x, float y) {
+        path.lineTo(x, y);
+        pathPoints.add(new Point(x, y));
+        return true;
     }
 }
