@@ -21,7 +21,6 @@ import java.util.logging.Logger;
 
 
 public class MainActivity extends AppCompatActivity {
-    //Fragment fragment = new MapFragment();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
