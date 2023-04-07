@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 // services
-import services.TowersService;
 
 
 public class EnchantedTowersServer {
@@ -17,7 +16,6 @@ public class EnchantedTowersServer {
         /* The port on which the server should run */
         int port = 50051;
         server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
-                .addService(new TowersService())
                 .build()
                 .start();
         logger.info("Server started, listening on port " + port);
@@ -60,4 +58,3 @@ public class EnchantedTowersServer {
         server.blockUntilShutdown();
     }
 }
-
