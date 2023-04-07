@@ -1,11 +1,14 @@
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 // services
+import services.TowerAttackService;
+
 
 
 public class EnchantedTowersServer {
@@ -16,6 +19,7 @@ public class EnchantedTowersServer {
         /* The port on which the server should run */
         int port = 50051;
         server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
+                .addService(new TowerAttackService())
                 .build()
                 .start();
         logger.info("Server started, listening on port " + port);
