@@ -34,6 +34,7 @@ public class MapActivity extends AppCompatActivity {
                     Boolean coarseLocationPermissionGranted = result.getOrDefault(
                             Manifest.permission.ACCESS_COARSE_LOCATION,false);
 
+                    // TODO: change Boolean to boolean, possible?
                     assert fineLocationPermissionGranted != null;
                     assert coarseLocationPermissionGranted != null;
 
@@ -41,26 +42,20 @@ public class MapActivity extends AppCompatActivity {
                         Toast.makeText(this,
                                 "All required permissions granted. Thanks, enjoy the game!", Toast.LENGTH_LONG).show();
                         mountGoogleMapsFragment();
-                        // System.out.println("INFO: fineLocationGranted && coarseLocationGranted");
                     }
                     else if (coarseLocationPermissionGranted) {
                         Toast.makeText(this,
                                 "Access of coarse location granted. Content might be limited", Toast.LENGTH_LONG).show();
                         mountGoogleMapsFragment();
-                        // System.out.println("INFO: Access of coarse location granted. Content might be limited");
                     }
                     else {
                         Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
-                        // System.out.println("INFO: No location access granted");
                     }
                 }
         );
 
         new PermissionManager()
-                .withPermissions(locationPermissions, this, () -> {
-                    // System.out.println("INFO: ACCESS_FINE_LOCATION & ACCESS_COARSE_LOCATION granted");
-                    mountGoogleMapsFragment();
-                })
+                .withPermissions(locationPermissions, this, this::mountGoogleMapsFragment)
                 .otherwise(() -> {
                     if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
                         shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
@@ -70,29 +65,6 @@ public class MapActivity extends AppCompatActivity {
                         locationPermissionLauncher.launch(locationPermissions);
                     }
                 });
-
-        /*if (PermissionManager.checkLocationPermission(this)) {
-            // You can use the API that requires the permission.
-            System.out.println("INFO: ACCESS_FINE_LOCATION & ACCESS_COARSE_LOCATION granted");
-            mountGoogleMapsFragment();
-        }
-        else if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
-                shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-            // In an educational UI, explain to the user why your app requires this
-            // permission for a specific feature to behave as expected, and what
-            // features are disabled if it's declined. In this UI, include a
-            // "cancel" or "no thanks" button that lets the user continue
-            // using your app without granting the permission.
-            boolean rationalFineLocation = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION);
-            boolean rationalCoarseLocation = shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION);
-            System.out.println("INFO: rationalFineLocation=" + rationalFineLocation + ", rationalCoarseLocation=" + rationalCoarseLocation);
-
-            locationPermissionLauncher.launch(locationPermissions);
-        } else {
-            // You can directly ask for the permission.
-            // The registered ActivityResultCallback gets the result of this request.
-            locationPermissionLauncher.launch(locationPermissions);
-        }*/
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {

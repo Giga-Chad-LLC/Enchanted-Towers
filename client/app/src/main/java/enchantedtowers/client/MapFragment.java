@@ -212,8 +212,6 @@ public class MapFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        // this.GPSAlertDialog = null;
-
         // TODO: figure out whether it is even correct
         // unregistering location listener if not null
         if (locationUpdatesListener != null) {
