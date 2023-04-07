@@ -7,6 +7,8 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import java.util.Random;
+
 import enchantedtowers.game_logic.CurvesMatchingMetric;
 import enchantedtowers.game_logic.HausdorffMetric;
 
@@ -52,13 +54,13 @@ public class CurvesMetricUnitTest {
     }
 
 
-    // returns number in range [mn, mx)
+    // returns number in range [mn, mx]
     private float generateRandomFloat(float mn, float mx) {
-        return (float) (Math.random() * (mx - mn + 1) + mn);
+        return (float) (mn + Math.random() * (mx - mn));
     }
 
-    // returns number in range [mn, mx)
+    // returns number in range [mn, mx]
     private int generateRandomInt(int mn, int mx) {
-        return (int) (Math.random() * (mx - mn + 1) + mn);
+        return (int) (mn + Math.random() * (mx - mn + 1));
     }
 }
