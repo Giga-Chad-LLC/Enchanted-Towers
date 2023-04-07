@@ -1,28 +1,23 @@
 package enchantedtowers.client;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import enchantedtowers.common.utils.generated.proto.GreeterGrpc;
+import enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply;
+import enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest;
 import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import enchantedtowers.common.utils.sample.Sample;
-// generated
-import enchantedtowers.common.utils.generated.proto.HelloWorld.HelloReply;
-import enchantedtowers.common.utils.generated.proto.HelloWorld.HelloRequest;
-import enchantedtowers.common.utils.generated.proto.GreeterGrpc;
 
 
 class HelloWorldClient {
@@ -30,7 +25,9 @@ class HelloWorldClient {
 
     private final GreeterGrpc.GreeterBlockingStub blockingStub;
 
-    /** Construct client for accessing HelloWorld server using the existing channel. */
+    /**
+     * Construct client for accessing HelloWorld server using the existing channel.
+     */
     public HelloWorldClient(Channel channel) {
         // 'channel' here is a Channel, not a ManagedChannel, so it is not this code's responsibility to
         // shut it down.
@@ -39,7 +36,9 @@ class HelloWorldClient {
         blockingStub = GreeterGrpc.newBlockingStub(channel);
     }
 
-    /** Say hello to server. */
+    /**
+     * Say hello to server.
+     */
     public String greet(String name) {
         logger.info("Will try to greet " + name + " ...");
         System.out.println("Will try to greet " + name + " ...");
@@ -108,16 +107,13 @@ class HelloWorldClient {
 }
 
 
-
-
-
 public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-//
+
 //        /*StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
 //                .detectLeakedClosableObjects()
 //                .build());*/
@@ -140,8 +136,7 @@ public class MainActivity extends AppCompatActivity {
         if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
             startActivity(intent);
-        }
-        else {
+        } else {
             System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view.toString());
         }
     }

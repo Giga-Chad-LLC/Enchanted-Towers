@@ -18,7 +18,7 @@ import enchantedtowers.client.R;
  */
 public class CanvasFragment extends Fragment {
     private int currentCanvasBrushColor = 0;
-    private final int[] brushColors = { Color.RED, Color.BLUE, Color.GREEN, Color.MAGENTA };
+    private final int[] brushColors = {Color.RED, Color.BLUE, Color.GREEN, Color.MAGENTA};
     private CanvasWidget canvasWidget = null;
 
     public CanvasFragment() {
@@ -45,7 +45,7 @@ public class CanvasFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        canvasWidget = (CanvasWidget)(requireView().findViewById(R.id.canvasView));
+        canvasWidget = (CanvasWidget) (requireView().findViewById(R.id.canvasView));
         canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
 
         registerOnClickActionOnView(view, "changeColorButton", this::nextColor);

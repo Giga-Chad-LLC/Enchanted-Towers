@@ -6,7 +6,7 @@ import android.graphics.Paint;
 import java.util.ArrayList;
 
 public class CanvasState {
-    public ArrayList<CanvasItem> items;
+    public ArrayList<CanvasDrawable> items;
     private final Paint brush = new Paint();
 
     public CanvasState() {
@@ -14,7 +14,7 @@ public class CanvasState {
         initBrush();
     }
 
-    public void addItem(CanvasItem newItem) {
+    public void addItem(CanvasDrawable newItem) {
         items.add(newItem);
     }
 
