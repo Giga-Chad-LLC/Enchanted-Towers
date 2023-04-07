@@ -41,6 +41,11 @@ public class MapFragment extends Fragment {
     private GoogleMap googleMap;
     private AlertDialog GPSAlertDialog;
     private LocationListener locationUpdatesListener;
+    private final CircleOptions circleOptions = new CircleOptions()
+            .radius(200)
+            .strokeColor(Color.BLACK)
+            .fillColor(0x30ff0000)
+            .strokeWidth(2);
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
 
@@ -204,14 +209,7 @@ public class MapFragment extends Fragment {
 
     private void drawCircleAroundPoint(LatLng point) {
         Objects.requireNonNull(googleMap);
-
-        CircleOptions circleOptions = new CircleOptions();
         circleOptions.center(point);
-        circleOptions.radius(200);
-        circleOptions.strokeColor(Color.BLACK);
-        circleOptions.fillColor(0x30ff0000);
-        circleOptions.strokeWidth(2);
-
         googleMap.addCircle(circleOptions);
     }
 
