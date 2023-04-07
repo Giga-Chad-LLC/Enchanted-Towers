@@ -41,20 +41,12 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
-        switch (motionEventType) {
-            case MotionEvent.ACTION_DOWN -> {
-                return onActionDownStartNewPath(state, x, y);
-            }
-            case MotionEvent.ACTION_UP -> {
-                return onActionUpFinishPath(state, x, y);
-            }
-            case MotionEvent.ACTION_MOVE -> {
-                return onActionMoveContinuePath(x, y);
-            }
-            default -> {
-                return false;
-            }
-        }
+        return switch (motionEventType) {
+            case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
+            case MotionEvent.ACTION_UP -> onActionUpFinishPath(state, x, y);
+            case MotionEvent.ACTION_MOVE -> onActionMoveContinuePath(x, y);
+            default -> false;
+        };
     }
 
     // returns new list of points that are relative to their bounding-box
