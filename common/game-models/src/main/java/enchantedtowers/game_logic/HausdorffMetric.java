@@ -6,8 +6,10 @@ import org.locationtech.jts.geom.Geometry;
 import enchantedtowers.game_logic.CurvesMatchingMetric;
 
 public class HausdorffMetric implements CurvesMatchingMetric {
+    private final HausdorffSimilarityMeasure hausdorffSimilarityMeasure = new HausdorffSimilarityMeasure();
+
     @Override
     public float calculate(Geometry template, Geometry pattern) {
-        return (float) (new HausdorffSimilarityMeasure()).measure(template, pattern);
+        return (float) hausdorffSimilarityMeasure.measure(template, pattern);
     }
 }

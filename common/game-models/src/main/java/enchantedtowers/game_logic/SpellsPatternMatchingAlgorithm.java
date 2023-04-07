@@ -4,6 +4,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
+import java.util.Optional;
 
 import enchantedtowers.game_logic.CurvesMatchingMetric;
 import enchantedtowers.game_models.Spell;
@@ -13,7 +14,7 @@ public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
     public static <Metric extends CurvesMatchingMetric>
-    Spell getMatchedTemplate(List<Spell> templates, Spell pattern, Metric metric) {
+    Optional<Spell> getMatchedTemplate(List<Spell> templates, Spell pattern, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();
@@ -45,7 +46,7 @@ public class SpellsPatternMatchingAlgorithm {
 
         if (maxSimilarity < SIMILARITY_THRESHOLD) {
             System.out.println("Matched template: none");
-            return null;
+            return Optional.empty();
         }
 
         System.out.println("Matched template: " + matchedTemplateIndex);
@@ -59,6 +60,6 @@ public class SpellsPatternMatchingAlgorithm {
                 )
         );
 
-        return matchedTemplate;
+        return Optional.of(matchedTemplate);
     }
 }

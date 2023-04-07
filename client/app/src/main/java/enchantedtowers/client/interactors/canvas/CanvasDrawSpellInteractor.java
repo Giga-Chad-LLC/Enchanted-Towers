@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
@@ -43,7 +44,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
-            case MotionEvent.ACTION_UP -> onActionUpFinishPath(state, x, y);
+            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(state, x, y);
             case MotionEvent.ACTION_MOVE -> onActionMoveContinuePath(x, y);
             default -> false;
         };
@@ -81,7 +82,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         return true;
     }
 
-    private boolean onActionUpFinishPath(CanvasState state, float x, float y) {
+    private boolean onActionUpFinishPathAndSubstitute(CanvasState state, float x, float y) {
         path.lineTo(x, y);
         pathPoints.add(new Point(x, y));
 
@@ -91,16 +92,16 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
                     getPathOffset(path)
             );
 
-            Spell matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
+            Optional<Spell> matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
                     SpellBook.getTemplates(),
                     pattern,
                     new HausdorffMetric()
             );
 
-            if (matchedSpell != null) {
+            if (matchedSpell.isPresent()) {
                 CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
                         brush.getColor(),
-                        matchedSpell
+                        matchedSpell.get()
                 );
 
                 state.addItem(canvasMatchedEnchantment);
