@@ -30,10 +30,11 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 .build();
 
         /*
-        "10.0.2.2:8080"  - emulators
-        "localhost:8080" - android device
+        "10.0.2.2:8080"  - use for emulators
+        "localhost:8080" - use for android device
+        "192.168.0.103:8080" - use for Wi-Fi LAN (if server must listen to 192.168.0.103:8080)
         */
-        String target = "10.0.2.2:8080";
+        String target = "localhost:8080";
 
         System.out.println("target: " + target);
 
