@@ -4,3 +4,10 @@ plugins {
 
 // expands to 'enchantedtowers.product.common'
 group = "${group}.common"
+
+def jtsVersion = '1.19.0'
+
+dependencies {
+    // jts (2d geometry)
+    implementation(group: "org.locationtech.jts", name: "jts-core", version: "${jtsVersion}")
+}
