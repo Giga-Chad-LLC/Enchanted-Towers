@@ -44,18 +44,6 @@ public class Spell {
         return new Point(point.getX(), point.getY());
     }
 
-    public double[] getPoints() {
-        Coordinate[] coordinates = curve.getCoordinates();
-        double[] pts = new double[coordinates.length * 2];
-
-        for (int i = 0; i < coordinates.length; i++) {
-            pts[2 * i] = coordinates[i].getX();
-            pts[2 * i + 1] = coordinates[i].getY();
-        }
-
-        return pts;
-    }
-
     public Point getOffset() {
         return offset;
     }
