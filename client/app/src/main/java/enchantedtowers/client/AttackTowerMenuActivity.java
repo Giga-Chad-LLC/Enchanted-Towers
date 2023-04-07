@@ -4,6 +4,8 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.concurrent.TimeUnit;
+
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -34,7 +36,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         "localhost:8080" - use for android device
         "192.168.0.103:8080" - use for Wi-Fi LAN (if server must listen to 192.168.0.103:8080)
         */
-        String target = "localhost:8080";
+        String target = "10.0.2.2:8080";
 
         System.out.println("target: " + target);
 
@@ -62,5 +64,18 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        channel.shutdownNow();
+        try {
+            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
