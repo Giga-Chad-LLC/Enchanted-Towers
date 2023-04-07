@@ -1,3 +1,5 @@
+/*
+
 package interactors;
 
 // game-models
@@ -57,3 +59,5 @@ public class AttackTowerResponseInteractor {
         return response;
     }
 }
+
+*/
