@@ -1,10 +1,6 @@
 package enchantedtowers.client.components.storage;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
-
-import enchantedtowers.game_models.Spell;
 
 public class ClientStorage {
     static private ClientStorage instance = null;
@@ -19,23 +15,23 @@ public class ClientStorage {
         return playerData.playerId;
     }
 
-    public Optional<Integer> getAttackSessionId() {
-        return playerData.attackSessionId;
+    public Optional<Integer> getTowerIdUnderAttack() {
+        return playerData.towerIdUnderAttack;
     }
 
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
     }
 
-    public void setAttackSessionId(int attackSessionId) {
-        playerData.attackSessionId = Optional.of(attackSessionId);
+    public void setTowerIdUnderAttack(int towerIdUnderAttack) {
+        playerData.towerIdUnderAttack = Optional.of(towerIdUnderAttack);
     }
 
     private final PlayerData playerData;
 
-    private class PlayerData {
+    private static class PlayerData {
         public Optional<Integer> playerId = Optional.empty();
-        public Optional<Integer> attackSessionId = Optional.empty();
+        public Optional<Integer> towerIdUnderAttack = Optional.empty();
     }
 
     private ClientStorage() {
