@@ -32,7 +32,7 @@
             android:inputType="text" />
 
         <Button
-            android:id="@+id/AttackButton"
+            android:id="@+id/attackButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="80dp"
@@ -41,7 +41,7 @@
             app:barrierAllowsGoneWidgets="false" />
 
         <Button
-            android:id="@+id/SpectateButton"
+            android:id="@+id/spectateButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="210dp"

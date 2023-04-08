@@ -27,7 +27,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         // TODO: if player attacks several towers simultaneously?
         // TODO: check whether player already has an attack session
         sessions.add(AttackSession.fromRequest(request));
-        System.out.println("attackTowerById: " + request.getPlayerData().getPlayerId());
+
+        int playerId = request.getPlayerData().getPlayerId();
+        int towerId = request.getTowerId();
+        System.out.println("attackTowerById: playerId=" + playerId + ", towerId=" + towerId);
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
         responseBuilder.setSuccess(true);
