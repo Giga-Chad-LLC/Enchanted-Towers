@@ -1,5 +1,6 @@
 package enchantedtowers.client;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,11 +28,22 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Objects;
+
+import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
+import enchantedtowers.common.utils.proto.responses.TowerResponse;
+import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
+import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.StatusRuntimeException;
 
 
 public class MapFragment extends Fragment {
@@ -40,7 +52,9 @@ public class MapFragment extends Fragment {
     private AlertDialog GPSAlertDialog;
     private LocationListener locationUpdatesListener;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+    private TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
 
+    private List<TowerResponse> towers;
 
     public MapFragment() {
         // Required empty public constructor
@@ -74,6 +88,9 @@ public class MapFragment extends Fragment {
             // for convenient use if methods
             this.googleMap = googleMap;
 
+            // for server
+            blockingStub = TowersServiceGrpc.newBlockingStub(Grpc.newChannelBuilder("10.0.2.2:50051", InsecureChannelCredentials.create()).build());
+
             applyCustomGoogleMapStyle();
 
             // registering click listeners on MyLocation button and location point
@@ -91,7 +108,9 @@ public class MapFragment extends Fragment {
                 Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                 if (lastKnownLocation != null) {
-                     double latitude = lastKnownLocation.getLatitude();
+                    getTowers();
+                    drawTowers(lastKnownLocation);
+                    double latitude = lastKnownLocation.getLatitude();
                      double longitude = lastKnownLocation.getLongitude();
                     drawCircleAroundPoint(new LatLng(latitude, longitude));
                 }
@@ -136,6 +155,8 @@ public class MapFragment extends Fragment {
             public void onLocationChanged(@NonNull Location location) {
                 logger.log(Level.INFO, "New location: " + location);
                 googleMap.clear();
+                getTowers();
+                drawTowers(location);
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
                 drawCircleAroundPoint(new LatLng(latitude, longitude));
@@ -231,6 +252,44 @@ public class MapFragment extends Fragment {
 
         googleMap.addCircle(circleOptions);
     }
+
+    private void getTowers() {
+        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(0).setY(0).build();
+        try {
+            TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
+
+            towers = response.getTowersList();
+        }
+        catch(StatusRuntimeException err) {
+            logger.log(Level.WARNING, "RPC failed: {0}", err.getStatus());
+        }
+    }
+
+    private void drawTowers(Location userPosition) {
+
+        try {
+            for (TowerResponse tower: towers){
+                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getX(), tower.getY());
+
+                float[] results = new float[1];
+                Location.distanceBetween(coordinatesForMarkerAtTower.latitude, coordinatesForMarkerAtTower.longitude,
+                        userPosition.getLatitude(), userPosition.getLongitude(), results); //TODO: refactor.
+
+
+                googleMap.addMarker(new MarkerOptions()
+                        .position(coordinatesForMarkerAtTower)
+                        .icon(BitmapDescriptorFactory.defaultMarker(results[0] > 200 ? BitmapDescriptorFactory.HUE_AZURE: BitmapDescriptorFactory.HUE_RED)));
+
+                drawCircleAroundPoint(coordinatesForMarkerAtTower);
+            }
+        }
+        catch(StatusRuntimeException err) {
+            logger.log(Level.WARNING, "RPC failed: {0}", err.getStatus());
+        }
+    }
+
+
+
 
     @Override
     public void onDestroy() {
