@@ -9,6 +9,10 @@ import android.view.MotionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
@@ -18,10 +22,57 @@ import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_models.utils.Vector2;
 
+class EventWorker extends Thread {
+    public static class Event {
+        // TODO: type, request_model
+        private final String msg;
+
+        Event(String msg) {
+            this.msg = msg;
+        }
+
+        public String getMsg() {
+            return msg;
+        }
+    };
+
+    private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+
+    public void run() {
+        isRunning.set(true);
+
+        while (isRunning.get()) {
+            try {
+                Event event = eventQueue.poll(30, TimeUnit.MILLISECONDS);
+                if (event != null) {
+                    System.out.println("Sending request with event: " + event.getMsg());
+                }
+            } catch (InterruptedException e) {
+                // Thread interrupted, exit the loop
+                isRunning.set(false);
+                break;
+            }
+        }
+
+        System.out.println("Stopped worker!");
+    }
+
+    public boolean enqueueEvent(Event event) {
+        return eventQueue.offer(event);
+    }
+
+    public void finish() {
+        isRunning.set(false);
+    }
+}
+
+
 public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
+    private final EventWorker worker = new EventWorker();
 
     private boolean isValidPath() {
         // The condition is required for the correct metric distance calculation
@@ -33,6 +84,8 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     public CanvasDrawSpellInteractor(CanvasState state) {
         brush = state.getBrush();
+        System.out.println("Start worker");
+        worker.start();
     }
 
     @Override
@@ -48,6 +101,12 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
             case MotionEvent.ACTION_MOVE -> onActionMoveContinuePath(x, y);
             default -> false;
         };
+    }
+
+    @Override
+    public void onDestroy() {
+        System.out.println("Finishing worker...");
+        worker.finish();
     }
 
     // returns new list of points that are relative to their bounding-box
@@ -75,16 +134,32 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
         path.moveTo(x, y);
-        pathPoints.add(new Vector2(x, y));
+        Vector2 point = new Vector2(x, y);
+        pathPoints.add(point);
         // update color only when started the new shape
         brush.setColor(state.getBrushColor());
+
+        if (!worker.enqueueEvent(new EventWorker.Event("Change color"))) {
+            System.out.println("'Change color' event lost");
+        }
+
+        if (!worker.enqueueEvent(new EventWorker.Event("Move to " + point))) {
+            System.out.println("'Move to' event lost");
+        }
 
         return true;
     }
 
     private boolean onActionUpFinishPathAndSubstitute(CanvasState state, float x, float y) {
         path.lineTo(x, y);
-        pathPoints.add(new Vector2(x, y));
+        Vector2 point = new Vector2(x, y);
+        pathPoints.add(point);
+
+        if (!worker.enqueueEvent(new EventWorker.Event("Line to " + point))) {
+            System.out.println("'Line to' event lost");
+        }
+
+        System.out.println("Run hausdorff on server!");
 
         if (isValidPath()) {
             Spell pattern = new Spell(
@@ -116,7 +191,13 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     private boolean onActionMoveContinuePath(float x, float y) {
         path.lineTo(x, y);
-        pathPoints.add(new Vector2(x, y));
+        Vector2 point = new Vector2(x, y);
+        pathPoints.add(point);
+
+        if (!worker.enqueueEvent(new EventWorker.Event("Line to " + point))) {
+            System.out.println("'Line to' event lost");
+        }
+
         return true;
     }
 }

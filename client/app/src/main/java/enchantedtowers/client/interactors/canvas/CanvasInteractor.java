@@ -17,4 +17,6 @@ public interface CanvasInteractor {
      * @return `true` if event was handled, `false` otherwise.
      */
     boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType);
+
+    default void onDestroy() {}
 }

@@ -52,6 +52,13 @@ public class CanvasFragment extends Fragment {
         registerOnClickActionOnView(view, "clearCanvasButton", this::clearCanvas);
     }
 
+    @Override
+    public void onDestroy() {
+        canvasWidget.onDestroy();
+
+        super.onDestroy();
+    }
+
     private void registerOnClickActionOnView(View view, String itemId, Runnable action) {
         @SuppressLint("DiscouragedApi")
         int canvasFragmentItemId = getResources().getIdentifier(itemId, "id", requireContext().getPackageName());
