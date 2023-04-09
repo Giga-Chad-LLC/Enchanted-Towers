@@ -10,6 +10,7 @@ import enchantedtowers.game_models.utils.Utils;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -25,7 +26,6 @@ public class AttackSession {
     // TODO: add spectators
 
     private final List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> drawnSpellsDescriptions = new ArrayList<>();
-    private final List<Integer> drawnSpellColors = new ArrayList<>();
     private final List<Spectator> spectators = new ArrayList<>();
 
     private static final Logger logger = Logger.getLogger(AttackSession.class.getName());
@@ -53,6 +53,15 @@ public class AttackSession {
         return currentSpellColorId.get();
     }
 
+    public List<Vector2> getCurrentSpellPoints() {
+        return Collections.unmodifiableList(currentSpellPoints);
+    }
+
+    public boolean hasCurrentSpell() {
+        // TODO: explicitly set flag of the variable existence
+        return this.currentSpellColorId.isPresent();
+    }
+
     public void setCurrentSpellColorId(int currentSpellColorId) {
         this.currentSpellColorId = Optional.of(currentSpellColorId);
     }
@@ -67,13 +76,16 @@ public class AttackSession {
         currentSpellColorId = Optional.empty();
     }
 
+    public List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getDrawnSpellsDescriptions() {
+        return Collections.unmodifiableList(drawnSpellsDescriptions);
+    }
+
     /**
      * This method must be called after successful getMatchedTemplate invocation
      */
     public void saveMatchedTemplate() {
         // add current template spell to the canvas history
         drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
-        drawnSpellColors.add(currentSpellColorId.get());
     }
 
     public Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getMatchedTemplate(Vector2 offset) {
@@ -88,6 +100,7 @@ public class AttackSession {
             Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedSpellDescription = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
                 SpellBook.getTemplates(),
                 pattern,
+                currentSpellColorId.get(),
                 new HausdorffMetric()
             );
 

@@ -3,7 +3,6 @@ package enchantedtowers.game_logic;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -13,26 +12,10 @@ import enchantedtowers.game_models.utils.Vector2;
 public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
-    static public class MatchedTemplateDescription {
-        private final int id;
-        private final Vector2 offset;
-
-        public MatchedTemplateDescription(int id, Vector2 offset) {
-            this.id = id;
-            this.offset = offset;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public Vector2 getOffset() {
-            return offset;
-        }
-    };
+    public record MatchedTemplateDescription(int id, int colorId, Vector2 offset) {}
 
     public static <Metric extends CurvesMatchingMetric>
-    Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates, Spell pattern, Metric metric) {
+    Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates, Spell pattern, int patternColor, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();
@@ -85,6 +68,6 @@ public class SpellsPatternMatchingAlgorithm {
 //                )
 //        );
 
-        return Optional.of(new MatchedTemplateDescription(matchedTemplateId, matchedTemplateOffset));
+        return Optional.of(new MatchedTemplateDescription(matchedTemplateId, patternColor, matchedTemplateOffset));
     }
 }
