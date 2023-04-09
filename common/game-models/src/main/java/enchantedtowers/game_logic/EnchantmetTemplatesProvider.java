@@ -8,18 +8,20 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import enchantedtowers.game_models.Spell;
+import enchantedtowers.game_models.SpellTemplate;
 import enchantedtowers.game_models.utils.Vector2;
 
 
 public class EnchantmetTemplatesProvider {
-    static public List<List<Vector2>> parseJson(String jsonString) throws JSONException {
+    static public List<SpellTemplate> parseJson(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
-        JSONArray templates = content.getJSONArray("canvasTemplates");
+        JSONArray templatesJson = content.getJSONArray("canvasTemplates");
 
-        List<List<Vector2>> templatePoints = new ArrayList<>();
+        List<SpellTemplate> templates = new ArrayList<>();
 
-        for (int i = 0; i < templates.length(); i++) {
-            JSONObject template = templates.getJSONObject(i);
+        for (int i = 0; i < templatesJson.length(); i++) {
+            JSONObject template = templatesJson.getJSONObject(i);
 
             List<Vector2> currentPointsArray = new ArrayList<>();
 
@@ -36,11 +38,13 @@ public class EnchantmetTemplatesProvider {
                 }
             }
 
+            int id = template.getInt("id");
+
             if (!currentPointsArray.isEmpty()) {
-                templatePoints.add(currentPointsArray);
+                templates.add(new SpellTemplate(id, currentPointsArray));
             }
         }
 
-        return templatePoints;
+        return templates;
     }
 }
