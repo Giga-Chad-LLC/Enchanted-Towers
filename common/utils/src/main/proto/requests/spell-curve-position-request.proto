@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.requests";
+option java_multiple_files = true;
+
+package request_models;
+
+// common
+import "common/player-data.proto";
+import "common/vector2.proto";
+
+message SpellCurvePositionRequest {
+  common.PlayerData playerData = 1;
+  common.Vector2 position = 2;
+};

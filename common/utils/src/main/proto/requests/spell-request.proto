@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.requests";
+option java_multiple_files = true;
+
+package request_models;
+
+// common
+import "common/player-data.proto";
+// requests
+import "requests/select-spell-color-request.proto";
+import "requests/spell-curve-position-request.proto";
+
+
+message SpellRequest {
+  enum RequestType {
+    SELECT_SPELL_COLOR = 0;
+    DRAW_SPELL = 1;
+    FINISH_SPELL = 2;
+  };
+
+  // common for all 3 types of request
+  RequestType requestType = 1;
+  // SELECT_SPELL_COLOR
+  SelectSpellColorRequest spellColor = 2;
+  // DRAW_SPELL
+  SpellCurvePositionRequest drawSpell = 3;
+  // FINISH_SPELL
+  SpellCurvePositionRequest finishSpell = 4;
+};
