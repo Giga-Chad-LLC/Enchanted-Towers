@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 import java.util.List;
+import java.util.Map;
 
 import enchantedtowers.client.components.canvas.CanvasDrawable;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
@@ -21,7 +22,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         // for DEBUG purposes
         drawTemplates(state, canvas);
 
-        for (CanvasDrawable item : state.items) {
+        for (CanvasDrawable item : state.getItems()) {
             item.draw(canvas, brush);
 
             // For DEBUG purposes (will be removed later)
@@ -38,10 +39,10 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
 
     // For DEBUG purposes, will be removed later
     private void drawTemplates(CanvasState state, Canvas canvas) {
-        List<Spell> templates = SpellBook.getTemplates();
+        Map<Integer, Spell> templates = SpellBook.getTemplates();
         Paint brush = state.getBrush();
 
-        for (Spell spell : templates) {
+        for (Spell spell : templates.values()) {
             new CanvasSpellDecorator(Color.BLACK, spell).draw(canvas, brush);
         }
     }

@@ -43,7 +43,7 @@ public class CanvasWidget extends View {
                 new CanvasDrawStateInteractor()
         );
         interactors.add(
-                new CanvasDrawSpellInteractor(state)
+                new CanvasDrawSpellInteractor(state, this)
         );
     }
 

@@ -17,9 +17,11 @@ import java.util.logging.Logger;
 
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
+import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_logic.HausdorffMetric;
@@ -37,7 +39,8 @@ class EventWorker extends Thread {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final TowerAttackServiceGrpc.TowerAttackServiceBlockingStub blockingStub;
     private final Logger logger = Logger.getLogger(EventWorker.class.getName());
-
+    private final CanvasState state;
+    private final CanvasWidget canvasWidget;
 
     // Event class
     public static class Event {
@@ -123,7 +126,10 @@ class EventWorker extends Thread {
         }
     };
 
-    public EventWorker() {
+    public EventWorker(CanvasState state, CanvasWidget canvasWidget) {
+        this.state = state;
+        this.canvasWidget = canvasWidget;
+
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
 
@@ -156,9 +162,42 @@ class EventWorker extends Thread {
                                     "\nmessage='" + response.getError().getMessage() + "'");
                         }
                         case FINISH_SPELL -> {
-                            ActionResultResponse response = blockingStub.finishSpell(event.getRequest());
-                            logger.info("Got response from finishSpell: success=" + response.getSuccess() +
-                                    "\nmessage='" + response.getError().getMessage() + "'");
+                            SpellFinishResponse response = blockingStub.finishSpell(event.getRequest());
+                            logger.info("Got FINISH_SPELL response");
+
+                            if (response.hasError()) {
+                                logger.warning("Got error from finishSpell: message='" + response.getError().getMessage() + "'\n");
+                            }
+                            else {
+                                var description = response.getSpellDescription();
+                                var offset = description.getSpellTemplateOffset();
+                                var colorId = description.getColorId();
+                                var templateId = description.getSpellTemplateId();
+
+                                logger.info(
+                                        "Got response from finishSpell: matchedSpellTemplateId='" + templateId + "'\n" +
+                                                "matchedTemplateOffset='[" + offset.getX() + ", " + offset.getY() + "]'\n" +
+                                                "matchedTemplateColor='" + colorId + "'");
+
+
+                                // substitute current spell with template
+                                Spell template = SpellBook.getTemplateById(templateId);
+
+                                if (template != null) {
+                                    template.setOffset(new Vector2(offset.getX(), offset.getY()));
+                                    CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
+                                            colorId,
+                                            template
+                                    );
+
+                                    state.addItem(canvasMatchedEnchantment);
+                                    canvasWidget.invalidate();
+                                }
+
+                                // TODO: remove this assert
+                                assert(template != null);
+
+                            }
                         }
                     }
                 }
@@ -187,7 +226,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
-    private final EventWorker worker = new EventWorker();
+    private final EventWorker worker;
 
     private static final Logger logger = Logger.getLogger(CanvasDrawSpellInteractor.class.getName());
 
@@ -200,9 +239,11 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 //        return true;
 //    }
 
-    public CanvasDrawSpellInteractor(CanvasState state) {
+    public CanvasDrawSpellInteractor(CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrush();
         logger.info("Start worker");
+
+        worker = new EventWorker(state, canvasWidget);
         worker.start();
     }
 
@@ -282,31 +323,31 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
         logger.info("Run hausdorff on server!");
 
-        if (Utils.isValidPath(pathPoints)) {
-            Vector2 offset = getPathOffset(path);
-
-            Spell pattern = new Spell(
-                    Utils.getNormalizedPoints(pathPoints, offset),
-                    offset
-            );
-
-            System.out.println("CANVAS: pathPoints.size=" + pathPoints.size());
-
-            Optional<Spell> matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
-                    SpellBook.getTemplates(),
-                    pattern,
-                    new HausdorffMetric()
-            );
-
-            if (matchedSpell.isPresent()) {
-                CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                        brush.getColor(),
-                        matchedSpell.get()
-                );
-
-                state.addItem(canvasMatchedEnchantment);
-            }
-        }
+//        if (Utils.isValidPath(pathPoints)) {
+//            Vector2 offset = getPathOffset(path);
+//
+//            Spell pattern = new Spell(
+//                    Utils.getNormalizedPoints(pathPoints, offset),
+//                    offset
+//            );
+//
+//            System.out.println("CANVAS: pathPoints.size=" + pathPoints.size());
+//
+//            Optional<Spell> matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
+//                    SpellBook.getTemplates(),
+//                    pattern,
+//                    new HausdorffMetric()
+//            );
+//
+//            if (matchedSpell.isPresent()) {
+//                CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
+//                        brush.getColor(),
+//                        matchedSpell.get()
+//                );
+//
+//                state.addItem(canvasMatchedEnchantment);
+//            }
+//        }
 
         path.reset();
         pathPoints.clear();
