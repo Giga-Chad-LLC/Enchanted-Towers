@@ -1,11 +1,14 @@
 package services;
 
 import components.session.AttackSession;
+import enchantedtowers.common.utils.proto.requests.PlayerIdentificationRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.GameError;
+import enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
+import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -22,6 +25,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     private final List<AttackSession> sessions = new ArrayList<>();
     private static final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
 
+    // rpc calls
     @Override
     public void attackTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         // TODO: if player attacks several towers simultaneously?
@@ -40,6 +44,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
+    // TODO: implement leaveAttack
     @Override
     public void leaveAttack(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         // System.out.println("leaveAttack: " + request.getPlayerData().getPlayerId());
@@ -69,6 +74,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
+    // TODO: reimplement to match data flow style of `finishSpell` method
     @Override
     public void selectSpellColor(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -120,6 +126,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+    // TODO: reimplement to match data flow style of `finishSpell` method
     @Override
     public void drawSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -247,7 +254,88 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+    @Override
+    public void enterSpectatingTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        int towerId = request.getTowerId();
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
+        Optional<AttackSession> session = getAttackSessionByTowerId(towerId);
+
+        if (session.isPresent()) {
+            responseBuilder.setSuccess(true);
+        }
+        else {
+            setErrorInActionResultResponse(
+                responseBuilder,
+                ErrorType.ATTACK_SESSION_NOT_FOUND,
+                "Attack session associated with tower id of " + towerId + " not found"
+            );
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
+    @Override
+    public void spectateTowerById(TowerAttackRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
+        int towerId = request.getTowerId();
+        int spectatingPlayerId = request.getPlayerData().getPlayerId();
+
+        SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
+
+        Optional<AttackSession> session = getAttackSessionByTowerId(towerId);
+
+        if (session.isPresent()) {
+            // adding spectator
+            session.get().addSpectator(spectatingPlayerId, streamObserver);
+        }
+        else {
+            responseBuilder.getErrorBuilder()
+                .setHasError(true)
+                .setType(GameError.ErrorType.ATTACK_SESSION_NOT_FOUND)
+                .setMessage("Attack session associated with tower id of " + towerId + " not found")
+                .build();
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
+    }
+
+    @Override
+    public void leaveSpectating(PlayerIdentificationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        final int playerId = request.getData().getPlayerId();
+        boolean successfullyRemoved = false;
+
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
+        for (var session : sessions) {
+            AttackSession.Spectator spectator = session.pollSpectatorById(playerId);
+            if (spectator != null) {
+                // if spectator found, close connection
+                spectator.streamObserver().onCompleted();
+                successfullyRemoved = true;
+                break;
+            }
+        }
+
+        if (successfullyRemoved) {
+            responseBuilder.setSuccess(true);
+        }
+        else {
+            // could not remove spectator since player did not spectate any attack session
+            setErrorInActionResultResponse(
+                responseBuilder,
+                ErrorType.INVALID_REQUEST,
+                "Player with id of '" + playerId + "' is not spectating any tower attack"
+            );
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
+
+    // helper methods
     // TODO: generify to accept not only `ActionResultResponse` type of response model
     private void setErrorInActionResultResponse(
         ActionResultResponse.Builder responseBuilder, GameError.ErrorType errorType, String message) {
@@ -268,31 +356,14 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         return Optional.empty();
     }
 
+    // TODO: implement Map<TowerId, List<AttackSession>> (in order to implement spectateNext/spectatePrev)
+    private Optional<AttackSession> getAttackSessionByTowerId(int towerId) {
+        for (var session : sessions) {
+            if (session.getAttackedTowerId() == towerId) {
+                return Optional.of(session);
+            }
+        }
 
-    /*
-    @Override
-    public void getTowersCoordinates(PlayerCoordinatesRequest request, StreamObserver<TowersAggregationResponse> responseObserver) {
-        System.out.println("getTowersCoordinates:\tPlayerCoordinatesRequest[x=" + request.getX() + ", y=" + request.getY() + "]");
-
-        CreateTowersResponseInteractor interactor = new CreateTowersResponseInteractor();
-
-        TowersAggregationResponse response = interactor.execute(request);
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        return Optional.empty();
     }
-
-    @Override
-    public void attackTower(TowerAttackRequest request, StreamObserver<AttackTowerResponse> responseObserver) {
-        System.out.println("attackTower:\tTowerAttackRequest[towerId=" + request.getTowerId()
-                + ", playerX=" + request.getPlayerCoordinates().getX()
-                + ", playerY=" + request.getPlayerCoordinates().getY() + "]");
-
-        AttackTowerResponseInteractor interactor = new AttackTowerResponseInteractor();
-        AttackTowerResponse response = interactor.execute(request);
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-    */
 }
