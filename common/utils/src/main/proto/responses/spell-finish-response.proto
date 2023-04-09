@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// responses
+import "responses/spell-description-response.proto";
+import "responses/game-error.proto";
+
+message SpellFinishResponse {
+  response_models.SpellDescriptionResponse spellDescription = 1;
+  response_models.GameError error = 2;
+};
