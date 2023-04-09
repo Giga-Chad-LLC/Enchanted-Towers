@@ -12,6 +12,7 @@ public class ClientStorage {
     }
 
     public Optional<Integer> getPlayerId() {
+        // TODO: return playerData.playerId.get() that throws
         return playerData.playerId;
     }
 

@@ -8,7 +8,7 @@ import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Vector2;
 // proto.requests
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
-
+import java.util.Optional;
 
 
 public class AttackSession {
@@ -16,6 +16,9 @@ public class AttackSession {
     private final int attackedTowerId;
 
     private final List<Vector2> currentSpellPoints = new ArrayList<>();
+    private Optional<Integer> currentSpellColorId;
+    // TODO: add spectators
+
     private final List<Spell> drawnSpells = new ArrayList<>();
     private final List<Integer> canvasViewer = new ArrayList<>();
 
@@ -28,7 +31,15 @@ public class AttackSession {
         return new AttackSession(request.getPlayerData().getPlayerId(), request.getTowerId());
     }
 
+    public void addPointToCurrentSpell(Vector2 point) {
+        currentSpellPoints.add(point);
+    }
+
     public int getAttackingPlayerId() {
         return attackingPlayerId;
+    }
+
+    public void setCurrentSpellColorId(int currentSpellColorId) {
+        this.currentSpellColorId = Optional.of(currentSpellColorId);
     }
 }
