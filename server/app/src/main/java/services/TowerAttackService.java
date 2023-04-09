@@ -9,6 +9,8 @@ import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.GameError;
 import enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
+import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
+import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -208,9 +210,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     .setMessage("No template found to match provided spell");
             }
             else {
-                int id = matchedTemplateDescription.get().getId();
-                double x = matchedTemplateDescription.get().getOffset().x;
-                double y = matchedTemplateDescription.get().getOffset().y;
+                int id = matchedTemplateDescription.get().id();
+                double x = matchedTemplateDescription.get().offset().x;
+                double y = matchedTemplateDescription.get().offset().y;
 
                 // Build template offset
                 responseBuilder.getSpellDescriptionBuilder().getSpellTemplateOffsetBuilder()
@@ -283,11 +285,23 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
 
-        Optional<AttackSession> session = getAttackSessionByTowerId(towerId);
+        Optional<AttackSession> sessionOpt = getAttackSessionByTowerId(towerId);
 
-        if (session.isPresent()) {
+        if (sessionOpt.isPresent()) {
+            AttackSession session = sessionOpt.get();
+
+            // create response with canvas state
+            responseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
+            createCurrentSpellOfCanvasStateInSpectateTowerAttackResponse(responseBuilder, session);
+            createSpellDescriptionsOfCanvasStateInSpectateTowerAttackResponse(responseBuilder, session);
+            // build canvas
+            responseBuilder.getCanvasStateBuilder().build();
+
+            // send canvas state to client
+            streamObserver.onNext(responseBuilder.build());
+
             // adding spectator
-            session.get().addSpectator(spectatingPlayerId, streamObserver);
+            session.addSpectator(spectatingPlayerId, streamObserver);
         }
         else {
             responseBuilder.getErrorBuilder()
@@ -336,6 +350,63 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     // helper methods
+    private void createCurrentSpellOfCanvasStateInSpectateTowerAttackResponse(
+        SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
+        // set current spell if exists
+        if (session.hasCurrentSpell()) {
+            List<enchantedtowers.common.utils.proto.common.Vector2> points = new ArrayList<>();
+
+            // collect drawn spell points
+            for (var point : session.getCurrentSpellPoints()) {
+                var vector2 = enchantedtowers.common.utils.proto.common.Vector2.newBuilder()
+                    .setX(point.x)
+                    .setY(point.y)
+                    .build();
+
+                points.add(vector2);
+            }
+
+            // build current spell
+            var canvasBuilder = responseBuilder.getCanvasStateBuilder();
+            canvasBuilder.getCurrentSpellStateBuilder()
+                .setColorId(session.getCurrentSpellColorId())
+                .addAllPoints(points)
+                .build();
+        }
+    }
+
+    private void createSpellDescriptionsOfCanvasStateInSpectateTowerAttackResponse(
+        SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
+        // set spell descriptions
+        List<SpellDescriptionResponse> spellDescriptionResponses = new ArrayList<>();
+
+        for (var spellDescription : session.getDrawnSpellsDescriptions()) {
+            int spellTemplateId = spellDescription.id();
+            int colorId = spellDescription.colorId();
+            Vector2 offset = spellDescription.offset();
+
+            // colorId, spellTemplateId, spellTemplateOffset: Vector2
+            SpellDescriptionResponse.Builder spellDescriptionResponseBuilder = SpellDescriptionResponse.newBuilder();
+
+            // add spellTemplateOffset
+            spellDescriptionResponseBuilder.getSpellTemplateOffsetBuilder()
+                .setX(offset.x)
+                .setY(offset.y)
+                .build();
+
+            // add the other fields
+            spellDescriptionResponseBuilder
+                .setColorId(colorId)
+                .setSpellTemplateId(spellTemplateId);
+
+            spellDescriptionResponses.add(spellDescriptionResponseBuilder.build());
+        }
+
+        // build
+        var canvasBuilder = responseBuilder.getCanvasStateBuilder();
+        canvasBuilder.addAllSpellDescriptions(spellDescriptionResponses);
+    }
+
     // TODO: generify to accept not only `ActionResultResponse` type of response model
     private void setErrorInActionResultResponse(
         ActionResultResponse.Builder responseBuilder, GameError.ErrorType errorType, String message) {
