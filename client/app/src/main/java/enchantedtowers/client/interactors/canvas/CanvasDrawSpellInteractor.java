@@ -15,23 +15,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-// client.components
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
-// utils
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.storage.ServerApiStorage;
-// game-models
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.common.utils.proto.requests.SpellRequest;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_logic.HausdorffMetric;
+import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
-import enchantedtowers.game_logic.HausdorffMetric;
+import enchantedtowers.game_models.utils.Utils;
 import enchantedtowers.game_models.utils.Vector2;
-// requests
-import enchantedtowers.common.utils.proto.requests.SpellRequest;
-// services
-import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -196,13 +192,13 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private static final Logger logger = Logger.getLogger(CanvasDrawSpellInteractor.class.getName());
 
 
-    private boolean isValidPath() {
-        // The condition is required for the correct metric distance calculation
-        if (pathPoints.size() < 2 || (pathPoints.size() == 2 && pathPoints.get(0).equals(pathPoints.get(1)))) {
-            return false;
-        }
-        return true;
-    }
+//    private boolean isValidPath() {
+//        // The condition is required for the correct metric distance calculation
+//        if (pathPoints.size() < 2 || (pathPoints.size() == 2 && pathPoints.get(0).equals(pathPoints.get(1)))) {
+//            return false;
+//        }
+//        return true;
+//    }
 
     public CanvasDrawSpellInteractor(CanvasState state) {
         brush = state.getBrush();
@@ -232,17 +228,17 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     }
 
     // returns new list of points that are relative to their bounding-box
-    private List<Vector2> getNormalizedPoints(List<Vector2> points) {
-        Vector2 offset = getPathOffset(path);
-        List<Vector2> translatedPoints = new ArrayList<>(points);
-
-        // translate each point
-        for (Vector2 p : translatedPoints) {
-            p.move(-offset.x, -offset.y);
-        }
-
-        return translatedPoints;
-    }
+//    private List<Vector2> getNormalizedPoints(List<Vector2> points) {
+//        Vector2 offset = getPathOffset(path);
+//        List<Vector2> translatedPoints = new ArrayList<>(points);
+//
+//        // translate each point
+//        for (Vector2 p : translatedPoints) {
+//            p.move(-offset.x, -offset.y);
+//        }
+//
+//        return translatedPoints;
+//    }
 
     private Vector2 getPathOffset(Path path) {
         // calculate bounding box for the path
@@ -275,17 +271,26 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         Vector2 point = new Vector2(x, y);
         pathPoints.add(point);
 
-        if (!worker.enqueueEvent(EventWorker.Event.createEventWithFinishSpellRequest(point))) {
+        if (!worker.enqueueEvent(EventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Line to' event lost");
+        }
+
+        Vector2 pathOffset = getPathOffset(path);
+        if (!worker.enqueueEvent(EventWorker.Event.createEventWithFinishSpellRequest(pathOffset))) {
+            logger.warning("'Offset' event lost");
         }
 
         logger.info("Run hausdorff on server!");
 
-        if (isValidPath()) {
+        if (Utils.isValidPath(pathPoints)) {
+            Vector2 offset = getPathOffset(path);
+
             Spell pattern = new Spell(
-                    getNormalizedPoints(pathPoints),
-                    getPathOffset(path)
+                    Utils.getNormalizedPoints(pathPoints, offset),
+                    offset
             );
+
+            System.out.println("CANVAS: pathPoints.size=" + pathPoints.size());
 
             Optional<Spell> matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
                     SpellBook.getTemplates(),

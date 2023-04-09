@@ -1,4 +1,4 @@
-package components;
+package components.session;
 
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -13,7 +13,6 @@ import enchantedtowers.game_models.utils.Vector2;
 // proto.requests
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import java.util.Optional;
-import javax.swing.text.html.Option;
 
 
 public class AttackSession {
@@ -55,6 +54,8 @@ public class AttackSession {
                 Utils.getNormalizedPoints(currentSpellPoints, offset),
                 offset
             );
+
+            System.out.println("SESSION: currentSpellPoints.size=" + currentSpellPoints.size());
 
             Optional<Spell> matchedSpell = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
                 SpellBook.getTemplates(),

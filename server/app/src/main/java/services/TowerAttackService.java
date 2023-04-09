@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 // components
-import components.AttackSession;
+import components.session.AttackSession;
 // requests
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
@@ -211,6 +211,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         logger.info("finishSpell: run hausdorff and return id of matched template and offset");
 
         responseBuilder.setSuccess(true);
+
+        Optional <List<Vector2>> templatePoints = session.get().getMatchedTemplate(offset);
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();

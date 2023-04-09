@@ -1,18 +1,17 @@
-package enchantedtowers.common.utils.fs;
+package enchantedtowers.game_logic;
 
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import enchantedtowers.game_models;
+import enchantedtowers.game_models.utils.Vector2;
 
 
-public class EnchantmetTemplatesFileReader {
+public class EnchantmetTemplatesProvider {
     static public List<List<Vector2>> parseJson(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templates = content.getJSONArray("canvasTemplates");
