@@ -8,6 +8,7 @@ package services;
 // requests
 import "requests/player-coordinates-request.proto";
 import "requests/tower-attack-request.proto";
+import "requests/spell-request.proto";
 // responses
 import "responses/action-result-response.proto";
 
@@ -16,4 +17,8 @@ service TowerAttackService {
 //  rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
   rpc AttackTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
   rpc LeaveAttack(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
+
+  rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc FinishSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
 }
