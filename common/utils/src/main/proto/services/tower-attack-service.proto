@@ -9,9 +9,11 @@ package services;
 import "requests/player-coordinates-request.proto";
 import "requests/tower-attack-request.proto";
 import "requests/spell-request.proto";
+import "requests/player-identification-request.proto";
 // responses
 import "responses/action-result-response.proto";
 import "responses/spell-finish-response.proto";
+import "responses/spectate-tower-attack-response.proto";
 
 
 
@@ -20,7 +22,12 @@ service TowerAttackService {
   rpc AttackTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
   rpc LeaveAttack(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
 
+  // drawing related methods
   rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
+
+  rpc EnterSpectatingTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
+  rpc SpectateTowerById(request_models.TowerAttackRequest) returns (stream response_models.SpectateTowerAttackResponse) {}
+  rpc LeaveSpectating(request_models.PlayerIdentificationRequest) returns (response_models.ActionResultResponse) {}
 }
