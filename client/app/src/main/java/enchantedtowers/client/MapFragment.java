@@ -108,7 +108,7 @@ public class MapFragment extends Fragment {
                 Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                 if (lastKnownLocation != null) {
-                    getTowers();
+                    getTowers(lastKnownLocation);
                     drawTowers(lastKnownLocation);
                     double latitude = lastKnownLocation.getLatitude();
                      double longitude = lastKnownLocation.getLongitude();
@@ -155,7 +155,7 @@ public class MapFragment extends Fragment {
             public void onLocationChanged(@NonNull Location location) {
                 logger.log(Level.INFO, "New location: " + location);
                 googleMap.clear();
-                getTowers();
+                getTowers(location);
                 drawTowers(location);
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
@@ -253,8 +253,8 @@ public class MapFragment extends Fragment {
         googleMap.addCircle(circleOptions);
     }
 
-    private void getTowers() {
-        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(0).setY(0).build();
+    private void getTowers(Location location) {
+        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(location.getLatitude()).setY(location.getLongitude()).build();
         try {
             TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
 
