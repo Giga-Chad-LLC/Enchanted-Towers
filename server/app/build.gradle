@@ -15,6 +15,9 @@ dependencies {
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
 
+    // json
+    implementation 'org.json:json:20220320'
+
     // example:
     // implementation('com.example.myproduct.user-feature:table')
 }

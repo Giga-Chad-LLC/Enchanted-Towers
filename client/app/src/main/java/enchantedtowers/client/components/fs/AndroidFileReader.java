@@ -7,14 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class FileReader {
-    private final Context context;
-
-    FileReader(Context context) {
-        this.context = context;
-    }
-
-    protected String readRawFile(int resourceId) throws IOException {
+public class AndroidFileReader {
+    public static String readRawFile(Context context, int resourceId) throws IOException {
         InputStream inputStream = context.getResources().openRawResource(resourceId);
 
         InputStreamReader inputReader = new InputStreamReader(inputStream);

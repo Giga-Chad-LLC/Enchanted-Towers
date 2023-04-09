@@ -20,4 +20,5 @@ def jtsVersion = '1.19.0'
 dependencies {
     // jts (2d geometry)
     implementation(group: "org.locationtech.jts", name: "jts-core", version: "${jtsVersion}")
+    implementation 'org.json:json:20220320'
 }

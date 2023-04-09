@@ -1,6 +1,5 @@
-package enchantedtowers.client.components.fs;
+package enchantedtowers.common.utils.fs;
 
-import android.content.Context;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -10,20 +9,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import enchantedtowers.game_models.utils.Vector2;
+import enchantedtowers.game_models;
 
-public class EnchantmetTemplatesFileReader extends FileReader {
 
-    public EnchantmetTemplatesFileReader(Context context) {
-        super(context);
-    }
-
-    public List<List<Vector2>> processFile(int resourceId) throws IOException, JSONException {
-        String json = readRawFile(resourceId);
-        return parseJsonFromString(json);
-    }
-
-    private List<List<Vector2>> parseJsonFromString(String jsonString) throws JSONException {
+public class EnchantmetTemplatesFileReader {
+    static public List<List<Vector2>> parseJson(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templates = content.getJSONArray("canvasTemplates");
 
