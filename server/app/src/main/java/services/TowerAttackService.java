@@ -1,27 +1,20 @@
 package services;
 
+import components.session.AttackSession;
+import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
-import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
+import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.GameError;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
+import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
-
-// components
-import components.session.AttackSession;
-// requests
-import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
-import enchantedtowers.common.utils.proto.requests.SpellRequest;
-// responses
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.GameError;
-// services
-import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 
 
 

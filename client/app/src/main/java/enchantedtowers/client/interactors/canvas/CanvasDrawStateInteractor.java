@@ -4,7 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 
-import java.util.List;
 import java.util.Map;
 
 import enchantedtowers.client.components.canvas.CanvasDrawable;

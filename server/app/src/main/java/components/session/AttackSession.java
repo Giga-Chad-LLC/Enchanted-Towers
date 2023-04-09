@@ -1,20 +1,15 @@
 package components.session;
 
-import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
+import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Utils;
+import enchantedtowers.game_models.utils.Vector2;
 import java.util.ArrayList;
 import java.util.List;
-
-// game-models
-import enchantedtowers.game_models.Spell;
-import enchantedtowers.game_models.utils.Vector2;
-// proto.requests
-import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import java.util.Optional;
-import javax.swing.text.html.Option;
 
 
 public class AttackSession {
