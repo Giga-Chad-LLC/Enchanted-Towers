@@ -11,6 +11,8 @@ import "requests/tower-attack-request.proto";
 import "requests/spell-request.proto";
 // responses
 import "responses/action-result-response.proto";
+import "responses/spell-finish-response.proto";
+
 
 
 service TowerAttackService {
@@ -20,5 +22,5 @@ service TowerAttackService {
 
   rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
-  rpc FinishSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
 }
