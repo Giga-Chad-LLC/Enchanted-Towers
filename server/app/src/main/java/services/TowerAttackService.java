@@ -122,6 +122,19 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             spectator.streamObserver.sendColor()
         */
 
+        // send current color id to all spectators
+        for (var spectator : session.get().getSpectators()) {
+            // create response with type of `SELECT_SPELL_COLOR`
+            SpectateTowerAttackResponse.Builder responseBulder = SpectateTowerAttackResponse.newBuilder();
+            responseBulder
+                .setResponseType(ResponseType.SELECT_SPELL_COLOR)
+                .getSpellColorBuilder()
+                    .setColorId(session.get().getCurrentSpellColorId())
+                    .build();
+
+            spectator.streamObserver().onNext(responseBulder.build());
+        }
+
         responseBuilder.setSuccess(true);
 
         streamObserver.onNext(responseBuilder.build());
@@ -172,6 +185,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         session.get().addPointToCurrentSpell(new Vector2(x, y));
         logger.info("Adding new spell point: " + new Vector2(x, y));
 
+        // send new point to all spectators
+        for (var spectator : session.get().getSpectators()) {
+            // create response with type of `DRAW_SPELL`
+            SpectateTowerAttackResponse.Builder responseBulder = SpectateTowerAttackResponse.newBuilder();
+            responseBulder
+                .setResponseType(ResponseType.DRAW_SPELL)
+                .getSpellPointBuilder()
+                    .setX(x)
+                    .setY(y)
+                    .build();
+
+            spectator.streamObserver().onNext(responseBulder.build());
+        }
+
         // sending response
         responseBuilder.setSuccess(true);
 
@@ -204,13 +231,31 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             Optional <SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedTemplateDescription = session.get().getMatchedTemplate(offset);
 
             if (matchedTemplateDescription.isEmpty()) {
+                // send error to attacker
                 responseBuilder.getErrorBuilder()
                     .setHasError(true)
                     .setType(GameError.ErrorType.SPELL_TEMPLATE_NOT_FOUND)
                     .setMessage("No template found to match provided spell");
+
+                // TODO: refactor (two cycles that send either error or data)
+                // send error to all spectators
+                for (var spectator : session.get().getSpectators()) {
+                    // create response with type of `FINISH_SPELL`
+                    SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+                    spectatorResponseBuilder
+                        .setResponseType(ResponseType.FINISH_SPELL)
+                        .getErrorBuilder()
+                            .setHasError(true)
+                            .setType(ErrorType.SPELL_TEMPLATE_NOT_FOUND)
+                            .setMessage("Attacking player drawing did not match any spells")
+                            .build();
+
+                    spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+                }
             }
             else {
-                int id = matchedTemplateDescription.get().id();
+                // send data to attacker
+                int templateId = matchedTemplateDescription.get().id();
                 double x = matchedTemplateDescription.get().offset().x;
                 double y = matchedTemplateDescription.get().offset().y;
 
@@ -223,11 +268,33 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 // Build template description
                 responseBuilder.getSpellDescriptionBuilder()
                     .setColorId(session.get().getCurrentSpellColorId())
-                    .setSpellTemplateId(id)
+                    .setSpellTemplateId(templateId)
                     .build();
 
                 // save the template to the canvas history
                 session.get().saveMatchedTemplate();
+
+                // TODO: refactor this place (two cycles that do the same thing)
+                // send data to all spectators
+                for (var spectator : session.get().getSpectators()) {
+                    // create response with type of `FINISH_SPELL`
+                    SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+                    spectatorResponseBuilder.setResponseType(ResponseType.FINISH_SPELL);
+
+                    // build spell description
+                    int colorId = session.get().getCurrentSpellColorId();
+                    var spellDescriptionBuilder = spectatorResponseBuilder.getSpellDescriptionBuilder();
+                    spellDescriptionBuilder
+                        .setColorId(colorId)
+                        .setSpellTemplateId(templateId)
+                        .getSpellTemplateOffsetBuilder()
+                            .setX(x)
+                            .setY(y)
+                            .build();
+                    spellDescriptionBuilder.build();
+
+                    spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+                }
             }
         }
         else if (!isRequestValid) {
