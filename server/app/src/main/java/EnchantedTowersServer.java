@@ -1,5 +1,6 @@
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.Server;
 
 import java.io.IOException;
@@ -7,8 +8,9 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+// utils
+import enchantedtowers.common.utils.storage.ServerApiStorage;
 // services
-import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import services.TowerAttackService;
 
 
@@ -18,9 +20,8 @@ public class EnchantedTowersServer {
     private Server server;
 
     private void start() throws IOException {
-        /* The port on which the server should run */
-        String host = "localhost"; // 192.168.0.103
-        int port = 8080;// 50051;
+        String host = ServerApiStorage.getInstance().getServerHost();
+        int port = ServerApiStorage.getInstance().getPort();
 
         server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
                 // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
@@ -28,7 +29,7 @@ public class EnchantedTowersServer {
                 .build()
                 .start();
 
-        logger.info("Server started, listening on port " + port);
+        logger.info("Server started: host='" + host + "', port='" + port + "'");
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {

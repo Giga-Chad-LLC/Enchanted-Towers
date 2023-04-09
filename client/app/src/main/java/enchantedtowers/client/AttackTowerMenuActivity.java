@@ -2,7 +2,6 @@ package enchantedtowers.client;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -21,6 +20,10 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+// utils
+import enchantedtowers.common.utils.storage.ServerApiStorage;
+
+
 
 public class AttackTowerMenuActivity extends AppCompatActivity {
     TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
@@ -31,14 +34,12 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attack_tower_menu);
 
-        /*
-        "10.0.2.2:8080"  - use for emulators
-        "localhost:8080" - use for android device
-        "192.168.0.103:8080" - use for Wi-Fi LAN (if server must listen to 192.168.0.103:8080)
-        */
-        String target = "10.0.2.2:8080";
-        // Grpc.newChannelBuilderForAddress("localhost", 50051, InsecureChannelCredentials.create());
-        channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
+        String host = ServerApiStorage.getInstance().getClientHost();
+        int port = ServerApiStorage.getInstance().getPort();
+        // String target = host + ":" + port;
+
+        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+        // channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
         asyncStub = TowerAttackServiceGrpc.newStub(channel);
 
         // buttons
