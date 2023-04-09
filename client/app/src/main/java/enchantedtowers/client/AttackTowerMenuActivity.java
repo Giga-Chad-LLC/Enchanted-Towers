@@ -1,5 +1,6 @@
 package enchantedtowers.client;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -10,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.concurrent.TimeUnit;
 
+import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -72,18 +74,24 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             public void onNext(ActionResultResponse response) {
                 // Handle the response
                 System.out.println("attackTowerById::Received response: " + response.getSuccess());
+                // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                ClientStorage.getInstance().setPlayerId(playerId);
+                ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
             }
 
             @Override
             public void onError(Throwable t) {
                 // Handle the error
                 System.err.println("attackTowerById::Error: " + t.getMessage());
+                Toast.makeText(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onCompleted() {
                 // Handle the completion
                 System.out.println("attackTowerById::Completed");
+                Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
+                startActivity(intent);
             }
         });
 
