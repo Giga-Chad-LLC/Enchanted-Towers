@@ -117,6 +117,10 @@ public class AttackSession {
         return Optional.empty();
     }
 
+    public List<Spectator> getSpectators() {
+        return Collections.unmodifiableList(spectators);
+    }
+
     public void addSpectator(int playerId, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
         spectators.add(new Spectator(playerId, streamObserver));
     }
