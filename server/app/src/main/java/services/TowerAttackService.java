@@ -1,6 +1,9 @@
 package services;
 
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
+import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
+import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
+import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
 
@@ -106,9 +109,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             return;
         }
 
+        logger.info("Session found: " + session.get().hashCode());
+
         // set current color id
         session.get().setCurrentSpellColorId(spellColorRequest.getColorId());
-        logger.info("Setting color id of '" + spellColorRequest.getColorId() + "'");
+        logger.info("Setting color id of '" + session.get().getCurrentSpellColorId() + "'");
 
         /*
         TODO: implement sending logic
@@ -156,6 +161,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             return;
         }
 
+
+        logger.info("Session found: " + session.get().hashCode());
+
         // adding new point to the current spell
         double x = drawSpellRequest.getPosition().getX();
         double y = drawSpellRequest.getPosition().getY();
@@ -170,55 +178,84 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     @Override
-    public void finishSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
-        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+    public void finishSpell(SpellRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
+        SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
+        boolean isRequestValid = (request.getRequestType() == RequestType.FINISH_SPELL && request.hasFinishSpell());
+        boolean sessionExists = isRequestValid && (getAttackSessionByPlayerId(
+            request.getFinishSpell().getPlayerData().getPlayerId()).isPresent());
 
-        // if request is invalid: either incorrect request type or FinishSpell is not provided
-        if (request.getRequestType() != RequestType.FINISH_SPELL || !request.hasFinishSpell()) {
-            setErrorInActionResultResponse(
-                responseBuilder,
-                GameError.ErrorType.INVALID_REQUEST,
-                "Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided"
-            );
+        if (isRequestValid && sessionExists) {
+            var finishSpellRequest = request.getFinishSpell();
+            int playerId = finishSpellRequest.getPlayerData().getPlayerId();
+            Optional<AttackSession> session = getAttackSessionByPlayerId(playerId);
+            logger.info("Session found: " + session.get().hashCode());
 
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-            return;
+            Vector2 offset;
+            {
+                double x = finishSpellRequest.getPosition().getX();
+                double y = finishSpellRequest.getPosition().getY();
+                offset = new Vector2(x, y);
+            }
+
+            logger.info("finishSpell: run hausdorff and return id of matched template and offset");
+
+            Optional <SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedTemplateDescription = session.get().getMatchedTemplate(offset);
+
+            if (matchedTemplateDescription.isEmpty()) {
+                responseBuilder.getErrorBuilder()
+                    .setHasError(true)
+                    .setType(GameError.ErrorType.SPELL_TEMPLATE_NOT_FOUND)
+                    .setMessage("No template found to match provided spell");
+            }
+            else {
+                int id = matchedTemplateDescription.get().getId();
+                double x = matchedTemplateDescription.get().getOffset().x;
+                double y = matchedTemplateDescription.get().getOffset().y;
+
+                // Build template offset
+                responseBuilder.getSpellDescriptionBuilder().getSpellTemplateOffsetBuilder()
+                    .setX(x)
+                    .setY(y)
+                    .build();
+
+                // Build template description
+                responseBuilder.getSpellDescriptionBuilder()
+                    .setColorId(session.get().getCurrentSpellColorId())
+                    .setSpellTemplateId(id)
+                    .build();
+
+                // save the template to the canvas history
+                session.get().saveMatchedTemplate();
+            }
+        }
+        else if (!isRequestValid) {
+            responseBuilder.getErrorBuilder()
+                .setHasError(true)
+                .setType(GameError.ErrorType.INVALID_REQUEST)
+                .setMessage("Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided");
+        }
+        else {
+            int playerId = request.getFinishSpell().getPlayerData().getPlayerId();
+
+            responseBuilder.getErrorBuilder()
+                .setHasError(true)
+                .setType(GameError.ErrorType.INVALID_REQUEST)
+                .setMessage(
+                    "Attack session associated with player with id of " + playerId + " not found");
         }
 
-        var finishSpellRequest = request.getFinishSpell();
-
-        int playerId = finishSpellRequest.getPlayerData().getPlayerId();
-        Optional<AttackSession> session = getAttackSessionByPlayerId(playerId);
-
-        // if session not found
-        if (session.isEmpty()) {
-            setErrorInActionResultResponse(
-                responseBuilder,
-                GameError.ErrorType.INVALID_REQUEST,
-                "Attack session associated with player with id of " + playerId + " not found");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-            return;
+        if (sessionExists) {
+            // clear the session state for the new spell drawing
+            var session = getAttackSessionByPlayerId(request.getFinishSpell().getPlayerData().getPlayerId());
+            session.get().clearCurrentDrawing();
         }
-
-        double x = finishSpellRequest.getPosition().getX();
-        double y = finishSpellRequest.getPosition().getY();
-        Vector2 offset = new Vector2(x, y);
-
-        // TODO: run hausdorff and return id of matched template and offset
-        logger.info("finishSpell: run hausdorff and return id of matched template and offset");
-
-        responseBuilder.setSuccess(true);
-
-        Optional <List<Vector2>> templatePoints = session.get().getMatchedTemplate(offset);
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
     }
 
 
+    // TODO: generify to accept not only `ActionResultResponse` type of response model
     private void setErrorInActionResultResponse(
         ActionResultResponse.Builder responseBuilder, GameError.ErrorType errorType, String message) {
         responseBuilder.setSuccess(false);
