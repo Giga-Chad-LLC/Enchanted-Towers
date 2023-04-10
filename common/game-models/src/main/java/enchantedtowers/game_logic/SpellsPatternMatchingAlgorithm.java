@@ -12,10 +12,33 @@ import enchantedtowers.game_models.utils.Vector2;
 public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
-    public record MatchedTemplateDescription(int id, int colorId, Vector2 offset) {}
+    static public class MatchedTemplateDescription {
+        private final int id;
+        private final int colorId;
+        private final Vector2 offset;
 
-    public static <Metric extends CurvesMatchingMetric>
-    Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates, Spell pattern, int patternColor, Metric metric) {
+        MatchedTemplateDescription(int id, int colorId, Vector2 offset) {
+            this.id = id;
+            this.colorId = colorId;
+            this.offset = offset;
+        }
+
+        public int id() {
+            return id;
+        }
+
+        public int colorId() {
+            return colorId;
+        }
+
+        public Vector2 offset() {
+            return offset;
+        }
+    }
+
+    static public <Metric extends CurvesMatchingMetric>
+    Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
+                                                            Spell pattern, int patternColor, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();

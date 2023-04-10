@@ -35,7 +35,23 @@ public class AttackSession {
         this.attackedTowerId = attackedTowerId;
     }
 
-    public record Spectator(int playerId, StreamObserver<SpectateTowerAttackResponse> streamObserver) {}
+    public static class Spectator {
+        private final int playerId;
+        private final StreamObserver<SpectateTowerAttackResponse> streamObserver;
+
+        Spectator(int playerId, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
+            this.playerId = playerId;
+            this.streamObserver = streamObserver;
+        }
+
+        public int playerId() {
+            return playerId;
+        }
+
+        public StreamObserver<SpectateTowerAttackResponse> streamObserver() {
+            return streamObserver;
+        }
+    }
 
     public static AttackSession fromRequest(final TowerAttackRequest request) {
         return new AttackSession(request.getPlayerData().getPlayerId(), request.getTowerId());
