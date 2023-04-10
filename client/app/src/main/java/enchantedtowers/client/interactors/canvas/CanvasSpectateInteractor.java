@@ -79,6 +79,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     }
                     case DRAW_SPELL -> {
                         System.out.println("CanvasSpectateInteractor::Received DRAW_SPELL");
+
+                        onDrawSpellReceived(value, canvasWidget);
                     }
                     case FINISH_SPELL -> {
                         System.out.println("CanvasSpectateInteractor::Received FINISH_SPELL");
@@ -160,7 +162,22 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
     private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
         // TODO: think about data race typa-shit...
+        currentPath.reset();
         brush.setColor(value.getSpellColor().getColorId());
         System.out.println("CanvasSpectateInteractor::onSelectSpellColorReceived: newSpellColor=" + brush.getColor());
     }
+
+    private void onDrawSpellReceived(SpectateTowerAttackResponse value, CanvasWidget canvasWidget) {
+        var newPoint = value.getSpellPoint();
+        if (currentPath.isEmpty()) {
+            currentPath.moveTo((float) newPoint.getX(), (float) newPoint.getY());
+        }
+        else {
+            currentPath.lineTo((float) newPoint.getX(), (float) newPoint.getY());
+        }
+
+        // trigger the rendering
+        canvasWidget.invalidate();
+    }
 }
+
