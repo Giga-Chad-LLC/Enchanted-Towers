@@ -1,5 +1,7 @@
 package enchantedtowers.client.interactors.canvas;
 
+import static enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -62,7 +64,13 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             public void onNext(SpectateTowerAttackResponse value) {
                 if (value.hasError()) {
                     System.err.println("CanvasSpectateInteractor::Received: " + value.getError().getMessage());
-                    // TODO: deal with error
+                    // TODO: deal with error somehow
+                    if (value.getError().getType() == ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
+                        // attacker did not manage to create a spell, then we just delete his drawing
+                        currentPath.reset();
+                        canvasWidget.invalidate();
+                    }
+
                     return;
                 }
 
@@ -84,6 +92,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     }
                     case FINISH_SPELL -> {
                         System.out.println("CanvasSpectateInteractor::Received FINISH_SPELL");
+
+                        onFinishSpellReceived(value, state, canvasWidget);
                     }
                 }
             }
@@ -97,7 +107,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             @Override
             public void onCompleted() {
                 System.out.println("CanvasSpectateInteractor::onCompleted");
-                // TODO: redirect to another actitity
+                // TODO: redirect to another activity
             }
         });
     }
@@ -177,6 +187,29 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
 
         // trigger the rendering
+        canvasWidget.invalidate();
+    }
+
+    private void onFinishSpellReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+        // reset current drawing because attacked already finished it
+        currentPath.reset();
+
+        // here spell template was definitely found
+        // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
+        var description = value.getSpellDescription();
+        var templateOffset = description.getSpellTemplateOffset();
+        int templateColor = description.getColorId();
+        Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
+        templateSpell.setOffset(new Vector2(
+                templateOffset.getX(),
+                templateOffset.getY()
+        ));
+
+        state.addItem(new CanvasSpellDecorator(
+                templateColor,
+                templateSpell
+        ));
+
         canvasWidget.invalidate();
     }
 }
