@@ -1,9 +1,13 @@
 package enchantedtowers.client.interactors.canvas;
 
+import static enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+
+import java.util.logging.Logger;
 
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
@@ -26,11 +30,11 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
+    private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
 
     // TODO: watch for the race conditions in this class
     // TODO: consider scaling the points that we retrieve from server (solution: make canvas size fixed or send to the server the canvas size of attacker and recalculate real path size on spectators)
 
-    // TODO: change System.out.println's to a logger (which print the calling calss and method names automatically);
     public CanvasSpectateInteractor(CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
         brush = state.getBrushCopy();
@@ -48,7 +52,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         var towerId = ClientStorage.getInstance().getTowerIdUnderSpectate();
         if (!(playerId.isPresent() && towerId.isPresent())) {
             // TODO: refactor later
-            throw new RuntimeException("CanvasSpectateInteractor() interactor constructor failure. PlayerId or TowerId is not present");
+            logger.warning("CanvasSpectateInteractor interactor constructor failure: present playerId=" + playerId.isPresent() + ", towerId=" + towerId.isPresent());
+            throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId or towerId is not present");
         }
 
         TowerAttackRequest.Builder requestBuilder = TowerAttackRequest.newBuilder();
@@ -61,43 +66,48 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             @Override
             public void onNext(SpectateTowerAttackResponse value) {
                 if (value.hasError()) {
-                    System.err.println("CanvasSpectateInteractor::Received: " + value.getError().getMessage());
-                    // TODO: deal with error
+                    logger.info("CanvasSpectateInteractor::Received: " + value.getError().getMessage());
+                    // TODO: deal with error somehow
+                    if (value.getError().getType() == ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
+                        // attacker did not manage to create a spell, then we just delete his drawing
+                        currentPath.reset();
+                        canvasWidget.invalidate();
+                    }
+
                     return;
                 }
 
                 switch (value.getResponseType()) {
                     case CURRENT_CANVAS_STATE -> {
-                        System.out.println("CanvasSpectateInteractor::Received CURRENT_CANVAS_STATE");
-
+                        logger.info("Received CURRENT_CANVAS_STATE");
                         onCurrentCanvasStateReceived(value, state, canvasWidget);
                     }
                     case SELECT_SPELL_COLOR -> {
-                        System.out.println("CanvasSpectateInteractor::Received SELECT_SPELL_COLOR");
-
+                        logger.info("Received SELECT_SPELL_COLOR");
                         onSelectSpellColorReceived(value);
                     }
                     case DRAW_SPELL -> {
-                        System.out.println("CanvasSpectateInteractor::Received DRAW_SPELL");
-
+                        logger.info("Received DRAW_SPELL");
                         onDrawSpellReceived(value, canvasWidget);
                     }
                     case FINISH_SPELL -> {
-                        System.out.println("CanvasSpectateInteractor::Received FINISH_SPELL");
+                        logger.info("Received FINISH_SPELL");
+                        onFinishSpellReceived(value, state, canvasWidget);
                     }
                 }
             }
 
             @Override
             public void onError(Throwable t) {
-                System.err.println("CanvasSpectateInteractor::onError: " + t.getMessage());
+                logger.warning("onError: " + t.getMessage());
                 // TODO: deal with error
+
             }
 
             @Override
             public void onCompleted() {
-                System.out.println("CanvasSpectateInteractor::onCompleted");
-                // TODO: redirect to another actitity
+                logger.info("onCompleted");
+                // TODO: redirect to another activity
             }
         });
     }
@@ -164,7 +174,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // TODO: think about data race typa-shit...
         currentPath.reset();
         brush.setColor(value.getSpellColor().getColorId());
-        System.out.println("CanvasSpectateInteractor::onSelectSpellColorReceived: newSpellColor=" + brush.getColor());
+        logger.info("onSelectSpellColorReceived: newSpellColor=" + brush.getColor());
     }
 
     private void onDrawSpellReceived(SpectateTowerAttackResponse value, CanvasWidget canvasWidget) {
@@ -177,6 +187,29 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
 
         // trigger the rendering
+        canvasWidget.invalidate();
+    }
+
+    private void onFinishSpellReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+        // reset current drawing because attacked already finished it
+        currentPath.reset();
+
+        // here spell template was definitely found
+        // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
+        var description = value.getSpellDescription();
+        var templateOffset = description.getSpellTemplateOffset();
+        int templateColor = description.getColorId();
+        Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
+        templateSpell.setOffset(new Vector2(
+                templateOffset.getX(),
+                templateOffset.getY()
+        ));
+
+        state.addItem(new CanvasSpellDecorator(
+                templateColor,
+                templateSpell
+        ));
+
         canvasWidget.invalidate();
     }
 }
