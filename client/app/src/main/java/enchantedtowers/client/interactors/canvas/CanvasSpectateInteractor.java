@@ -29,6 +29,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
     // TODO: watch for the race conditions in this class
     // TODO: consider scaling the points that we retrieve from server (solution: make canvas size fixed or send to the server the canvas size of attacker and recalculate real path size on spectators)
+
+    // TODO: change System.out.println's to a logger (which print the calling calss and method names automatically);
     public CanvasSpectateInteractor(CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
         brush = state.getBrushCopy();
@@ -72,6 +74,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     }
                     case SELECT_SPELL_COLOR -> {
                         System.out.println("CanvasSpectateInteractor::Received SELECT_SPELL_COLOR");
+
+                        onSelectSpellColorReceived(value);
                     }
                     case DRAW_SPELL -> {
                         System.out.println("CanvasSpectateInteractor::Received DRAW_SPELL");
@@ -152,5 +156,11 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         // trigger the rendering
         canvasWidget.invalidate();
+    }
+
+    private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
+        // TODO: think about data race typa-shit...
+        brush.setColor(value.getSpellColor().getColorId());
+        System.out.println("CanvasSpectateInteractor::onSelectSpellColorReceived: newSpellColor=" + brush.getColor());
     }
 }
