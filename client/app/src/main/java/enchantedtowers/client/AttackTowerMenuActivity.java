@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -24,7 +25,7 @@ import io.grpc.stub.StreamObserver;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 
 
-
+// TODO: rename/remove this activity (created only for testing)
 public class AttackTowerMenuActivity extends AppCompatActivity {
     TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     ManagedChannel channel;
@@ -50,6 +51,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         EditText playerIdTextInput = findViewById(R.id.playerIdTextInput);
         EditText towerIdTextInput = findViewById(R.id.towerIdTextInput);
 
+
         attackButton.setOnClickListener(view -> {
             try {
                 int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
@@ -60,7 +62,52 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 System.out.println(err.getMessage());
                 Toast.makeText(this, err.getMessage(), Toast.LENGTH_SHORT).show();
             }
+        });
 
+        spectateButton.setOnClickListener(view -> {
+            try {
+                int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
+                int towerId  = Integer.parseInt(towerIdTextInput.getText().toString());
+                callAsyncEnterSpectateTowerById(playerId, towerId);
+            }
+            catch(NumberFormatException err) {
+                System.out.println(err.getMessage());
+                Toast.makeText(this, err.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void callAsyncEnterSpectateTowerById(int playerId, int towerId) {
+        TowerAttackRequest.Builder requestBuilder = TowerAttackRequest.newBuilder();
+        requestBuilder.getPlayerDataBuilder()
+                .setPlayerId(playerId)
+                .build();
+        requestBuilder.setTowerId(towerId);
+        asyncStub.enterSpectatingTowerById(requestBuilder.build(), new StreamObserver<>() {
+            @Override
+            public void onNext(ActionResultResponse response) {
+                // Handle the response
+                System.out.println("spectateTowerById::Received response: " + response.getSuccess());
+                // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                ClientStorage.getInstance().setPlayerId(playerId);
+                ClientStorage.getInstance().setTowerIdUnderSpectate(towerId);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                // Handle the error
+                System.err.println("spectateTowerById::Error: " + t.getMessage());
+                Toast.makeText(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCompleted() {
+                // Handle the completion
+                System.out.println("spectateTowerById::Completed");
+                Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
+                intent.putExtra("isSpectating", true);
+                startActivity(intent);
+            }
         });
     }
 
@@ -92,6 +139,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 // Handle the completion
                 System.out.println("attackTowerById::Completed");
                 Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
+                intent.putExtra("isAttacking", true);
                 startActivity(intent);
             }
         });

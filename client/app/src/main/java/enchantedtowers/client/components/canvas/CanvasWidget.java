@@ -14,37 +14,31 @@ import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasInteractor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class CanvasWidget extends View {
-    private CanvasState state;
-    private ArrayList<CanvasInteractor> interactors;
+    private CanvasState state = new CanvasState();
+    private List<CanvasInteractor> interactors = new ArrayList<>();
 
     public CanvasWidget(Context context) {
         super(context);
-        init();
     }
 
     public CanvasWidget(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public CanvasWidget(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
     }
 
-    private void init() {
-        state = new CanvasState();
-        interactors = new ArrayList<>();
+    public CanvasState getState() {
+        return state;
+    }
 
-        interactors.add(
-                new CanvasDrawStateInteractor()
-        );
-        interactors.add(
-                new CanvasDrawSpellInteractor(state, this)
-        );
+    public void setInteractors(List<CanvasInteractor> interactors) {
+        this.interactors = interactors;
     }
 
     /**
