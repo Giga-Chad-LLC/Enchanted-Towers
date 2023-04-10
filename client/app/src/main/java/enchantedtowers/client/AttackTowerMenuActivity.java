@@ -87,7 +87,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             @Override
             public void onNext(ActionResultResponse response) {
                 // Handle the response
-                System.out.println("spectateTowerById::Received response: " + response.getSuccess());
+                System.out.println("spectateTowerById::Received response: " + response.getSuccess() + ", playerId=" + playerId + ", towerId=" + towerId);
                 // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                 ClientStorage.getInstance().setPlayerId(playerId);
                 ClientStorage.getInstance().setTowerIdUnderSpectate(towerId);
