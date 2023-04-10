@@ -37,6 +37,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Objects;
 
+import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
 import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
@@ -53,8 +54,7 @@ public class MapFragment extends Fragment {
     private LocationListener locationUpdatesListener;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
     private TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
-
-    private List<TowerResponse> towers;
+    private final MapDrawTowersInteractor drawInteractor = new MapDrawTowersInteractor();
 
     public MapFragment() {
         // Required empty public constructor
@@ -96,6 +96,7 @@ public class MapFragment extends Fragment {
             // registering click listeners on MyLocation button and location point
             registerOnMyLocationButtonClickListener();
             registerOnMyLocationClickListener();
+            //registerOnMyMarkerClickListener();
 
             // enabling user location
             if (checkRequiredLocationPermission()) {
@@ -109,10 +110,9 @@ public class MapFragment extends Fragment {
 
                 if (lastKnownLocation != null) {
                     getTowers(lastKnownLocation);
-                    drawTowers(lastKnownLocation);
                     double latitude = lastKnownLocation.getLatitude();
                      double longitude = lastKnownLocation.getLongitude();
-                    drawCircleAroundPoint(new LatLng(latitude, longitude));
+                    drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap);
                 }
             }
             else {
@@ -156,10 +156,9 @@ public class MapFragment extends Fragment {
                 logger.log(Level.INFO, "New location: " + location);
                 googleMap.clear();
                 getTowers(location);
-                drawTowers(location);
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
-                drawCircleAroundPoint(new LatLng(latitude, longitude));
+                drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap);
             }
 
             @Override
@@ -206,6 +205,19 @@ public class MapFragment extends Fragment {
         }
     }
 
+    /*private void registerOnMyMarkerClickListener() {
+        Objects.requireNonNull(googleMap);
+
+        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                Intent intent = new Intent(MapActivity.this, CanvasActivity.class);
+                startActivity(intent);
+                return false;
+            }
+        });
+    }*/
+
     private void registerOnMyLocationButtonClickListener() {
         Objects.requireNonNull(googleMap);
 
@@ -240,55 +252,17 @@ public class MapFragment extends Fragment {
         }
     }
 
-    private void drawCircleAroundPoint(LatLng point) {
-        Objects.requireNonNull(googleMap);
-
-        CircleOptions circleOptions = new CircleOptions();
-        circleOptions.center(point);
-        circleOptions.radius(200);
-        circleOptions.strokeColor(Color.BLACK);
-        circleOptions.fillColor(0x30ff0000);
-        circleOptions.strokeWidth(2);
-
-        googleMap.addCircle(circleOptions);
-    }
-
     private void getTowers(Location location) {
         PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder().setX(location.getLatitude()).setY(location.getLongitude()).build();
         try {
             TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
 
-            towers = response.getTowersList();
+            drawInteractor.execute(googleMap, response, location);
         }
         catch(StatusRuntimeException err) {
-            logger.log(Level.WARNING, "RPC failed: {0}", err.getStatus());
+            logger.log(Level.WARNING, "Towers' request has fallen", err.getStatus());
         }
     }
-
-    private void drawTowers(Location userPosition) {
-
-        try {
-            for (TowerResponse tower: towers){
-                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getX(), tower.getY());
-
-                float[] results = new float[1];
-                Location.distanceBetween(coordinatesForMarkerAtTower.latitude, coordinatesForMarkerAtTower.longitude,
-                        userPosition.getLatitude(), userPosition.getLongitude(), results); //TODO: refactor.
-
-
-                googleMap.addMarker(new MarkerOptions()
-                        .position(coordinatesForMarkerAtTower)
-                        .icon(BitmapDescriptorFactory.defaultMarker(results[0] > 200 ? BitmapDescriptorFactory.HUE_AZURE: BitmapDescriptorFactory.HUE_RED)));
-
-                drawCircleAroundPoint(coordinatesForMarkerAtTower);
-            }
-        }
-        catch(StatusRuntimeException err) {
-            logger.log(Level.WARNING, "RPC failed: {0}", err.getStatus());
-        }
-    }
-
-
 
 
     @Override
