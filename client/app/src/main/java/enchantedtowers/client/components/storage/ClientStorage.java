@@ -35,7 +35,7 @@ public class ClientStorage {
     }
 
     public void setTowerIdUnderSpectate(int towerIdUnderSpectate) {
-        playerData.towerIdUnderAttack = Optional.of(towerIdUnderSpectate);
+        playerData.towerIdUnderSpectate = Optional.of(towerIdUnderSpectate);
     }
 
     private final PlayerData playerData;
