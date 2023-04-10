@@ -38,7 +38,11 @@ public class CanvasState {
         items.clear();
     }
 
-    public Paint getBrush() {
+    /**
+     *
+     * @return a copy of brush that is used inside a {@code CanvasState} with all settings included
+     */
+    public Paint getBrushCopy() {
         return new Paint(brush);
     }
 

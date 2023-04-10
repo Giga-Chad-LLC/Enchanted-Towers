@@ -16,7 +16,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
 
     @Override
     public void onDraw(CanvasState state, Canvas canvas) {
-        Paint brush = state.getBrush();
+        Paint brush = state.getBrushCopy();
 
         // for DEBUG purposes
         drawTemplates(state, canvas);
@@ -39,7 +39,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
     // For DEBUG purposes, will be removed later
     private void drawTemplates(CanvasState state, Canvas canvas) {
         Map<Integer, Spell> templates = SpellBook.getTemplates();
-        Paint brush = state.getBrush();
+        Paint brush = state.getBrushCopy();
 
         for (Spell spell : templates.values()) {
             new CanvasSpellDecorator(Color.BLACK, spell).draw(canvas, brush);

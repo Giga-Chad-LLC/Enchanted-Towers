@@ -30,11 +30,11 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 
-class EventWorker extends Thread {
+class AttackEventWorker extends Thread {
     private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final TowerAttackServiceGrpc.TowerAttackServiceBlockingStub blockingStub;
-    private final Logger logger = Logger.getLogger(EventWorker.class.getName());
+    private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
     private final CanvasState state;
     private final CanvasWidget canvasWidget;
 
@@ -122,7 +122,7 @@ class EventWorker extends Thread {
         }
     };
 
-    public EventWorker(CanvasState state, CanvasWidget canvasWidget) {
+    public AttackEventWorker(CanvasState state, CanvasWidget canvasWidget) {
         this.state = state;
         this.canvasWidget = canvasWidget;
 
@@ -136,6 +136,7 @@ class EventWorker extends Thread {
         blockingStub = TowerAttackServiceGrpc.newBlockingStub(channel);
     }
 
+    @Override
     public void run() {
         isRunning.set(true);
 
@@ -222,15 +223,15 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
-    private final EventWorker worker;
+    private final AttackEventWorker worker;
 
     private static final Logger logger = Logger.getLogger(CanvasDrawSpellInteractor.class.getName());
 
     public CanvasDrawSpellInteractor(CanvasState state, CanvasWidget canvasWidget) {
-        brush = state.getBrush();
+        brush = state.getBrushCopy();
         logger.info("Start worker");
 
-        worker = new EventWorker(state, canvasWidget);
+        worker = new AttackEventWorker(state, canvasWidget);
         worker.start();
     }
 
@@ -270,11 +271,11 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         // update color only when started the new shape
         brush.setColor(state.getBrushColor());
 
-        if (!worker.enqueueEvent(EventWorker.Event.createEventWithSpellColorRequest(brush.getColor()))) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithSpellColorRequest(brush.getColor()))) {
             logger.warning("'Change color' event lost");
         }
 
-        if (!worker.enqueueEvent(EventWorker.Event.createEventWithDrawSpellRequest(point))) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Move to' event lost");
         }
 
@@ -286,12 +287,12 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         Vector2 point = new Vector2(x, y);
         pathPoints.add(point);
 
-        if (!worker.enqueueEvent(EventWorker.Event.createEventWithDrawSpellRequest(point))) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Line to' event lost");
         }
 
         Vector2 pathOffset = getPathOffset(path);
-        if (!worker.enqueueEvent(EventWorker.Event.createEventWithFinishSpellRequest(pathOffset))) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithFinishSpellRequest(pathOffset))) {
             logger.warning("'Offset' event lost");
         }
 
@@ -308,7 +309,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         Vector2 point = new Vector2(x, y);
         pathPoints.add(point);
 
-        if (!worker.enqueueEvent(EventWorker.Event.createEventWithDrawSpellRequest(point))) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Line to' event lost");
         }
 
