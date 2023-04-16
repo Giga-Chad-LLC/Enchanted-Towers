@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 // components
 import components.session.AttackSession;
+import components.session.AttackSessionManager;
 // proto
 // requests
 import enchantedtowers.common.utils.proto.requests.PlayerIdentificationRequest;
@@ -33,7 +34,8 @@ import enchantedtowers.game_models.utils.Vector2;
 
 
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
-    private final List<AttackSession> sessions = new ArrayList<>();
+//    private final List<AttackSession> sessions = new ArrayList<>();
+    private final AttackSessionManager sessionManager = new AttackSessionManager();
     private static final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
 
     // rpc calls
@@ -45,7 +47,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     public void attackTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         // TODO: if player attacks several towers simultaneously?
         // TODO: check whether player already has an attack session
-        sessions.add(AttackSession.fromRequest(request));
+        // sessions.add(AttackSession.fromRequest(request));
+        sessionManager.add(request.getTowerId(), AttackSession.fromRequest(request));
 
         int playerId = request.getPlayerData().getPlayerId();
         int towerId = request.getTowerId();
@@ -66,7 +69,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         logger.info("leaveAttack: " + request.getPlayerData().getPlayerId());
 
         final int playerId = request.getPlayerData().getPlayerId();
-        Optional<AttackSession> session = getAttackSessionByPlayerId(playerId);
+        Optional<AttackSession> session = sessionManager.getAttackSessionByPlayerId(playerId);
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
@@ -81,7 +84,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             // removing session
-            sessions.remove(session.get());
+            // sessions.remove(session.get());
+            sessionManager.remove(session.get());
             responseBuilder.setSuccess(true);
         }
 
@@ -95,15 +99,16 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_COLOR && request.hasSpellColor());
-        boolean sessionExists = isRequestValid && getAttackSessionByPlayerId(request.getSpellColor().getPlayerData().getPlayerId()).isPresent();
+        boolean sessionExists = isRequestValid && sessionManager.getAttackSessionByPlayerId(
+            request.getSpellColor().getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
             final int colorId = request.getSpellColor().getColorId();
             final int playerId = request.getSpellColor().getPlayerData().getPlayerId();
 
             // session must exist
-            assert(getAttackSessionByPlayerId(playerId).isPresent());
-            AttackSession session = getAttackSessionByPlayerId(playerId).get();
+            assert(sessionManager.getAttackSessionByPlayerId(playerId).isPresent());
+            AttackSession session = sessionManager.getAttackSessionByPlayerId(playerId).get();
 
             logger.info("Session found: " + session.hashCode());
             // set current color id
@@ -153,15 +158,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         boolean isRequestValid = (request.getRequestType() == RequestType.DRAW_SPELL) && (request.hasDrawSpell());
-        boolean sessionExists = isRequestValid && getAttackSessionByPlayerId(
+        boolean sessionExists = isRequestValid && sessionManager.getAttackSessionByPlayerId(
                 request.getDrawSpell().getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
             var drawSpellRequest = request.getDrawSpell();
             int playerId = drawSpellRequest.getPlayerData().getPlayerId();
 
-            assert(getAttackSessionByPlayerId(playerId).isPresent());
-            AttackSession session = getAttackSessionByPlayerId(playerId).get();
+            assert(sessionManager.getAttackSessionByPlayerId(playerId).isPresent());
+            AttackSession session = sessionManager.getAttackSessionByPlayerId(playerId).get();
 
             logger.info("Session found: " + session.hashCode());
 
@@ -215,13 +220,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
         boolean isRequestValid = (request.getRequestType() == RequestType.FINISH_SPELL && request.hasFinishSpell());
-        boolean sessionExists = isRequestValid && getAttackSessionByPlayerId(
+        boolean sessionExists = isRequestValid && sessionManager.getAttackSessionByPlayerId(
             request.getFinishSpell().getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
             var finishSpellRequest = request.getFinishSpell();
             int playerId = finishSpellRequest.getPlayerData().getPlayerId();
-            Optional<AttackSession> session = getAttackSessionByPlayerId(playerId);
+            Optional<AttackSession> session = sessionManager.getAttackSessionByPlayerId(playerId);
+
+            assert(session.isPresent());
             logger.info("Session found: " + session.get().hashCode());
 
             Vector2 offset;
@@ -321,7 +328,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         if (sessionExists) {
             // clear the session state for the new spell drawing
-            var session = getAttackSessionByPlayerId(request.getFinishSpell().getPlayerData().getPlayerId());
+            var session = sessionManager.getAttackSessionByPlayerId(request.getFinishSpell().getPlayerData().getPlayerId());
+            assert(session.isPresent());
             session.get().clearCurrentDrawing();
         }
 
@@ -335,7 +343,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         int towerId = request.getTowerId();
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        Optional<AttackSession> session = getAttackSessionByTowerId(towerId);
+        Optional<AttackSession> session = sessionManager.getAttackSessionByTowerId(towerId);
 
         if (session.isPresent()) {
             responseBuilder.setSuccess(true);
@@ -359,7 +367,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
 
-        Optional<AttackSession> sessionOpt = getAttackSessionByTowerId(towerId);
+        Optional<AttackSession> sessionOpt = sessionManager.getAttackSessionByTowerId(towerId);
         if (sessionOpt.isPresent()) {
             AttackSession session = sessionOpt.get();
             // create response with canvas state
@@ -393,7 +401,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        for (var session : sessions) {
+        // TODO: reimplement using session manager
+        /*for (var session : sessions) {
             AttackSession.Spectator spectator = session.pollSpectatorById(playerId);
             if (spectator != null) {
                 // if spectator found, close connection
@@ -401,7 +410,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 successfullyRemoved = true;
                 break;
             }
-        }
+        }*/
 
         if (successfullyRemoved) {
             responseBuilder.setSuccess(true);
@@ -489,7 +498,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
 
-    private Optional<AttackSession> getAttackSessionByPlayerId(int playerId) {
+    /*private Optional<AttackSession> getAttackSessionByPlayerId(int playerId) {
         for (var session : sessions) {
             if (session.getAttackingPlayerId() == playerId) {
                 return Optional.of(session);
@@ -507,5 +516,5 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
 
         return Optional.empty();
-    }
+    }*/
 }
