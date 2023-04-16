@@ -1,11 +1,13 @@
 package enchantedtowers.client.interactors.canvas;
 
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -14,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -28,8 +31,9 @@ import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
-
+// TODO: add timeout to blocking stub
 class AttackEventWorker extends Thread {
     private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
@@ -160,19 +164,28 @@ class AttackEventWorker extends Thread {
                     logger.info("Sending request of type: " + event.requestType().toString());
                     switch (event.requestType()) {
                         case SELECT_SPELL_COLOR -> {
-                            ActionResultResponse response = blockingStub.selectSpellColor(event.getRequest());
+                            ActionResultResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .selectSpellColor(event.getRequest());
+
                             logger.info(
                                     "Got response from selectSpellColor: success=" + response.getSuccess() +
                                         "\nmessage='" + response.getError().getMessage() + "'");
 
                         }
                         case DRAW_SPELL -> {
-                            ActionResultResponse response = blockingStub.drawSpell(event.getRequest());
+                            ActionResultResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .drawSpell(event.getRequest());
+
                             logger.info("Got response from drawSpell: success=" + response.getSuccess() +
                                     "\nmessage='" + response.getError().getMessage() + "'");
                         }
                         case FINISH_SPELL -> {
-                            SpellFinishResponse response = blockingStub.finishSpell(event.getRequest());
+                            SpellFinishResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .finishSpell(event.getRequest());
+
                             logger.info("Got FINISH_SPELL response");
 
                             if (response.hasError()) {
@@ -207,10 +220,22 @@ class AttackEventWorker extends Thread {
                         }
                     }
                 }
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | StatusRuntimeException e) {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
-                break;
+
+                logger.warning("CanvasDrawSpellInteractor error while blocking stub '" + e.getMessage() + "'");
+
+                // redirect to base activity
+                Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                intent.putExtra("showToastOnStart", true);
+                intent.putExtra("toastMessage", e.getMessage());
+
+                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
+
+                canvasWidget.getContext().startActivity(intent);
             }
         }
 
@@ -253,7 +278,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
-            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(state, x, y);
+            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(x, y);
             case MotionEvent.ACTION_MOVE -> onActionMoveContinuePath(x, y);
             default -> false;
         };
@@ -291,7 +316,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         return true;
     }
 
-    private boolean onActionUpFinishPathAndSubstitute(CanvasState state, float x, float y) {
+    private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
         path.lineTo(x, y);
         Vector2 point = new Vector2(x, y);
         pathPoints.add(point);
