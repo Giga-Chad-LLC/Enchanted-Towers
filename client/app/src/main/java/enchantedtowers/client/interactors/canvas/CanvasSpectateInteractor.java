@@ -1,6 +1,5 @@
 package enchantedtowers.client.interactors.canvas;
 
-import static enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
 
 import android.content.Intent;
 import android.graphics.Canvas;
@@ -16,6 +15,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.AttackSessionIdRequest;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -71,7 +71,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             public void onNext(SpectateTowerAttackResponse response) {
                 if (response.hasError()) {
                     logger.info("CanvasSpectateInteractor::Received: " + response.getError().getMessage());
-                    if (response.getError().getType() == ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
+                    if (response.getError().getType() == ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
                         // attacker did not manage to create a spell, then we just delete his drawing
                         currentPath.reset();
                         canvasWidget.invalidate();

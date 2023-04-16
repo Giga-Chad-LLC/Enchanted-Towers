@@ -10,7 +10,7 @@ import "common/vector2.proto";
 // responses
 import "responses/current-canvas-state-response.proto";
 import "responses/spell-description-response.proto";
-import "responses/game-error.proto";
+import "responses/server-error.proto";
 
 
 message SpectateTowerAttackResponse {
@@ -26,7 +26,7 @@ message SpectateTowerAttackResponse {
   };
 
   ResponseType responseType = 1;
-  response_models.GameError error = 2;
+  response_models.ServerError error = 2;
 
   // CURRENT_CANVAS_STATE
   response_models.CurrentCanvasStateResponse canvasState = 3;
