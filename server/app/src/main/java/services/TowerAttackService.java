@@ -71,8 +71,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: use ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND where needed
-
     /**
      * If request is valid, closes connections to all spectators and removes attack session associated with player.
      * Otherwise, sends error to the player.
@@ -169,7 +167,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -237,7 +235,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -355,7 +353,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
