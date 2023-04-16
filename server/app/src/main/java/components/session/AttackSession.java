@@ -55,16 +55,16 @@ public class AttackSession {
         }
     }
 
+    public int getId() {
+        return id;
+    }
+
     public int getAttackingPlayerId() {
         return attackingPlayerId;
     }
 
     public int getAttackedTowerId() {
         return attackedTowerId;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public int getCurrentSpellColorId() {
@@ -143,15 +143,20 @@ public class AttackSession {
         spectators.add(new Spectator(playerId, streamObserver));
     }
 
-    public Spectator pollSpectatorById(int playerId) {
+    /**
+     * Removes spectator by player id (if spectator exists).
+     * Does not call close the connection of spectator's stream observer.
+     * @return either <code>Optional.empty()</code> or <code>Optional.of(removedSpectator)</code>
+     */
+    public Optional<Spectator> pollSpectatorById(int playerId) {
         var iterator = spectators.iterator();
-        Spectator removedSpectator = null;
+        Optional<Spectator> removedSpectator = Optional.empty();
 
         while (iterator.hasNext()) {
             Spectator spectator = iterator.next();
             if (spectator.playerId == playerId) {
                 logger.info("Spectator with id '" + playerId + "' removed from session");
-                removedSpectator = spectator;
+                removedSpectator = Optional.of(spectator);
                 iterator.remove();
                 break;
             }
