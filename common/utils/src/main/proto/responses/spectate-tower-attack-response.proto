@@ -26,15 +26,14 @@ message SpectateTowerAttackResponse {
   };
 
   ResponseType responseType = 1;
-  int32 sessionId = 2;
-  response_models.GameError error = 3;
+  response_models.GameError error = 2;
 
   // CURRENT_CANVAS_STATE
-  response_models.CurrentCanvasStateResponse canvasState = 4;
+  response_models.CurrentCanvasStateResponse canvasState = 3;
   // SELECT_SPELL_COLOR
-  SelectSpellColor spellColor = 5;
+  SelectSpellColor spellColor = 4;
   // DRAW_SPELL
-  common.Vector2 spellPoint = 6;
+  common.Vector2 spellPoint = 5;
   // FINISH_SPELL
-   response_models.SpellDescriptionResponse spellDescription = 7;
+   response_models.SpellDescriptionResponse spellDescription = 6;
 };

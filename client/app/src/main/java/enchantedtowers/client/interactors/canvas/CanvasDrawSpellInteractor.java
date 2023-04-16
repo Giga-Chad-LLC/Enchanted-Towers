@@ -59,12 +59,16 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_COLOR);
 
-            // set player id
-            // TODO: check that playerId exists
-            requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+            // TODO: check that playerId and sessionId exists
+            // set session id
+            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
 
-            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get());
+            // set player id
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
+                    .build();
+
+            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get() + ", SESSION_ID: " + ClientStorage.getInstance().getSessionId().get());
 
             // creating spell color request
             var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
@@ -80,10 +84,16 @@ class AttackEventWorker extends Thread {
             SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.DRAW_SPELL);
+
+            // TODO: check that playerId and sessionId exists
+            // set session id
+            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+
             // set player id
-            // TODO: check that playerId exists
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+
+            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get() + ", SESSION_ID: " + ClientStorage.getInstance().getSessionId().get());
 
             // creating draw spell request
             var drawSpellRequestBuilder = requestBuilder.getDrawSpellBuilder();
@@ -102,8 +112,12 @@ class AttackEventWorker extends Thread {
             SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.FINISH_SPELL);
+
+            // TODO: check that playerId and sessionId exists
+            // set session id
+            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+
             // set player id
-            // TODO: check that playerId exists
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
 

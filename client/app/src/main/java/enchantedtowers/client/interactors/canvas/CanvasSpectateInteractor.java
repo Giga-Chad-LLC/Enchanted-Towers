@@ -12,6 +12,7 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.common.utils.proto.requests.AttackSessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -48,20 +49,21 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         asyncStub = TowerAttackServiceGrpc.newStub(channel);
 
         var playerId = ClientStorage.getInstance().getPlayerId();
-        var towerId = ClientStorage.getInstance().getTowerIdUnderSpectate();
-        if (!(playerId.isPresent() && towerId.isPresent())) {
+        var sessionId = ClientStorage.getInstance().getSessionId();
+        // var towerId = ClientStorage.getInstance().getTowerIdUnderSpectate();
+        if (!(playerId.isPresent() && sessionId.isPresent())) {
             // TODO: refactor later
-            logger.warning("CanvasSpectateInteractor interactor constructor failure: present playerId=" + playerId.isPresent() + ", towerId=" + towerId.isPresent());
-            throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId or towerId is not present");
+            logger.warning("CanvasSpectateInteractor interactor constructor failure: present playerId=" + playerId.isPresent() + ", sessionId=" + sessionId.isPresent());
+            throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId is not present");
         }
 
-        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
-        requestBuilder.setTowerId(towerId.get());
+        AttackSessionIdRequest.Builder requestBuilder = AttackSessionIdRequest.newBuilder();
+        requestBuilder.setSessionId(sessionId.get());
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId.get())
                 .build();
 
-        asyncStub.spectateTowerById(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub.spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
             @Override
             public void onNext(SpectateTowerAttackResponse value) {
                 if (value.hasError()) {

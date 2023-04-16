@@ -22,14 +22,6 @@ public class ClientStorage {
         return playerData.sessionId;
     }
 
-    public Optional<Integer> getTowerIdUnderAttack() {
-        return playerData.towerIdUnderAttack;
-    }
-
-    public Optional<Integer> getTowerIdUnderSpectate() {
-        return playerData.towerIdUnderSpectate;
-    }
-
     // setters
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
@@ -39,21 +31,11 @@ public class ClientStorage {
         playerData.sessionId = Optional.of(sessionId);
     }
 
-    public void setTowerIdUnderAttack(int towerIdUnderAttack) {
-        playerData.towerIdUnderAttack = Optional.of(towerIdUnderAttack);
-    }
-
-    public void setTowerIdUnderSpectate(int towerIdUnderSpectate) {
-        playerData.towerIdUnderSpectate = Optional.of(towerIdUnderSpectate);
-    }
-
     private final PlayerData playerData;
 
     private static class PlayerData {
         public Optional<Integer> playerId = Optional.empty();
         public Optional<Integer> sessionId = Optional.empty();
-        public Optional<Integer> towerIdUnderAttack = Optional.empty();
-        public Optional<Integer> towerIdUnderSpectate = Optional.empty();
     }
 
     private ClientStorage() {

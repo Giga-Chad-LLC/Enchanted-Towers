@@ -81,12 +81,19 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         requestBuilder.setTowerId(towerId);
         asyncStub.trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(ActionResultResponse response) {
+            public void onNext(AttackSessionIdResponse response) {
                 // Handle the response
-                System.out.println("spectateTowerById::Received response: " + response.getSuccess() + ", playerId=" + playerId + ", towerId=" + towerId);
-                // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
-                ClientStorage.getInstance().setPlayerId(playerId);
-                ClientStorage.getInstance().setTowerIdUnderSpectate(towerId);
+                if (response.hasError()) {
+                    System.err.println("spectateTowerById::Received error: " + response.getError().getMessage());
+                }
+                else {
+                    int sessionId = response.getSessionId();
+                    System.out.println("spectateTowerById::Received response: sessionId=" + response.getSessionId());
+                    // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                    ClientStorage.getInstance().setPlayerId(playerId);
+                    ClientStorage.getInstance().setSessionId(sessionId);
+                    // ClientStorage.getInstance().setTowerIdUnderSpectate(towerId);
+                }
             }
 
             @Override
@@ -118,13 +125,15 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             public void onNext(AttackSessionIdResponse response) {
                 // Handle the response
                 if (response.hasError()) {
-                    System.out.println("attackTowerById::Received error: " + response.getError().getMessage());
+                    System.err.println("attackTowerById::Received error: " + response.getError().getMessage());
                 }
                 else {
                     // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                    int sessionId = response.getSessionId();
+                    System.out.println("attackTowerById::Received response: sessionId=" + sessionId);
                     ClientStorage.getInstance().setPlayerId(playerId);
-                    ClientStorage.getInstance().setSessionId(response.getSessionId());
-                    ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
+                    ClientStorage.getInstance().setSessionId(sessionId);
+                    // ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
                 }
             }
 

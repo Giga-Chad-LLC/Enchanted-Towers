@@ -9,7 +9,7 @@ import java.util.TreeMap;
 public class AttackSessionManager {
    // towerId -> sessions
    private final Map<Integer, List<AttackSession>> sessions = new TreeMap<>();
-   private int CURRENT_SESSION_ID = 0;
+   private int CURRENT_SESSION_ID = 2;
 
    /**
     * Returns id of newly created session
@@ -36,28 +36,26 @@ public class AttackSessionManager {
       }
    }
 
+   public Optional<AttackSession> getSessionById(int sessionId) {
+      for (var sessionList : sessions.values()) {
+         for (var session : sessionList) {
+            if (sessionId == session.getId()) {
+               return Optional.of(session);
+            }
+         }
+      }
+      return Optional.empty();
+   }
+
    /**
-    * Invariant: if key exist then the list on sessions must be non-empty
-   */
-   // TODO: replace with getSessionById
-   public Optional<AttackSession> getAttackSessionByTowerId(int towerId) {
+    * Invariant: if key exists then the list of sessions must be non-empty
+    */
+   public Optional<AttackSession> getAnyAttackSessionByTowerId(int towerId) {
       if (sessions.containsKey(towerId)) {
          assert(sessions.get(towerId) != null && !sessions.get(towerId).isEmpty());
          // returning first session
          AttackSession firstSession = sessions.get(towerId).get(0);
          return Optional.of(firstSession);
-      }
-
-      return Optional.empty();
-   }
-   // TODO: replace with getSessionById
-   public Optional<AttackSession> getAttackSessionByPlayerId(int playerId) {
-      for (var sessionList : sessions.values()) {
-         for (var session : sessionList) {
-            if (playerId == session.getAttackingPlayerId()) {
-               return Optional.of(session);
-            }
-         }
       }
 
       return Optional.empty();
