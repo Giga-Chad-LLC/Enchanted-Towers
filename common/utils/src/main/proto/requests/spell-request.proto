@@ -19,12 +19,14 @@ message SpellRequest {
     FINISH_SPELL = 2;
   };
 
+  common.PlayerData playerData = 1;
+
   // common for all 3 types of request
-  RequestType requestType = 1;
+  RequestType requestType = 2;
   // SELECT_SPELL_COLOR
-  SelectSpellColorRequest spellColor = 2;
+  SelectSpellColorRequest spellColor = 3;
   // DRAW_SPELL
-  SpellCurvePositionRequest drawSpell = 3;
+  SpellCurvePositionRequest drawSpell = 4;
   // FINISH_SPELL
-  SpellCurvePositionRequest finishSpell = 4;
+  SpellCurvePositionRequest finishSpell = 5;
 };

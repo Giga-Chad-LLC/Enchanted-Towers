@@ -10,6 +10,5 @@ import "common/player-data.proto";
 import "common/vector2.proto";
 
 message SpellCurvePositionRequest {
-  common.PlayerData playerData = 1;
   common.Vector2 position = 2;
 };

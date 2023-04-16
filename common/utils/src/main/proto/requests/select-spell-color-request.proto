@@ -9,6 +9,5 @@ package request_models;
 import "common/player-data.proto";
 
 message SelectSpellColorRequest {
-  common.PlayerData playerData = 1;
   int32 colorId = 2;
 };

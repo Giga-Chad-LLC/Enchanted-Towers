@@ -27,7 +27,8 @@ service TowerAttackService {
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
 
-  rpc EnterSpectatingTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
+  // TODO: how to remove this redundant method
+  rpc TrySpectateTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
   rpc SpectateTowerById(request_models.TowerAttackRequest) returns (stream response_models.SpectateTowerAttackResponse) {}
   rpc LeaveSpectating(request_models.PlayerIdentificationRequest) returns (response_models.ActionResultResponse) {}
 }

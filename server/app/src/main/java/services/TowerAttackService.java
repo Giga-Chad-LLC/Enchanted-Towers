@@ -100,11 +100,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_COLOR && request.hasSpellColor());
         boolean sessionExists = isRequestValid && sessionManager.getAttackSessionByPlayerId(
-            request.getSpellColor().getPlayerData().getPlayerId()).isPresent();
+            request.getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
             final int colorId = request.getSpellColor().getColorId();
-            final int playerId = request.getSpellColor().getPlayerData().getPlayerId();
+            final int playerId = request.getPlayerData().getPlayerId();
 
             // session must exist
             assert(sessionManager.getAttackSessionByPlayerId(playerId).isPresent());
@@ -118,14 +118,14 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // send current color id to all spectators
             for (var spectator : session.getSpectators()) {
                 // create response with type of `SELECT_SPELL_COLOR`
-                SpectateTowerAttackResponse.Builder responseBulder = SpectateTowerAttackResponse.newBuilder();
-                responseBulder
+                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+                spectatorResponseBuilder
                         .setResponseType(ResponseType.SELECT_SPELL_COLOR)
                         .getSpellColorBuilder()
                         .setColorId(session.getCurrentSpellColorId())
                         .build();
 
-                spectator.streamObserver().onNext(responseBulder.build());
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
             }
             // request processed successfully
             responseBuilder.setSuccess(true);
@@ -138,8 +138,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             // session does not exist
-            int playerId = request.getSpellColor().getPlayerData().getPlayerId();
-
+            int playerId = request.getPlayerData().getPlayerId();
             setErrorInActionResultResponse(
                     responseBuilder,
                     GameError.ErrorType.INVALID_REQUEST,
@@ -159,11 +158,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         boolean isRequestValid = (request.getRequestType() == RequestType.DRAW_SPELL) && (request.hasDrawSpell());
         boolean sessionExists = isRequestValid && sessionManager.getAttackSessionByPlayerId(
-                request.getDrawSpell().getPlayerData().getPlayerId()).isPresent();
+                request.getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
-            var drawSpellRequest = request.getDrawSpell();
-            int playerId = drawSpellRequest.getPlayerData().getPlayerId();
+            int playerId = request.getPlayerData().getPlayerId();
 
             assert(sessionManager.getAttackSessionByPlayerId(playerId).isPresent());
             AttackSession session = sessionManager.getAttackSessionByPlayerId(playerId).get();
@@ -171,8 +169,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             logger.info("Session found: " + session.hashCode());
 
             // adding new point to the current spell
-            double x = drawSpellRequest.getPosition().getX();
-            double y = drawSpellRequest.getPosition().getY();
+            double x = request.getDrawSpell().getPosition().getX();
+            double y = request.getDrawSpell().getPosition().getY();
             logger.info("Adding new spell point: " + new Vector2(x, y));
             session.addPointToCurrentSpell(new Vector2(x, y));
 
@@ -203,7 +201,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             // session does not exist
-            int playerId = request.getDrawSpell().getPlayerData().getPlayerId();
+            int playerId = request.getPlayerData().getPlayerId();
             setErrorInActionResultResponse(
                     responseBuilder,
                     GameError.ErrorType.INVALID_REQUEST,
@@ -221,11 +219,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         boolean isRequestValid = (request.getRequestType() == RequestType.FINISH_SPELL && request.hasFinishSpell());
         boolean sessionExists = isRequestValid && sessionManager.getAttackSessionByPlayerId(
-            request.getFinishSpell().getPlayerData().getPlayerId()).isPresent();
+            request.getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
-            var finishSpellRequest = request.getFinishSpell();
-            int playerId = finishSpellRequest.getPlayerData().getPlayerId();
+            int playerId = request.getPlayerData().getPlayerId();
             Optional<AttackSession> session = sessionManager.getAttackSessionByPlayerId(playerId);
 
             assert(session.isPresent());
@@ -233,8 +230,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             Vector2 offset;
             {
-                double x = finishSpellRequest.getPosition().getX();
-                double y = finishSpellRequest.getPosition().getY();
+                double x = request.getFinishSpell().getPosition().getX();
+                double y = request.getFinishSpell().getPosition().getY();
                 offset = new Vector2(x, y);
             }
 
@@ -317,7 +314,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             // session does not exist
-            int playerId = request.getFinishSpell().getPlayerData().getPlayerId();
+            int playerId = request.getPlayerData().getPlayerId();
 
             responseBuilder.getErrorBuilder()
                 .setHasError(true)
@@ -328,7 +325,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         if (sessionExists) {
             // clear the session state for the new spell drawing
-            var session = sessionManager.getAttackSessionByPlayerId(request.getFinishSpell().getPlayerData().getPlayerId());
+            int playerId = request.getPlayerData().getPlayerId();
+            var session = sessionManager.getAttackSessionByPlayerId(playerId);
             assert(session.isPresent());
             session.get().clearCurrentDrawing();
         }
@@ -339,7 +337,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     // spectating related methods
     @Override
-    public void enterSpectatingTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public void trySpectateTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         int towerId = request.getTowerId();
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
@@ -496,25 +494,4 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             .setType(errorType)
             .setMessage(message);
     }
-
-
-    /*private Optional<AttackSession> getAttackSessionByPlayerId(int playerId) {
-        for (var session : sessions) {
-            if (session.getAttackingPlayerId() == playerId) {
-                return Optional.of(session);
-            }
-        }
-        return Optional.empty();
-    }
-
-    // TODO: implement Map<TowerId, List<AttackSession>> (in order to implement spectateNext/spectatePrev)
-    private Optional<AttackSession> getAttackSessionByTowerId(int towerId) {
-        for (var session : sessions) {
-            if (session.getAttackedTowerId() == towerId) {
-                return Optional.of(session);
-            }
-        }
-
-        return Optional.empty();
-    }*/
 }

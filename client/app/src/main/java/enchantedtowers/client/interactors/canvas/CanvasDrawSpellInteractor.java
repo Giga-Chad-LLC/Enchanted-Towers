@@ -59,16 +59,17 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_COLOR);
 
+            // set player id
+            // TODO: check that playerId exists
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+
+            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get());
+
             // creating spell color request
             var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
             spellColorRequestBuilder.setColorId(colorId);
 
-            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get());
-            // building player data
-            // TODO: check that playerId exists
-            spellColorRequestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
-                    .build();
             // building spell color request
             spellColorRequestBuilder.build();
 
@@ -79,6 +80,10 @@ class AttackEventWorker extends Thread {
             SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.DRAW_SPELL);
+            // set player id
+            // TODO: check that playerId exists
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
 
             // creating draw spell request
             var drawSpellRequestBuilder = requestBuilder.getDrawSpellBuilder();
@@ -87,11 +92,6 @@ class AttackEventWorker extends Thread {
                     .setY(point.y)
                     .build();
 
-            // building player data
-            // TODO: check that playerId exists
-            drawSpellRequestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
-                    .build();
             // building draw spell request
             drawSpellRequestBuilder.build();
 
@@ -102,6 +102,10 @@ class AttackEventWorker extends Thread {
             SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.FINISH_SPELL);
+            // set player id
+            // TODO: check that playerId exists
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
 
             // creating draw spell request
             var finishSpellBuilder = requestBuilder.getFinishSpellBuilder();
@@ -110,11 +114,6 @@ class AttackEventWorker extends Thread {
                     .setY(point.y)
                     .build();
 
-            // building player data
-            // TODO: check that playerId exists
-            finishSpellBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
-                    .build();
             // building draw spell request
             finishSpellBuilder.build();
 
@@ -190,10 +189,6 @@ class AttackEventWorker extends Thread {
                                     state.addItem(canvasMatchedEnchantment);
                                     canvasWidget.invalidate();
                                 }
-
-                                // TODO: remove this assert
-                                assert(template != null);
-
                             }
                         }
                     }

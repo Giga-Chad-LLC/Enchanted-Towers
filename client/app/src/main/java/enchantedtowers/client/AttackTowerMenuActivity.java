@@ -83,7 +83,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
-        asyncStub.enterSpectatingTowerById(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub.trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
             public void onNext(ActionResultResponse response) {
                 // Handle the response
