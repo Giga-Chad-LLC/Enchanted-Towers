@@ -80,7 +80,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: reimplement to match data flow style of `finishSpell` method
     // TODO: add description
     @Override
     public void selectSpellColor(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
@@ -138,66 +137,63 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
-    // TODO: reimplement to match data flow style of `finishSpell` method
+    // TODO: add description
     @Override
     public void drawSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        // if request is invalid: either incorrect request type or DrawSpell is not provided
-        if (request.getRequestType() != RequestType.DRAW_SPELL || !request.hasDrawSpell()) {
+        boolean isRequestValid = (request.getRequestType() == RequestType.DRAW_SPELL) && (request.hasDrawSpell());
+        boolean sessionExists = isRequestValid && getAttackSessionByPlayerId(
+                request.getDrawSpell().getPlayerData().getPlayerId()).isPresent();
+
+        if (isRequestValid && sessionExists) {
+            var drawSpellRequest = request.getDrawSpell();
+            int playerId = drawSpellRequest.getPlayerData().getPlayerId();
+
+            assert(getAttackSessionByPlayerId(playerId).isPresent());
+            AttackSession session = getAttackSessionByPlayerId(playerId).get();
+
+            logger.info("Session found: " + session.hashCode());
+
+            // adding new point to the current spell
+            double x = drawSpellRequest.getPosition().getX();
+            double y = drawSpellRequest.getPosition().getY();
+            logger.info("Adding new spell point: " + new Vector2(x, y));
+            session.addPointToCurrentSpell(new Vector2(x, y));
+
+            // send new point to all spectators
+            for (var spectator : session.getSpectators()) {
+                // create response with type of `DRAW_SPELL`
+                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+
+                spectatorResponseBuilder
+                        .setResponseType(ResponseType.DRAW_SPELL)
+                        .getSpellPointBuilder()
+                        .setX(x)
+                        .setY(y)
+                        .build();
+
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
+
+            // sending response
+            responseBuilder.setSuccess(true);
+        }
+        else if (!isRequestValid) {
             setErrorInActionResultResponse(
-                responseBuilder,
-                GameError.ErrorType.INVALID_REQUEST,
-                "Invalid request: request type must be 'DRAW_SPELL' and DrawSpell must be provided"
+                    responseBuilder,
+                    GameError.ErrorType.INVALID_REQUEST,
+                    "Invalid request: request type must be 'DRAW_SPELL' and DrawSpell must be provided"
             );
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-            return;
         }
-
-        var drawSpellRequest = request.getDrawSpell();
-
-        int playerId = drawSpellRequest.getPlayerData().getPlayerId();
-        Optional<AttackSession> session = getAttackSessionByPlayerId(playerId);
-
-        // if session not found
-        if (session.isEmpty()) {
+        else {
+            // session does not exist
+            int playerId = request.getDrawSpell().getPlayerData().getPlayerId();
             setErrorInActionResultResponse(
-                responseBuilder,
-                GameError.ErrorType.INVALID_REQUEST,
-                "Attack session associated with player with id of " + playerId + " not found");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-            return;
+                    responseBuilder,
+                    GameError.ErrorType.INVALID_REQUEST,
+                    "Attack session associated with player with id of " + playerId + " not found");
         }
-
-
-        logger.info("Session found: " + session.get().hashCode());
-
-        // adding new point to the current spell
-        double x = drawSpellRequest.getPosition().getX();
-        double y = drawSpellRequest.getPosition().getY();
-        session.get().addPointToCurrentSpell(new Vector2(x, y));
-        logger.info("Adding new spell point: " + new Vector2(x, y));
-
-        // send new point to all spectators
-        for (var spectator : session.get().getSpectators()) {
-            // create response with type of `DRAW_SPELL`
-            SpectateTowerAttackResponse.Builder responseBulder = SpectateTowerAttackResponse.newBuilder();
-            responseBulder
-                .setResponseType(ResponseType.DRAW_SPELL)
-                .getSpellPointBuilder()
-                    .setX(x)
-                    .setY(y)
-                    .build();
-
-            spectator.streamObserver().onNext(responseBulder.build());
-        }
-
-        // sending response
-        responseBuilder.setSuccess(true);
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
