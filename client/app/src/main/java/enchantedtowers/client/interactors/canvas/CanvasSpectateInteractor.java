@@ -161,7 +161,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 newSpellPath.lineTo((float)point.getX(), (float)point.getY());
             }
 
-            // TODO: add mutex of smth (in order to prevent data race with onDraw method)
+            // TODO: add mutex (in order to prevent data race with onDraw method)
             // set class members values
             brush.setColor(currentSpellColor);
             currentPath.set(newSpellPath);
@@ -179,7 +179,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
             templateSpell.setOffset(templateOffset);
 
-            // TODO: state.addItem should be thread safe actually, make sure it is
             state.addItem(new CanvasSpellDecorator(
                     templateColor,
                     templateSpell
@@ -191,7 +190,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     }
 
     private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
-        // TODO: think about data race typa-shit...
+        // TODO: add mutex (in order to prevent data race with onDraw method)
         currentPath.reset();
         brush.setColor(value.getSpellColor().getColorId());
         logger.info("onSelectSpellColorReceived: newSpellColor=" + brush.getColor());

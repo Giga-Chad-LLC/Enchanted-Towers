@@ -33,7 +33,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
-// TODO: add timeout to blocking stub
 class AttackEventWorker extends Thread {
     private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
@@ -63,16 +62,18 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_COLOR);
 
-            // TODO: check that playerId and sessionId exists
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
             // set session id
-            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            requestBuilder.setSessionId(storage.getSessionId().get());
 
             // set player id
             requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
+                    .setPlayerId(storage.getPlayerId().get())
                     .build();
 
-            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get() + ", SESSION_ID: " + ClientStorage.getInstance().getSessionId().get());
+            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
 
             // creating spell color request
             var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
@@ -89,15 +90,17 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.DRAW_SPELL);
 
-            // TODO: check that playerId and sessionId exists
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
             // set session id
-            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            requestBuilder.setSessionId(storage.getSessionId().get());
 
             // set player id
             requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+                    .setPlayerId(storage.getPlayerId().get()).build();
 
-            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get() + ", SESSION_ID: " + ClientStorage.getInstance().getSessionId().get());
+            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
 
             // creating draw spell request
             var drawSpellRequestBuilder = requestBuilder.getDrawSpellBuilder();
@@ -117,13 +120,15 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.FINISH_SPELL);
 
-            // TODO: check that playerId and sessionId exists
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
             // set session id
-            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            requestBuilder.setSessionId(storage.getSessionId().get());
 
             // set player id
             requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+                    .setPlayerId(storage.getPlayerId().get()).build();
 
             // creating draw spell request
             var finishSpellBuilder = requestBuilder.getFinishSpellBuilder();
@@ -220,7 +225,7 @@ class AttackEventWorker extends Thread {
                         }
                     }
                 }
-            } catch (InterruptedException | StatusRuntimeException e) {
+            } catch (Exception e) {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
 
