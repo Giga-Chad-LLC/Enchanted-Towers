@@ -42,15 +42,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     public void attackTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> responseObserver) {
         // TODO: if player attacks several towers simultaneously?
         // TODO: check whether player already has an attack session
-        // sessions.add(AttackSession.fromRequest(request));
         int playerId = request.getPlayerData().getPlayerId();
         int towerId = request.getTowerId();
-
 
         int sessionId = sessionManager.add(playerId, towerId);
 
         logger.info("attackTowerById: playerId=" + playerId + ", towerId=" + towerId);
-        // System.out.println("attackTowerById: playerId=" + playerId + ", towerId=" + towerId);
 
         AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
         responseBuilder.setSessionId(sessionId);
@@ -99,11 +96,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
 
         boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_COLOR && request.hasSpellColor());
         boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
+        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
 
-        if (isRequestValid && sessionExists) {
+        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
             final int colorId = request.getSpellColor().getColorId();
 
             // session must exist
@@ -136,12 +135,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     GameError.ErrorType.INVALID_REQUEST,
                     "Invalid request: request type must be 'SELECT_SPELL_COLOR' and spell color must be provided");
         }
-        else {
+        else if (!sessionExists) {
             // session does not exist
             setErrorInActionResultResponse(
                     responseBuilder,
                     GameError.ErrorType.INVALID_REQUEST,
                     "Attack session with id " + sessionId + " not found");
+        }
+        else {
+            // attacker id does not match player id
+            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+            setErrorInActionResultResponse(
+                    responseBuilder,
+                    GameError.ErrorType.INVALID_REQUEST,
+                    "Attacker id " + attackerId + " does not match player id " + playerId);
         }
 
         // sending response
@@ -156,11 +163,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
 
         boolean isRequestValid = (request.getRequestType() == RequestType.DRAW_SPELL) && (request.hasDrawSpell());
         boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
+        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
 
-        if (isRequestValid && sessionExists) {
+        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
             assert(sessionManager.getSessionById(sessionId).isPresent());
             AttackSession session = sessionManager.getSessionById(sessionId).get();
 
@@ -197,12 +206,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     "Invalid request: request type must be 'DRAW_SPELL' and DrawSpell must be provided"
             );
         }
-        else {
+        else if (!sessionExists) {
             // session does not exist
             setErrorInActionResultResponse(
                     responseBuilder,
                     GameError.ErrorType.INVALID_REQUEST,
                     "Attack session with id " + sessionId + " not found");
+        }
+        else {
+            // attacker id does not match player id
+            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+            setErrorInActionResultResponse(
+                    responseBuilder,
+                    GameError.ErrorType.INVALID_REQUEST,
+                    "Attacker id " + attackerId + " does not match player id " + playerId);
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -215,11 +232,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
 
         boolean isRequestValid = (request.getRequestType() == RequestType.FINISH_SPELL && request.hasFinishSpell());
         boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
+        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
 
-        if (isRequestValid && sessionExists) {
+        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
             Optional<AttackSession> session = sessionManager.getSessionById(sessionId);
             assert(session.isPresent());
             logger.info("Session found: " + session.get().hashCode());
@@ -308,13 +327,22 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 .setType(GameError.ErrorType.INVALID_REQUEST)
                 .setMessage("Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided");
         }
-        else {
+        else if (!sessionExists) {
             // session does not exist
             responseBuilder.getErrorBuilder()
                 .setHasError(true)
                 .setType(GameError.ErrorType.INVALID_REQUEST)
-                .setMessage(
-                    "Attack session with id " + sessionId + " not found");
+                .setMessage("Attack session with id " + sessionId + " not found")
+                .build();
+        }
+        else {
+            // attacker id does not match player id
+            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+            responseBuilder.getErrorBuilder()
+                .setHasError(true)
+                .setType(GameError.ErrorType.INVALID_REQUEST)
+                .setMessage("Attacker id " + attackerId + " does not match player id " + playerId)
+                .build();
         }
 
         if (sessionExists) {
@@ -483,6 +511,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     // TODO: generify to accept not only `ActionResultResponse` type of response model
+    // TODO: change 'setErrorInActionResultResponse' to build game error object
     private void setErrorInActionResultResponse(
         ActionResultResponse.Builder responseBuilder, GameError.ErrorType errorType, String message) {
         responseBuilder.setSuccess(false);
