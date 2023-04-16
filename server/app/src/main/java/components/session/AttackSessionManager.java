@@ -36,6 +36,41 @@ public class AttackSessionManager {
       }
    }
 
+   /**
+    * @param playerId
+    * @return <code>true</code> if there exists attack session that is associated with player with provided id.
+    * Otherwise, returns <code>false</code>.
+    */
+   public boolean hasSessionAssociatedWithPlayerId(int playerId) {
+      for (var sessionList : sessions.values()) {
+         for (var session : sessionList) {
+            if (playerId == session.getAttackingPlayerId()) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   /**
+    *
+    * @param playerId
+    * @return <code>true</code> if there exists an attack session that has <code>playerId</code> as a spectator.
+    * Otherwise, returns <code>false</code>.
+    */
+   public boolean isPlayerInSpectatingMode(int playerId) {
+      for (var sessionList : sessions.values()) {
+         for (var session : sessionList) {
+            for (var spectator : session.getSpectators()) {
+               if (playerId == spectator.playerId()) {
+                  return true;
+               }
+            }
+         }
+      }
+      return false;
+   }
+
    public Optional<AttackSession> getSessionById(int sessionId) {
       for (var sessionList : sessions.values()) {
          for (var session : sessionList) {

@@ -26,8 +26,6 @@ import enchantedtowers.game_models.utils.Vector2;
 
 
 
-// TODO: after getting session check that playerId == session.playerId()
-
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
     private final AttackSessionManager sessionManager = new AttackSessionManager();
     private static final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
@@ -44,12 +42,33 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         int playerId = request.getPlayerData().getPlayerId();
         int towerId = request.getTowerId();
 
-        int sessionId = sessionManager.add(playerId, towerId);
-
-        logger.info("attackTowerById: playerId=" + playerId + ", towerId=" + towerId);
-
         AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
-        responseBuilder.setSessionId(sessionId);
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+
+        logger.info("attackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
+
+        if (!isAttacking && !isSpectating) {
+            // creating new attack session associated with player
+            logger.info("Creating attack session for player with id " + playerId);
+            int sessionId = sessionManager.add(playerId, towerId);
+            responseBuilder.setSessionId(sessionId);
+        }
+        else if (isAttacking) {
+            // if player is already in attack session
+            logger.info("Player with id " + playerId + " is already in attack session");
+            buildGameError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is already in attack session");
+        }
+        else {
+            // if player is already spectating
+            logger.info("Player with id " + playerId + " is already spectating someone's attack session");
+            buildGameError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is already spectating someone's attack session");
+        }
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
