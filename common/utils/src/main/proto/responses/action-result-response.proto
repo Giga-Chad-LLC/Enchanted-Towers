@@ -6,9 +6,9 @@ option java_multiple_files = true;
 package response_models;
 
 // responses
-import "responses/game-error.proto";
+import "responses/server-error.proto";
 
 message ActionResultResponse {
   bool success = 1;
-  response_models.GameError error = 2;
+  response_models.ServerError error = 2;
 };

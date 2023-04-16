@@ -16,7 +16,6 @@ import components.session.AttackSessionManager;
 // requests
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
 // responses
-import enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
 // services
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -131,20 +130,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else if (!isRequestValid) {
             buildGameError(responseBuilder.getErrorBuilder(),
-                GameError.ErrorType.INVALID_REQUEST,
+                ServerError.ErrorType.INVALID_REQUEST,
                 "Invalid request: request type must be 'SELECT_SPELL_COLOR' and spell color must be provided");
         }
         else if (!sessionExists) {
             // session does not exist
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
             // attacker id does not match player id
             int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Attacker id " + attackerId + " does not match player id " + playerId);
         }
 
@@ -198,20 +197,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else if (!isRequestValid) {
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Invalid request: request type must be 'DRAW_SPELL' and DrawSpell must be provided");
         }
         else if (!sessionExists) {
             // session does not exist
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
             // attacker id does not match player id
             int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Attacker id " + attackerId + " does not match player id " + playerId);
         }
 
@@ -250,12 +249,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             if (matchedTemplateDescription.isEmpty()) {
                 // send error to attacker
                 buildGameError(responseBuilder.getErrorBuilder(),
-                        GameError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
+                        ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
                         "No template found to match provided spell");
-                /*responseBuilder.getErrorBuilder()
-                    .setHasError(true)
-                    .setType(GameError.ErrorType.SPELL_TEMPLATE_NOT_FOUND)
-                    .setMessage("No template found to match provided spell");*/
 
                 // TODO: refactor (two cycles that send either error or data)
                 // send error to all spectators
@@ -264,13 +259,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
                     spectatorResponseBuilder.setResponseType(ResponseType.FINISH_SPELL);
                     buildGameError(spectatorResponseBuilder.getErrorBuilder(),
-                            ErrorType.SPELL_TEMPLATE_NOT_FOUND,
+                            ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
                             "Attacking player drawing did not match any spells");
-                        /*.getErrorBuilder()
-                            .setHasError(true)
-                            .setType(ErrorType.SPELL_TEMPLATE_NOT_FOUND)
-                            .setMessage("Attacking player drawing did not match any spells")
-                            .build();*/
 
                     spectator.streamObserver().onNext(spectatorResponseBuilder.build());
                 }
@@ -321,35 +311,21 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else if (!isRequestValid) {
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided");
-            /*responseBuilder.getErrorBuilder()
-                .setHasError(true)
-                .setType(GameError.ErrorType.INVALID_REQUEST)
-                .setMessage("Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided");*/
         }
         else if (!sessionExists) {
             // session does not exist
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Attack session with id " + sessionId + " not found");
-            /*responseBuilder.getErrorBuilder()
-                .setHasError(true)
-                .setType(GameError.ErrorType.INVALID_REQUEST)
-                .setMessage("Attack session with id " + sessionId + " not found")
-                .build();*/
         }
         else {
             // attacker id does not match player id
             int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
             buildGameError(responseBuilder.getErrorBuilder(),
-                    GameError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.INVALID_REQUEST,
                     "Attacker id " + attackerId + " does not match player id " + playerId);
-            /*responseBuilder.getErrorBuilder()
-                .setHasError(true)
-                .setType(GameError.ErrorType.INVALID_REQUEST)
-                .setMessage("Attacker id " + attackerId + " does not match player id " + playerId)
-                .build();*/
         }
 
         if (sessionExists) {
@@ -375,13 +351,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             buildGameError(responseBuilder.getErrorBuilder(),
-                    ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session associated with tower id of " + towerId + " not found");
-            /*responseBuilder.getErrorBuilder()
-                    .setHasError(true)
-                    .setType(ErrorType.ATTACK_SESSION_NOT_FOUND)
-                    .setMessage("Attack session associated with tower id of " + towerId + " not found")
-                    .build();*/
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -412,13 +383,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else {
             // session does not exist
             buildGameError(responseBuilder.getErrorBuilder(),
-                    ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
-            /*responseBuilder.getErrorBuilder()
-                .setHasError(true)
-                .setType(ErrorType.ATTACK_SESSION_NOT_FOUND)
-                .setMessage("Attack session with id " + sessionId + " not found")
-                .build();*/
 
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
@@ -521,10 +487,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         canvasBuilder.addAllSpellDescriptions(spellDescriptionResponses);
     }
 
-    private void buildGameError(GameError.Builder builder, GameError.ErrorType type, String message) {
-        builder.setHasError(true)
-            .setType(type)
-            .setMessage(message)
-            .build();
+    private void buildGameError(ServerError.Builder builder, ServerError.ErrorType type, String message) {
+        builder.setType(type).setMessage(message).build();
     }
 }

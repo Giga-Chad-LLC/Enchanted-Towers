@@ -1,7 +1,5 @@
 package enchantedtowers.client.interactors.canvas;
 
-import static enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
-
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -13,7 +11,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.AttackSessionIdRequest;
-import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -65,11 +63,11 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         asyncStub.spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(SpectateTowerAttackResponse value) {
-                if (value.hasError()) {
-                    logger.info("CanvasSpectateInteractor::Received: " + value.getError().getMessage());
+            public void onNext(SpectateTowerAttackResponse response) {
+                if (response.hasError()) {
+                    logger.info("CanvasSpectateInteractor::Received: " + response.getError().getMessage());
                     // TODO: deal with error somehow
-                    if (value.getError().getType() == ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
+                    if (response.getError().getType() == ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
                         // attacker did not manage to create a spell, then we just delete his drawing
                         currentPath.reset();
                         canvasWidget.invalidate();
@@ -78,22 +76,22 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     return;
                 }
 
-                switch (value.getResponseType()) {
+                switch (response.getResponseType()) {
                     case CURRENT_CANVAS_STATE -> {
                         logger.info("Received CURRENT_CANVAS_STATE");
-                        onCurrentCanvasStateReceived(value, state, canvasWidget);
+                        onCurrentCanvasStateReceived(response, state, canvasWidget);
                     }
                     case SELECT_SPELL_COLOR -> {
                         logger.info("Received SELECT_SPELL_COLOR");
-                        onSelectSpellColorReceived(value);
+                        onSelectSpellColorReceived(response);
                     }
                     case DRAW_SPELL -> {
                         logger.info("Received DRAW_SPELL");
-                        onDrawSpellReceived(value, canvasWidget);
+                        onDrawSpellReceived(response, canvasWidget);
                     }
                     case FINISH_SPELL -> {
                         logger.info("Received FINISH_SPELL");
-                        onFinishSpellReceived(value, state, canvasWidget);
+                        onFinishSpellReceived(response, state, canvasWidget);
                     }
                 }
             }

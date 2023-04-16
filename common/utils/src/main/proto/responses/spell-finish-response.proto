@@ -7,9 +7,9 @@ package response_models;
 
 // responses
 import "responses/spell-description-response.proto";
-import "responses/game-error.proto";
+import "responses/server-error.proto";
 
 message SpellFinishResponse {
   response_models.SpellDescriptionResponse spellDescription = 1;
-  response_models.GameError error = 2;
+  response_models.ServerError error = 2;
 };
