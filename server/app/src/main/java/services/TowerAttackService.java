@@ -28,6 +28,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     private static final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
 
     // rpc calls
+    /**
+     * Entry point before the attack.
+     * TODO: fully implement method and add description
+     */
     @Override
     public void attackTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         // TODO: if player attacks several towers simultaneously?
@@ -46,7 +50,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: implement leaveAttack
+    // TODO: implement leaveAttack & add description
     @Override
     public void leaveAttack(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         // System.out.println("leaveAttack: " + request.getPlayerData().getPlayerId());
@@ -77,66 +81,59 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     // TODO: reimplement to match data flow style of `finishSpell` method
+    // TODO: add description
     @Override
     public void selectSpellColor(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        // if request is invalid: either incorrect request type or spell color is not provided
-        if (request.getRequestType() != SpellRequest.RequestType.SELECT_SPELL_COLOR || !request.hasSpellColor()) {
+        boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_COLOR && request.hasSpellColor());
+        boolean sessionExists = isRequestValid && getAttackSessionByPlayerId(request.getSpellColor().getPlayerData().getPlayerId()).isPresent();
+
+        if (isRequestValid && sessionExists) {
+            final int colorId = request.getSpellColor().getColorId();
+            final int playerId = request.getSpellColor().getPlayerData().getPlayerId();
+
+            // session must exist
+            assert(getAttackSessionByPlayerId(playerId).isPresent());
+            AttackSession session = getAttackSessionByPlayerId(playerId).get();
+
+            logger.info("Session found: " + session.hashCode());
+            // set current color id
+            session.setCurrentSpellColorId(colorId);
+            logger.info("Setting color id of '" + session.getCurrentSpellColorId() + "'");
+
+            // send current color id to all spectators
+            for (var spectator : session.getSpectators()) {
+                // create response with type of `SELECT_SPELL_COLOR`
+                SpectateTowerAttackResponse.Builder responseBulder = SpectateTowerAttackResponse.newBuilder();
+                responseBulder
+                        .setResponseType(ResponseType.SELECT_SPELL_COLOR)
+                        .getSpellColorBuilder()
+                        .setColorId(session.getCurrentSpellColorId())
+                        .build();
+
+                spectator.streamObserver().onNext(responseBulder.build());
+            }
+            // request processed successfully
+            responseBuilder.setSuccess(true);
+        }
+        else if (!isRequestValid) {
             setErrorInActionResultResponse(
-                responseBuilder,
-                GameError.ErrorType.INVALID_REQUEST,
-                "Invalid request: request type must be 'SELECT_SPELL_COLOR' and spell color must be provided");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-            return;
+                    responseBuilder,
+                    GameError.ErrorType.INVALID_REQUEST,
+                    "Invalid request: request type must be 'SELECT_SPELL_COLOR' and spell color must be provided");
         }
+        else {
+            // session does not exist
+            int playerId = request.getSpellColor().getPlayerData().getPlayerId();
 
-        var spellColorRequest = request.getSpellColor();
-
-        int playerId = spellColorRequest.getPlayerData().getPlayerId();
-        Optional<AttackSession> session = getAttackSessionByPlayerId(playerId);
-
-        // if session not found
-        if (session.isEmpty()) {
             setErrorInActionResultResponse(
-                responseBuilder,
-                GameError.ErrorType.INVALID_REQUEST,
-                "Attack session associated with player with id of " + playerId + " not found");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-            return;
+                    responseBuilder,
+                    GameError.ErrorType.INVALID_REQUEST,
+                    "Attack session associated with player with id of " + playerId + " not found");
         }
 
-        logger.info("Session found: " + session.get().hashCode());
-
-        // set current color id
-        session.get().setCurrentSpellColorId(spellColorRequest.getColorId());
-        logger.info("Setting color id of '" + session.get().getCurrentSpellColorId() + "'");
-
-        /*
-        TODO: implement sending logic
-        for spectator in spectators:
-            spectator.streamObserver.sendColor()
-        */
-
-        // send current color id to all spectators
-        for (var spectator : session.get().getSpectators()) {
-            // create response with type of `SELECT_SPELL_COLOR`
-            SpectateTowerAttackResponse.Builder responseBulder = SpectateTowerAttackResponse.newBuilder();
-            responseBulder
-                .setResponseType(ResponseType.SELECT_SPELL_COLOR)
-                .getSpellColorBuilder()
-                    .setColorId(session.get().getCurrentSpellColorId())
-                    .build();
-
-            spectator.streamObserver().onNext(responseBulder.build());
-        }
-
-        responseBuilder.setSuccess(true);
-
+        // sending response
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
     }
@@ -209,9 +206,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     @Override
     public void finishSpell(SpellRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
+
         boolean isRequestValid = (request.getRequestType() == RequestType.FINISH_SPELL && request.hasFinishSpell());
-        boolean sessionExists = isRequestValid && (getAttackSessionByPlayerId(
-            request.getFinishSpell().getPlayerData().getPlayerId()).isPresent());
+        boolean sessionExists = isRequestValid && getAttackSessionByPlayerId(
+            request.getFinishSpell().getPlayerData().getPlayerId()).isPresent();
 
         if (isRequestValid && sessionExists) {
             var finishSpellRequest = request.getFinishSpell();
@@ -304,6 +302,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 .setMessage("Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided");
         }
         else {
+            // session does not exist
             int playerId = request.getFinishSpell().getPlayerData().getPlayerId();
 
             responseBuilder.getErrorBuilder()
