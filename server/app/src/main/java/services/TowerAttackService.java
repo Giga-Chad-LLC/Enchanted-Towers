@@ -71,38 +71,53 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: implement leaveAttack & add description
+    // TODO: use ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND where needed
+
+    /**
+     * If request is valid, closes connections to all spectators and removes attack session associated with player.
+     * Otherwise, sends error to the player.
+     */
     @Override
     public void leaveAttack(LeaveAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
-        /*
-        // System.out.println("leaveAttack: " + request.getPlayerData().getPlayerId());
-
-        logger.info("leaveAttack: " + request.getPlayerData().getPlayerId());
-
-        final int playerId = request.getPlayerData().getPlayerId();
-        Optional<AttackSession> session = sessionManager.getAttackSessionByPlayerId(playerId);
+        logger.info("leaveAttack: playerId=" + request.getPlayerData().getPlayerId() + ", sessionId=" + request.getSessionId());
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        if (session.isEmpty()) {
-            // session not found -> error
-            responseBuilder.setSuccess(false);
-            responseBuilder.getErrorBuilder()
-                    .setHasError(true)
-                    .setType(GameError.ErrorType.ATTACK_SESSION_NOT_FOUND)
-                    .setMessage("Attack session associated with player id of '" + playerId + "' not found")
-                    .build();
+        final int sessionId = request.getSessionId();
+        final int playerId = request.getPlayerData().getPlayerId();
+
+        boolean sessionExists = sessionManager.getSessionById(sessionId).isPresent();
+        boolean isPlayerAssociatedWithFoundSession = sessionExists &&
+                playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+
+        if (sessionExists && isPlayerAssociatedWithFoundSession) {
+            AttackSession session = sessionManager.getSessionById(sessionId).get();
+
+            // send onComplete() to all spectators
+            for (var spectator : session.getSpectators()) {
+                spectator.streamObserver().onCompleted();
+            }
+            // remove attack session
+            sessionManager.remove(session);
+
+            responseBuilder.setSuccess(true);
+        }
+        else if (!sessionExists) {
+            // session not found
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    "Attack session with provided id " + sessionId + " not found");
         }
         else {
-            // removing session
-            // sessions.remove(session.get());
-            sessionManager.remove(session.get());
-            responseBuilder.setSuccess(true);
+            // player id does not equal to the id of player associated with found session
+            int associatedPlayerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is no associated with found session, expected player id " + associatedPlayerId);
         }
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
-        */
     }
 
     /**
