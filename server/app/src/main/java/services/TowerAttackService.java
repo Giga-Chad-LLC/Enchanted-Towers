@@ -1,10 +1,21 @@
 package services;
 
+import io.grpc.stub.StreamObserver;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.logging.Logger;
+
+// components
 import components.session.AttackSession;
+// proto
+// requests
 import enchantedtowers.common.utils.proto.requests.PlayerIdentificationRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
 import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
+// responses
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.GameError;
 import enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
@@ -12,14 +23,12 @@ import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
 import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
+// services
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
+// game-logic
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+// game-models
 import enchantedtowers.game_models.utils.Vector2;
-import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.logging.Logger;
 
 
 
@@ -137,6 +146,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+
     // TODO: add description
     @Override
     public void drawSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
@@ -198,6 +208,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
     }
+
 
     @Override
     public void finishSpell(SpellRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
@@ -318,6 +329,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+    // spectating related methods
     @Override
     public void enterSpectatingTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         int towerId = request.getTowerId();
@@ -348,24 +360,21 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
 
         Optional<AttackSession> sessionOpt = getAttackSessionByTowerId(towerId);
-
         if (sessionOpt.isPresent()) {
             AttackSession session = sessionOpt.get();
-
             // create response with canvas state
             responseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
-            createCurrentSpellOfCanvasStateInSpectateTowerAttackResponse(responseBuilder, session);
-            createSpellDescriptionsOfCanvasStateInSpectateTowerAttackResponse(responseBuilder, session);
+            addCurrentSpellIfExists(responseBuilder, session);
+            addSpellDescriptionsOfDrawnSpells(responseBuilder, session);
             // build canvas
             responseBuilder.getCanvasStateBuilder().build();
-
-            // send canvas state to client
+            // send canvas state to spectator
             streamObserver.onNext(responseBuilder.build());
-
             // adding spectator
             session.addSpectator(spectatingPlayerId, streamObserver);
         }
         else {
+            // session does not exist
             responseBuilder.getErrorBuilder()
                 .setHasError(true)
                 .setType(GameError.ErrorType.ATTACK_SESSION_NOT_FOUND)
@@ -412,23 +421,23 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     // helper methods
-    private void createCurrentSpellOfCanvasStateInSpectateTowerAttackResponse(
-        SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
-        // set current spell if exists
+    /**
+    * Adds currently being drawn spell to {@link SpectateTowerAttackResponse} if the one exists.
+    */
+    private void addCurrentSpellIfExists(SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
+        // set current spell if it exists (aka spell that is being used for drawing right now)
         if (session.hasCurrentSpell()) {
             List<enchantedtowers.common.utils.proto.common.Vector2> points = new ArrayList<>();
-
             // collect drawn spell points
             for (var point : session.getCurrentSpellPoints()) {
                 var vector2 = enchantedtowers.common.utils.proto.common.Vector2.newBuilder()
                     .setX(point.x)
                     .setY(point.y)
                     .build();
-
                 points.add(vector2);
             }
 
-            // build current spell
+            // build current spell (aka spell that is being drawn right now)
             var canvasBuilder = responseBuilder.getCanvasStateBuilder();
             canvasBuilder.getCurrentSpellStateBuilder()
                 .setColorId(session.getCurrentSpellColorId())
@@ -437,26 +446,26 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
     }
 
-    private void createSpellDescriptionsOfCanvasStateInSpectateTowerAttackResponse(
-        SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
-        // set spell descriptions
+    /**
+     * Adds spell descriptions (i.e. {@link SpellDescriptionResponse} instances) of already drawn spells into {@link SpectateTowerAttackResponse} response.
+     */
+    private void addSpellDescriptionsOfDrawnSpells(SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
         List<SpellDescriptionResponse> spellDescriptionResponses = new ArrayList<>();
 
+        // collecting building descriptions of all already drawn spells on canvas
         for (var spellDescription : session.getDrawnSpellsDescriptions()) {
-            int spellTemplateId = spellDescription.id();
-            int colorId = spellDescription.colorId();
-            Vector2 offset = spellDescription.offset();
-
-            // colorId, spellTemplateId, spellTemplateOffset: Vector2
             SpellDescriptionResponse.Builder spellDescriptionResponseBuilder = SpellDescriptionResponse.newBuilder();
 
-            // add spellTemplateOffset
+            // add spell template offset
+            Vector2 offset = spellDescription.offset();
             spellDescriptionResponseBuilder.getSpellTemplateOffsetBuilder()
                 .setX(offset.x)
                 .setY(offset.y)
                 .build();
 
             // add the other fields
+            int spellTemplateId = spellDescription.id();
+            int colorId = spellDescription.colorId();
             spellDescriptionResponseBuilder
                 .setColorId(colorId)
                 .setSpellTemplateId(spellTemplateId);
@@ -464,7 +473,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             spellDescriptionResponses.add(spellDescriptionResponseBuilder.build());
         }
 
-        // build
+        // adding spell descriptions into canvas state response
         var canvasBuilder = responseBuilder.getCanvasStateBuilder();
         canvasBuilder.addAllSpellDescriptions(spellDescriptionResponses);
     }
