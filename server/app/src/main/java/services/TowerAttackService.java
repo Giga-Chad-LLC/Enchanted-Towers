@@ -71,8 +71,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: use ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND where needed
-
     /**
      * If request is valid, closes connections to all spectators and removes attack session associated with player.
      * Otherwise, sends error to the player.
@@ -169,7 +167,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -237,7 +235,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -355,7 +353,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -378,6 +376,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     // spectating related methods
+
+    /**
+     * Retrieves any session associated with provided tower id and sends its id (i.e. session id) the client.
+     * If session not found, sends error.
+     */
     @Override
     public void trySpectateTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
         int towerId = request.getTowerId();
@@ -397,6 +400,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+    /**
+     * Registers player as spectator to the events of the requested attack session.
+     */
     @Override
     public void spectateTowerBySessionId(AttackSessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
         final int sessionId = request.getSessionId();
@@ -429,41 +435,46 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
     }
 
-    // TODO: implement
+    /**
+     * Finds spectator with provided player id in the requested attack session.
+     * Then closes the connection with the spectator and removes it from session spectators list.
+     */
     @Override
     public void leaveSpectating(LeaveSpectatingRequest request, StreamObserver<ActionResultResponse> streamObserver) {
-        /*
-        final int playerId = request.getData().getPlayerId();
-        boolean successfullyRemoved = false;
+        logger.info("leaveSpectating: playerId=" + request.getPlayerData().getPlayerId() + ", sessionId=" + request.getSessionId());
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        // TODO: reimplement using session manager
-        for (var session : sessions) {
-            AttackSession.Spectator spectator = session.pollSpectatorById(playerId);
-            if (spectator != null) {
-                // if spectator found, close connection
-                spectator.streamObserver().onCompleted();
-                successfullyRemoved = true;
-                break;
+        final int sessionId = request.getSessionId();
+        final int spectatingPlayerId = request.getPlayerData().getPlayerId();
+
+        boolean sessionExists = sessionManager.getSessionById(sessionId).isPresent();
+        if (sessionExists) {
+            AttackSession session = sessionManager.getSessionById(sessionId).get();
+            Optional<AttackSession.Spectator> spectator = session.pollSpectatorById(spectatingPlayerId);
+
+            if (spectator.isPresent()) {
+                // closing connection
+                logger.info("Closing connection with spectator with id " + spectatingPlayerId);
+                spectator.get().streamObserver().onCompleted();
+                responseBuilder.setSuccess(true);
+            }
+            else {
+                // player is not spectating
+                buildServerError(responseBuilder.getErrorBuilder(),
+                        ServerError.ErrorType.INVALID_REQUEST,
+                        "Session with id " + sessionId + " does not have spectator with id " + spectatingPlayerId);
             }
         }
-
-        if (successfullyRemoved) {
-            responseBuilder.setSuccess(true);
-        }
         else {
-            // could not remove spectator since player did not spectate any attack session
-            setErrorInActionResultResponse(
-                responseBuilder,
-                ErrorType.INVALID_REQUEST,
-                "Player with id of '" + playerId + "' is not spectating any tower attack"
-            );
+            // session not found
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    "Attack session with provided id " + sessionId + " not found");
         }
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
-        */
     }
 
 

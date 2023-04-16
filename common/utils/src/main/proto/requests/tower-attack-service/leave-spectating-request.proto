@@ -10,5 +10,5 @@ import "common/player-data.proto";
 
 message LeaveSpectatingRequest {
   int32 sessionId = 1;
-  common.PlayerData data = 2;
+  common.PlayerData playerData = 2;
 };
