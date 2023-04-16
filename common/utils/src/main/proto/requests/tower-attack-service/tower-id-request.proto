@@ -5,9 +5,9 @@ option java_multiple_files = true;
 
 package request_models;
 
-// common
 import "common/player-data.proto";
 
-message PlayerIdentificationRequest {
-  common.PlayerData data = 1;
+message TowerIdRequest {
+  int32 towerId = 1;
+  common.PlayerData playerData = 2;
 };

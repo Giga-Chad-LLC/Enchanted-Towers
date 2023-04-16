@@ -11,18 +11,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
+import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
+import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-
-// utils
-import enchantedtowers.common.utils.storage.ServerApiStorage;
 
 
 // TODO: rename/remove this activity (created only for testing)
@@ -51,7 +48,6 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         EditText playerIdTextInput = findViewById(R.id.playerIdTextInput);
         EditText towerIdTextInput = findViewById(R.id.towerIdTextInput);
 
-
         attackButton.setOnClickListener(view -> {
             try {
                 int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
@@ -68,7 +64,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             try {
                 int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
                 int towerId  = Integer.parseInt(towerIdTextInput.getText().toString());
-                callAsyncEnterSpectateTowerById(playerId, towerId);
+                callAsyncTrySpectateTowerById(playerId, towerId);
             }
             catch(NumberFormatException err) {
                 System.out.println(err.getMessage());
@@ -77,8 +73,8 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         });
     }
 
-    private void callAsyncEnterSpectateTowerById(int playerId, int towerId) {
-        TowerAttackRequest.Builder requestBuilder = TowerAttackRequest.newBuilder();
+    private void callAsyncTrySpectateTowerById(int playerId, int towerId) {
+        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
@@ -112,19 +108,24 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     }
 
     private void callAsyncAttackTowerById(int playerId, int towerId) {
-        TowerAttackRequest.Builder requestBuilder = TowerAttackRequest.newBuilder();
+        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(ActionResultResponse response) {
+            public void onNext(AttackSessionIdResponse response) {
                 // Handle the response
-                System.out.println("attackTowerById::Received response: " + response.getSuccess());
-                // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
-                ClientStorage.getInstance().setPlayerId(playerId);
-                ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
+                if (response.hasError()) {
+                    System.out.println("attackTowerById::Received error: " + response.getError().getMessage());
+                }
+                else {
+                    // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                    ClientStorage.getInstance().setPlayerId(playerId);
+                    ClientStorage.getInstance().setSessionId(response.getSessionId());
+                    ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
+                }
             }
 
             @Override

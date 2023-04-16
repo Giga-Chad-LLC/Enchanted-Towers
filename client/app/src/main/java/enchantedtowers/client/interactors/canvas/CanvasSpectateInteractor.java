@@ -3,7 +3,6 @@ package enchantedtowers.client.interactors.canvas;
 import static enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 
@@ -13,7 +12,7 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
+import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -56,7 +55,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId or towerId is not present");
         }
 
-        TowerAttackRequest.Builder requestBuilder = TowerAttackRequest.newBuilder();
+        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.setTowerId(towerId.get());
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId.get())
@@ -213,4 +212,3 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         canvasWidget.invalidate();
     }
 }
-

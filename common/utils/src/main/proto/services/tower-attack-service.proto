@@ -7,28 +7,31 @@ package services;
 
 // requests
 import "requests/player-coordinates-request.proto";
-import "requests/tower-attack-request.proto";
 import "requests/spell-request.proto";
-import "requests/player-identification-request.proto";
+import "requests/tower-attack-service/tower-id-request.proto";
+import "requests/tower-attack-service/leave-attack-request.proto";
+import "requests/tower-attack-service/leave-spectating-request.proto";
 // responses
 import "responses/action-result-response.proto";
 import "responses/spell-finish-response.proto";
 import "responses/spectate-tower-attack-response.proto";
+import "responses/tower-attack-service/attack-session-id-response.proto";
 
 
 
 service TowerAttackService {
 //  rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
-  rpc AttackTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
-  rpc LeaveAttack(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
+
+  rpc AttackTowerById(request_models.TowerIdRequest) returns (response_models.AttackSessionIdResponse) {}
+  rpc LeaveAttack(request_models.LeaveAttackRequest) returns (response_models.ActionResultResponse) {}
 
   // drawing related methods
   rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
 
-  // TODO: how to remove this redundant method
-  rpc TrySpectateTowerById(request_models.TowerAttackRequest) returns (response_models.ActionResultResponse) {}
-  rpc SpectateTowerById(request_models.TowerAttackRequest) returns (stream response_models.SpectateTowerAttackResponse) {}
-  rpc LeaveSpectating(request_models.PlayerIdentificationRequest) returns (response_models.ActionResultResponse) {}
+  // TODO: how to remove this redundant method 'TrySpectateTowerById'?
+  rpc TrySpectateTowerById(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc SpectateTowerById(request_models.TowerIdRequest) returns (stream response_models.SpectateTowerAttackResponse) {}
+  rpc LeaveSpectating(request_models.LeaveSpectatingRequest) returns (response_models.ActionResultResponse) {}
 }

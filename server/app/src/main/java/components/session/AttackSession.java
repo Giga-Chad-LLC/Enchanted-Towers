@@ -1,6 +1,6 @@
 package components.session;
 
-import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
+import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 
 
 public class AttackSession {
+    private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
 
@@ -30,7 +31,8 @@ public class AttackSession {
 
     private static final Logger logger = Logger.getLogger(AttackSession.class.getName());
 
-    AttackSession(int attackingPlayerId, int attackedTowerId) {
+    AttackSession(int id, int attackingPlayerId, int attackedTowerId) {
+        this.id = id;
         this.attackingPlayerId = attackingPlayerId;
         this.attackedTowerId = attackedTowerId;
     }
@@ -53,16 +55,16 @@ public class AttackSession {
         }
     }
 
-    public static AttackSession fromRequest(final TowerAttackRequest request) {
-        return new AttackSession(request.getPlayerData().getPlayerId(), request.getTowerId());
-    }
-
     public int getAttackingPlayerId() {
         return attackingPlayerId;
     }
 
     public int getAttackedTowerId() {
         return attackedTowerId;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public int getCurrentSpellColorId() {

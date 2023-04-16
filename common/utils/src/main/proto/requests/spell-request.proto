@@ -20,13 +20,14 @@ message SpellRequest {
   };
 
   common.PlayerData playerData = 1;
+  int32 sessionId = 2;
 
   // common for all 3 types of request
-  RequestType requestType = 2;
+  RequestType requestType = 3;
   // SELECT_SPELL_COLOR
-  SelectSpellColorRequest spellColor = 3;
+  SelectSpellColorRequest spellColor = 4;
   // DRAW_SPELL
-  SpellCurvePositionRequest drawSpell = 4;
+  SpellCurvePositionRequest drawSpell = 5;
   // FINISH_SPELL
-  SpellCurvePositionRequest finishSpell = 5;
+  SpellCurvePositionRequest finishSpell = 6;
 };

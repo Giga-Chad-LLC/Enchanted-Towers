@@ -17,6 +17,11 @@ public class ClientStorage {
         return playerData.playerId;
     }
 
+    public Optional<Integer> getSessionId() {
+        // TODO: return playerData.sessionId.get() that throws
+        return playerData.sessionId;
+    }
+
     public Optional<Integer> getTowerIdUnderAttack() {
         return playerData.towerIdUnderAttack;
     }
@@ -28,6 +33,10 @@ public class ClientStorage {
     // setters
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
+    }
+
+    public void setSessionId(int sessionId) {
+        playerData.sessionId = Optional.of(sessionId);
     }
 
     public void setTowerIdUnderAttack(int towerIdUnderAttack) {
@@ -42,6 +51,7 @@ public class ClientStorage {
 
     private static class PlayerData {
         public Optional<Integer> playerId = Optional.empty();
+        public Optional<Integer> sessionId = Optional.empty();
         public Optional<Integer> towerIdUnderAttack = Optional.empty();
         public Optional<Integer> towerIdUnderSpectate = Optional.empty();
     }
@@ -50,4 +60,3 @@ public class ClientStorage {
         playerData = new PlayerData();
     }
 }
-

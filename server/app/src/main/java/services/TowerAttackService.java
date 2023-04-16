@@ -1,5 +1,9 @@
 package services;
 
+import enchantedtowers.common.utils.proto.requests.LeaveAttackRequest;
+import enchantedtowers.common.utils.proto.requests.LeaveSpectatingRequest;
+import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
+import enchantedtowers.common.utils.proto.responses.*;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
@@ -12,18 +16,11 @@ import components.session.AttackSession;
 import components.session.AttackSessionManager;
 // proto
 // requests
-import enchantedtowers.common.utils.proto.requests.PlayerIdentificationRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
-import enchantedtowers.common.utils.proto.requests.TowerAttackRequest;
 // responses
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.GameError;
 import enchantedtowers.common.utils.proto.responses.GameError.ErrorType;
-import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
-import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
-import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 // services
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 // game-logic
@@ -34,7 +31,6 @@ import enchantedtowers.game_models.utils.Vector2;
 
 
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
-//    private final List<AttackSession> sessions = new ArrayList<>();
     private final AttackSessionManager sessionManager = new AttackSessionManager();
     private static final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
 
@@ -44,19 +40,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * TODO: fully implement method and add description
      */
     @Override
-    public void attackTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+    public void attackTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> responseObserver) {
         // TODO: if player attacks several towers simultaneously?
         // TODO: check whether player already has an attack session
         // sessions.add(AttackSession.fromRequest(request));
-        sessionManager.add(request.getTowerId(), AttackSession.fromRequest(request));
-
         int playerId = request.getPlayerData().getPlayerId();
         int towerId = request.getTowerId();
+
+        int sessionId = sessionManager.add(playerId, towerId);
+
         logger.info("attackTowerById: playerId=" + playerId + ", towerId=" + towerId);
         // System.out.println("attackTowerById: playerId=" + playerId + ", towerId=" + towerId);
 
-        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
-        responseBuilder.setSuccess(true);
+        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+        responseBuilder.setSessionId(sessionId);
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
@@ -64,8 +61,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     // TODO: implement leaveAttack & add description
     @Override
-    public void leaveAttack(TowerAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+    public void leaveAttack(LeaveAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+        /*
         // System.out.println("leaveAttack: " + request.getPlayerData().getPlayerId());
+
         logger.info("leaveAttack: " + request.getPlayerData().getPlayerId());
 
         final int playerId = request.getPlayerData().getPlayerId();
@@ -91,6 +90,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
+        */
     }
 
     // TODO: add description
@@ -337,7 +337,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     // spectating related methods
     @Override
-    public void trySpectateTowerById(TowerAttackRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public void trySpectateTowerById(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         int towerId = request.getTowerId();
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
@@ -359,7 +359,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     @Override
-    public void spectateTowerById(TowerAttackRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
+    public void spectateTowerById(TowerIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
         int towerId = request.getTowerId();
         int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
@@ -392,15 +392,17 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
     }
 
+    // TODO: implement
     @Override
-    public void leaveSpectating(PlayerIdentificationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public void leaveSpectating(LeaveSpectatingRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        /*
         final int playerId = request.getData().getPlayerId();
         boolean successfullyRemoved = false;
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         // TODO: reimplement using session manager
-        /*for (var session : sessions) {
+        for (var session : sessions) {
             AttackSession.Spectator spectator = session.pollSpectatorById(playerId);
             if (spectator != null) {
                 // if spectator found, close connection
@@ -408,7 +410,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 successfullyRemoved = true;
                 break;
             }
-        }*/
+        }
 
         if (successfullyRemoved) {
             responseBuilder.setSuccess(true);
@@ -424,6 +426,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
+        */
     }
 
 

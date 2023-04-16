@@ -9,12 +9,22 @@ import java.util.TreeMap;
 public class AttackSessionManager {
    // towerId -> sessions
    private final Map<Integer, List<AttackSession>> sessions = new TreeMap<>();
+   private int CURRENT_SESSION_ID = 0;
 
-   public void add(int towerId, AttackSession session) {
+   /**
+    * Returns id of newly created session
+    */
+   public int add(int playerId, int towerId) {
       if (!sessions.containsKey(towerId)) {
          sessions.put(towerId, new ArrayList<>());
       }
+
+      int sessionId = CURRENT_SESSION_ID++;
+
+      AttackSession session = new AttackSession(sessionId, playerId, towerId);
       sessions.get(towerId).add(session);
+
+      return sessionId;
    }
 
    public void remove(AttackSession session) {
@@ -29,6 +39,7 @@ public class AttackSessionManager {
    /**
     * Invariant: if key exist then the list on sessions must be non-empty
    */
+   // TODO: replace with getSessionById
    public Optional<AttackSession> getAttackSessionByTowerId(int towerId) {
       if (sessions.containsKey(towerId)) {
          assert(sessions.get(towerId) != null && !sessions.get(towerId).isEmpty());
@@ -39,7 +50,7 @@ public class AttackSessionManager {
 
       return Optional.empty();
    }
-
+   // TODO: replace with getSessionById
    public Optional<AttackSession> getAttackSessionByPlayerId(int playerId) {
       for (var sessionList : sessions.values()) {
          for (var session : sessionList) {

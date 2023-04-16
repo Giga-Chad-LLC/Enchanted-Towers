@@ -9,12 +9,10 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import enchantedtowers.client.interactors.canvas.CanvasDrawSpellInteractor;
-import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
-import enchantedtowers.client.interactors.canvas.CanvasInteractor;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import enchantedtowers.client.interactors.canvas.CanvasInteractor;
 
 
 public class CanvasWidget extends View {
