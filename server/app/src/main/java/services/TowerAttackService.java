@@ -391,6 +391,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             responseBuilder.setSessionId(session.get().getId());
         }
         else {
+            logger.info("trySpectateTowerById: session associated with tower id " + towerId + " not found");
             buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session associated with tower id of " + towerId + " not found");
