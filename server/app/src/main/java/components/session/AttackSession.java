@@ -1,6 +1,5 @@
 package components.session;
 
-import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -20,14 +19,13 @@ public class AttackSession {
     private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
-
     private final List<Vector2> currentSpellPoints = new ArrayList<>();
     private Optional<Integer> currentSpellColorId = Optional.empty();
     private Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> lastTemplateMatchDescription = Optional.empty();
-    // TODO: add spectators
-
     private final List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> drawnSpellsDescriptions = new ArrayList<>();
     private final List<Spectator> spectators = new ArrayList<>();
+    // this lock object is used as mutual exclusion lock
+    private final Object lock = new Object();
 
     private static final Logger logger = Logger.getLogger(AttackSession.class.getName());
 
@@ -56,91 +54,116 @@ public class AttackSession {
     }
 
     public int getId() {
-        return id;
+        synchronized (lock) {
+            return id;
+        }
     }
 
     public int getAttackingPlayerId() {
-        return attackingPlayerId;
-    }
-
-    public int getAttackedTowerId() {
-        return attackedTowerId;
+        synchronized (lock) {
+            return attackingPlayerId;
+        }
     }
 
     public int getCurrentSpellColorId() {
-        return currentSpellColorId.get();
+        synchronized (lock) {
+            // asserting that this method will not be used before the value assigned to the field
+            assert(currentSpellColorId.isPresent());
+            return currentSpellColorId.get();
+        }
     }
 
     public List<Vector2> getCurrentSpellPoints() {
-        return Collections.unmodifiableList(currentSpellPoints);
+        synchronized (lock) {
+            return Collections.unmodifiableList(currentSpellPoints);
+        }
     }
 
     public boolean hasCurrentSpell() {
-        // TODO: explicitly set flag of the variable existence
-        return this.currentSpellColorId.isPresent();
+        synchronized (lock) {
+            // TODO: explicitly set flag of the variable existence
+            return this.currentSpellColorId.isPresent();
+        }
     }
 
     public void setCurrentSpellColorId(int currentSpellColorId) {
-        this.currentSpellColorId = Optional.of(currentSpellColorId);
+        synchronized (lock) {
+            this.currentSpellColorId = Optional.of(currentSpellColorId);
+        }
     }
 
     public void addPointToCurrentSpell(Vector2 point) {
-        currentSpellPoints.add(point);
+        synchronized (lock) {
+            currentSpellPoints.add(point);
+        }
     }
 
     public void clearCurrentDrawing() {
-        // clear out the current spell
-        currentSpellPoints.clear();
-        currentSpellColorId = Optional.empty();
+        synchronized (lock) {
+            // clear out the current spell
+            currentSpellPoints.clear();
+            currentSpellColorId = Optional.empty();
+        }
     }
 
     public List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getDrawnSpellsDescriptions() {
-        return Collections.unmodifiableList(drawnSpellsDescriptions);
+        synchronized (lock) {
+            return Collections.unmodifiableList(drawnSpellsDescriptions);
+        }
     }
 
     /**
-     * This method must be called after successful getMatchedTemplate invocation
+     * This method must be called after successful <code>getMatchedTemplate</code> invocation
      */
     public void saveMatchedTemplate() {
-        // add current template spell to the canvas history
-        drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
+        synchronized (lock) {
+            assert(lastTemplateMatchDescription.isPresent());
+            // add current template spell to the canvas history
+            drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
+        }
     }
 
     public Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getMatchedTemplate(Vector2 offset) {
-        if (Utils.isValidPath(currentSpellPoints) && currentSpellColorId.isPresent()) {
-            Spell pattern = new Spell(
-                Utils.getNormalizedPoints(currentSpellPoints, offset),
-                offset
-            );
+        synchronized (lock) {
+            if (Utils.isValidPath(currentSpellPoints) && currentSpellColorId.isPresent()) {
+                Spell pattern = new Spell(
+                        Utils.getNormalizedPoints(currentSpellPoints, offset),
+                        offset
+                );
 
-            System.out.println("SESSION: currentSpellPoints.size=" + currentSpellPoints.size());
+                System.out.println("SESSION: currentSpellPoints.size=" + currentSpellPoints.size());
 
-            Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedSpellDescription = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
-                SpellBook.getTemplates(),
-                pattern,
-                currentSpellColorId.get(),
-                new HausdorffMetric()
-            );
+                Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedSpellDescription = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
+                        SpellBook.getTemplates(),
+                        pattern,
+                        currentSpellColorId.get(),
+                        new HausdorffMetric()
+                );
 
-            if (matchedSpellDescription.isPresent()) {
-                lastTemplateMatchDescription = matchedSpellDescription;
-                return matchedSpellDescription;
+                if (matchedSpellDescription.isPresent()) {
+                    lastTemplateMatchDescription = matchedSpellDescription;
+                    return matchedSpellDescription;
+                }
             }
-        }
-        else {
-            System.err.println("Path validity: " + Utils.isValidPath(currentSpellPoints));
-            System.err.println("Current spell color present: " + currentSpellColorId.isPresent());
-        }
+            else {
+                System.err.println("Path validity: " + Utils.isValidPath(currentSpellPoints));
+                System.err.println("Current spell color present: " + currentSpellColorId.isPresent());
+            }
 
-        return Optional.empty();
+            return Optional.empty();
+        }
     }
 
     public List<Spectator> getSpectators() {
-        return Collections.unmodifiableList(spectators);
+        synchronized (lock) {
+            return Collections.unmodifiableList(spectators);
+        }
     }
 
     public void addSpectator(int playerId, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
-        spectators.add(new Spectator(playerId, streamObserver));
+        synchronized (lock) {
+            spectators.add(new Spectator(playerId, streamObserver));
+        }
     }
 
     /**
@@ -149,19 +172,21 @@ public class AttackSession {
      * @return either <code>Optional.empty()</code> or <code>Optional.of(removedSpectator)</code>
      */
     public Optional<Spectator> pollSpectatorById(int playerId) {
-        var iterator = spectators.iterator();
-        Optional<Spectator> removedSpectator = Optional.empty();
+        synchronized (lock) {
+            var iterator = spectators.iterator();
+            Optional<Spectator> removedSpectator = Optional.empty();
 
-        while (iterator.hasNext()) {
-            Spectator spectator = iterator.next();
-            if (spectator.playerId == playerId) {
-                logger.info("Spectator with id '" + playerId + "' removed from session");
-                removedSpectator = Optional.of(spectator);
-                iterator.remove();
-                break;
+            while (iterator.hasNext()) {
+                Spectator spectator = iterator.next();
+                if (spectator.playerId == playerId) {
+                    logger.info("Spectator with id '" + playerId + "' removed from session");
+                    removedSpectator = Optional.of(spectator);
+                    iterator.remove();
+                    break;
+                }
             }
-        }
 
-        return removedSpectator;
+            return removedSpectator;
+        }
     }
 }
