@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// responses
+import "responses/server-error.proto";
+
+
+message AttackTowerByIdResponse {
+  enum ResponseType {
+    ATTACK_SESSION_ID = 0;
+    ATTACK_SESSION_EXPIRED = 1;
+  };
+
+  message SessionInfo {
+    int32 sessionId = 1;
+  };
+
+  message SessionExpirationInfo {
+    // maybe some data in the future (e.g. duration)
+  };
+
+  ResponseType type = 1;
+  response_models.ServerError error = 2;
+  // ATTACK_SESSION_ID
+  SessionInfo session = 3;
+  // ATTACK_SESSION_EXPIRED
+  SessionExpirationInfo expiration = 4;
+};
