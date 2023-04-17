@@ -1,20 +1,24 @@
 package components.session;
 
+import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import io.grpc.stub.StreamObserver;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.IntConsumer;
 
 public class AttackSessionManager {
    // towerId -> sessions
    private final Map<Integer, List<AttackSession>> sessions = new TreeMap<>();
    private int CURRENT_SESSION_ID = 2;
 
-   /**
-    * @return id of newly created session
-    */
-   public int add(int playerId, int towerId) {
+   public AttackSession createAttackSession(int playerId,
+                                  int towerId,
+                                  StreamObserver<AttackTowerByIdResponse> attackerResponseObserver,
+                                  IntConsumer onSessionExpiredCallback) {
       synchronized (sessions) {
          if (!sessions.containsKey(towerId)) {
             sessions.put(towerId, new ArrayList<>());
@@ -22,10 +26,10 @@ public class AttackSessionManager {
 
          int sessionId = CURRENT_SESSION_ID++;
 
-         AttackSession session = new AttackSession(sessionId, playerId, towerId);
+         AttackSession session = new AttackSession(sessionId, playerId, towerId, attackerResponseObserver, onSessionExpiredCallback);
          sessions.get(towerId).add(session);
 
-         return sessionId;
+         return session;
       }
    }
 

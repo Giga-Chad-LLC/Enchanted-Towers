@@ -1,5 +1,6 @@
 package components.session;
 
+import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -10,6 +11,7 @@ import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
 
 import java.util.*;
+import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
 
@@ -17,6 +19,8 @@ public class AttackSession {
     private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
+    private final StreamObserver<AttackTowerByIdResponse> attackerResponseObserver;
+    private final IntConsumer onSessionExpiredCallback;
     private final List<Vector2> currentSpellPoints = new ArrayList<>();
     private Optional<Integer> currentSpellColorId = Optional.empty();
     private Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> lastTemplateMatchDescription = Optional.empty();
@@ -27,10 +31,17 @@ public class AttackSession {
 
     private static final Logger logger = Logger.getLogger(AttackSession.class.getName());
 
-    AttackSession(int id, int attackingPlayerId, int attackedTowerId) {
+    AttackSession(int id,
+                  int attackingPlayerId,
+                  int attackedTowerId,
+                  StreamObserver<AttackTowerByIdResponse> attackerResponseObserver,
+                  IntConsumer onSessionExpiredCallback) {
         this.id = id;
         this.attackingPlayerId = attackingPlayerId;
         this.attackedTowerId = attackedTowerId;
+        this.attackerResponseObserver = attackerResponseObserver;
+        // TODO: create timeout event that fires `onSessionExpiredCallback`
+        this.onSessionExpiredCallback = onSessionExpiredCallback;
     }
 
     public static class Spectator {
@@ -70,6 +81,12 @@ public class AttackSession {
     public int getAttackingPlayerId() {
         synchronized (lock) {
             return attackingPlayerId;
+        }
+    }
+
+    public StreamObserver<AttackTowerByIdResponse> getAttackerResponseObserver () {
+        synchronized (lock) {
+            return attackerResponseObserver;
         }
     }
 
