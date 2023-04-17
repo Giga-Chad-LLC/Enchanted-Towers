@@ -8,10 +8,8 @@ import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Utils;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 import java.util.logging.Logger;
 
 
@@ -37,15 +35,25 @@ public class AttackSession {
 
     public static class Spectator {
         private final int playerId;
+        private boolean isValid;
         private final StreamObserver<SpectateTowerAttackResponse> streamObserver;
 
         Spectator(int playerId, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
             this.playerId = playerId;
+            this.isValid = true;
             this.streamObserver = streamObserver;
         }
 
         public int playerId() {
             return playerId;
+        }
+
+        private void invalidate() {
+            isValid = false;
+        }
+
+        private boolean isValid() {
+            return this.isValid;
         }
 
         public StreamObserver<SpectateTowerAttackResponse> streamObserver() {
@@ -62,6 +70,27 @@ public class AttackSession {
     public int getAttackingPlayerId() {
         synchronized (lock) {
             return attackingPlayerId;
+        }
+    }
+
+    /**
+     * Sets <code>isValid</code> property of {@link Spectator} to <code>true</code> to indicate
+     * that spectator is no longer valid and must be deleted on the next {@link AttackSession#getSpectators()} call.
+     * Thus, the removal of spectator is being held lazily since it simplifies the workflow of {@link AttackSession}.
+     */
+    public void invalidateSpectator(int spectatorId) {
+        synchronized (lock) {
+            boolean invalidated = false;
+            for (var spectator : spectators) {
+                if (spectatorId == spectator.playerId()) {
+                    spectator.invalidate();
+                    invalidated = true;
+                }
+            }
+
+            if (!invalidated) {
+                throw new NoSuchElementException("Invalidation failed: spectator with id " + spectatorId + " not found");
+            }
         }
     }
 
@@ -113,7 +142,7 @@ public class AttackSession {
     }
 
     /**
-     * This method must be called after successful <code>getMatchedTemplate</code> invocation
+     * This method must be called after successful {@link AttackSession#getMatchedTemplate} invocation
      */
     public void saveMatchedTemplate() {
         synchronized (lock) {
@@ -154,8 +183,13 @@ public class AttackSession {
         }
     }
 
+    /**
+     * Removes invalid spectators before returning the unmodifiable spectator list.
+     */
     public List<Spectator> getSpectators() {
         synchronized (lock) {
+            // remove invalidated spectators
+            spectators.removeIf(spectator -> !spectator.isValid());
             return Collections.unmodifiableList(spectators);
         }
     }

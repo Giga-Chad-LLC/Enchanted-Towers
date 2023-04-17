@@ -2,6 +2,7 @@ package services;
 
 import enchantedtowers.common.utils.proto.requests.*;
 import enchantedtowers.common.utils.proto.responses.*;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         if (sessionExists && isPlayerAssociatedWithFoundSession) {
             AttackSession session = sessionManager.getSessionById(sessionId).get();
 
-            // send onComplete() to all spectators
+            // send onCompleted() to all spectators
             for (var spectator : session.getSpectators()) {
                 spectator.streamObserver().onCompleted();
             }
@@ -210,6 +211,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             session.addPointToCurrentSpell(new Vector2(x, y));
 
             // send new point to all spectators
+            logger.info("drawSpell: number of spectators: " + session.getSpectators().size());
+
             for (var spectator : session.getSpectators()) {
                 // create response with type of `DRAW_SPELL`
                 SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
@@ -403,6 +406,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     /**
      * Registers player as spectator to the events of the requested attack session.
+     * <p>
+     * Creates <code>callObserver</code> instance of {@link ServerCallStreamObserver<SpectateTowerAttackResponse>} class
+     * and registers {@link ServerCallStreamObserver#setOnCancelHandler(Runnable)} callback that invalidates spectator
+     * (i.e. marks the underlining spectator's {@link StreamObserver} to be no longer valid and to be removed from spectators list).
+     * <p>
+     * Note that the handler only marks the spectator as invalid, the removal itself is being held inside {@link AttackSession}
+     * and is opaque to the caller. In particular, the removal of an invalid spectator is done inside {@link AttackSession#getSpectators} method, thus making the removal lazy. The caller must not rely on this implementation.
      */
     @Override
     public void spectateTowerBySessionId(AttackSessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
@@ -420,10 +430,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             addSpellDescriptionsOfDrawnSpells(responseBuilder, session);
             // build canvas
             responseBuilder.getCanvasStateBuilder().build();
-            // send canvas state to spectator
-            streamObserver.onNext(responseBuilder.build());
+
             // adding spectator
             session.addSpectator(spectatingPlayerId, streamObserver);
+
+            // create cancel handler to hook the event of client closing the connection (deleting spectator in this case)
+            var callObserver = (ServerCallStreamObserver<SpectateTowerAttackResponse>) streamObserver;
+            // `setOnCancelHandler` must be called before any `onNext` calls
+            callObserver.setOnCancelHandler(() -> {
+                logger.info("Spectator with id " + spectatingPlayerId + " cancelled stream. Invalidating the spectator...");
+                session.invalidateSpectator(spectatingPlayerId);
+            });
+
+            // send canvas state to spectator
+            streamObserver.onNext(responseBuilder.build());
         }
         else {
             // session does not exist
