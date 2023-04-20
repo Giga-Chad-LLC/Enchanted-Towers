@@ -14,6 +14,7 @@ import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
+import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.Grpc;
@@ -24,8 +25,8 @@ import io.grpc.stub.StreamObserver;
 
 // TODO: rename/remove this activity (created only for testing)
 public class AttackTowerMenuActivity extends AppCompatActivity {
-    TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
-    ManagedChannel channel;
+    private TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
+    private ManagedChannel channel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +53,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             try {
                 int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
                 int towerId  = Integer.parseInt(towerIdTextInput.getText().toString());
-                callAsyncAttackTowerById(playerId, towerId);
+                callAsyncTryAttackTowerById(playerId, towerId);
             }
             catch(NumberFormatException err) {
                 System.out.println(err.getMessage());
@@ -114,25 +115,30 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         });
     }
 
-    private void callAsyncAttackTowerById(int playerId, int towerId) {
+    private void callAsyncTryAttackTowerById(int playerId, int towerId) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
-        asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub.tryAttackTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(AttackSessionIdResponse response) {
+            public void onNext(ActionResultResponse response) {
                 // Handle the response
                 if (response.hasError()) {
                     System.err.println("attackTowerById::Received error: " + response.getError().getMessage());
                 }
                 else {
                     // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                    System.out.println("attackTowerById::Received response: success=" + response.getSuccess());
+                    ClientStorage.getInstance().setPlayerId(playerId);
+                    ClientStorage.getInstance().setTowerId(towerId);
+                    /*
                     int sessionId = response.getSessionId();
                     System.out.println("attackTowerById::Received response: sessionId=" + sessionId);
                     ClientStorage.getInstance().setPlayerId(playerId);
                     ClientStorage.getInstance().setSessionId(sessionId);
+                    */
                     // ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
                 }
             }
