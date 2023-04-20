@@ -32,7 +32,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     private final AttackSessionManager sessionManager = new AttackSessionManager();
     private final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
 
-    private final IntConsumer onSessionExpiredCallback = sessionId -> onSessionExpired(sessionId);
+    private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
 
     // rpc calls
     /**
