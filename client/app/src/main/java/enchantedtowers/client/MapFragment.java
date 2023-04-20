@@ -52,6 +52,7 @@ public class MapFragment extends Fragment {
     private GoogleMap googleMap;
     private AlertDialog GPSAlertDialog;
     private LocationListener locationUpdatesListener;
+    private GoogleMap.OnMarkerClickListener markerClickListener;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
     private TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
     private final MapDrawTowersInteractor drawInteractor = new MapDrawTowersInteractor();
@@ -88,15 +89,18 @@ public class MapFragment extends Fragment {
             // for convenient use if methods
             this.googleMap = googleMap;
 
+            this.googleMap.setOnMarkerClickListener(markerClickListener);
+
             // for server
             blockingStub = TowersServiceGrpc.newBlockingStub(Grpc.newChannelBuilder("10.0.2.2:50051", InsecureChannelCredentials.create()).build());
 
             applyCustomGoogleMapStyle();
 
-            // registering click listeners on MyLocation button and location point
+            // registering click listeners on MyLocation button, location point and marker's
             registerOnMyLocationButtonClickListener();
             registerOnMyLocationClickListener();
-            //registerOnMyMarkerClickListener();
+            registerOnMyMarkerClickListener();
+            this.googleMap.setOnMarkerClickListener(markerClickListener);
 
             // enabling user location
             if (checkRequiredLocationPermission()) {
@@ -205,18 +209,19 @@ public class MapFragment extends Fragment {
         }
     }
 
-    /*private void registerOnMyMarkerClickListener() {
+    private void registerOnMyMarkerClickListener() {
         Objects.requireNonNull(googleMap);
 
-        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+        markerClickListener = new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
-                Intent intent = new Intent(MapActivity.this, CanvasActivity.class);
+                Intent intent = new Intent(getActivity(), CanvasActivity.class);
                 startActivity(intent);
                 return false;
             }
-        });
-    }*/
+        };
+
+    }
 
     private void registerOnMyLocationButtonClickListener() {
         Objects.requireNonNull(googleMap);
