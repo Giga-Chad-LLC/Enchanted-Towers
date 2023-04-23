@@ -77,33 +77,4 @@ public class CanvasAttackerFragment extends CanvasFragment {
         addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false);
         addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true);
     }
-
-    public void addButtonToConstraintLayout(
-            ConstraintLayout constraintLayout,
-            int buttonId,
-            String buttonText,
-            boolean constrainedToEnd
-    ) {
-        // create a new Button
-        Button button = new Button(constraintLayout.getContext());
-        button.setId(buttonId);
-        button.setText(buttonText);
-        // TODO: figure out how to create buttons with fixed size and certain text
-        var layoutParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT
-        );
-        layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
-        if (constrainedToEnd) {
-            layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
-        }
-        else {
-            layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
-        }
-
-        button.setLayoutParams(layoutParams);
-
-        // add the Button to the layout
-        constraintLayout.addView(button);
-    }
 }
