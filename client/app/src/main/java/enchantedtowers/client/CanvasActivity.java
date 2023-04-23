@@ -39,8 +39,9 @@ public class CanvasActivity extends AppCompatActivity {
 
         System.out.println("Load canvas fragment to the canvas activity");
         // create fragment
-        Fragment canvasFragment;
         Bundle extras = getIntent().getExtras();
+        CanvasFragment canvasFragment;
+
         if (extras.getBoolean("isAttacking", false)) {
             System.out.println("Attacking on canvas");
             canvasFragment = CanvasAttackerFragment.newInstance();

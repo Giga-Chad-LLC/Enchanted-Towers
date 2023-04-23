@@ -75,7 +75,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         Bundle extras = getIntent().getExtras();
-        System.out.println("AttackTowerMenuActivity: " + extras);
+        System.out.println("AttackTowerMenuActivity onStart extras: " + extras);
 
         if (extras != null && extras.getBoolean("showToastOnStart", false)) {
             showToast(extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
@@ -184,13 +184,13 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         channel.shutdownNow();
         try {
             channel.awaitTermination(300, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        super.onDestroy();
     }
 }
