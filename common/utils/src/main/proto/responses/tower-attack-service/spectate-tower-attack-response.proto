@@ -8,9 +8,9 @@ package response_models;
 // common
 import "common/vector2.proto";
 // responses
-import "responses/current-canvas-state-response.proto";
-import "responses/spell-description-response.proto";
-import "responses/server-error.proto";
+import "responses/tower-attack-service/spell-description-response.proto";
+import "responses/common/server-error.proto";
+import "responses/common/current-canvas-state-response.proto";
 
 
 message SpectateTowerAttackResponse {

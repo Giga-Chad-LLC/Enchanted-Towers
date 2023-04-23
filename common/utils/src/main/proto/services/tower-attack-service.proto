@@ -7,16 +7,16 @@ package services;
 
 // requests
 import "requests/player-coordinates-request.proto";
-import "requests/spell-request.proto";
+import "requests/tower-attack-service/spell-request.proto";
 import "requests/tower-attack-service/tower-id-request.proto";
 import "requests/tower-attack-service/leave-attack-request.proto";
 import "requests/tower-attack-service/leave-spectating-request.proto";
 import  "requests/tower-attack-service/attack-session-id-request.proto";
 import  "requests/tower-attack-service/toggle-attacker.proto";
 // responses
-import "responses/action-result-response.proto";
-import "responses/spell-finish-response.proto";
-import "responses/spectate-tower-attack-response.proto";
+import "responses/common/action-result-response.proto";
+import "responses/tower-attack-service/spell-finish-response.proto";
+import "responses/tower-attack-service/spectate-tower-attack-response.proto";
 import "responses/tower-attack-service/attack-session-id-response.proto";
 import "responses/tower-attack-service/attack-tower-by-id-response.proto";
 

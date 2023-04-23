@@ -6,8 +6,8 @@ option java_multiple_files = true;
 package response_models;
 
 // responses
-import "responses/spell-description-response.proto";
-import "responses/server-error.proto";
+import "responses/tower-attack-service/spell-description-response.proto";
+import "responses/common/server-error.proto";
 
 message SpellFinishResponse {
   response_models.SpellDescriptionResponse spellDescription = 1;

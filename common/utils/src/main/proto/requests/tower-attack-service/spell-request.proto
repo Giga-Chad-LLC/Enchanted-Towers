@@ -8,8 +8,8 @@ package request_models;
 // common
 import "common/player-data.proto";
 // requests
-import "requests/select-spell-color-request.proto";
-import "requests/spell-curve-position-request.proto";
+import "requests/tower-attack-service/select-spell-color-request.proto";
+import "requests/tower-attack-service/spell-curve-position-request.proto";
 
 
 message SpellRequest {

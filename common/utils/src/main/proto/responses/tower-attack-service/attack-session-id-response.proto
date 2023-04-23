@@ -6,7 +6,7 @@ option java_multiple_files = true;
 package response_models;
 
 // responses
-import "responses/server-error.proto";
+import "responses/common/server-error.proto";
 
 
 message AttackSessionIdResponse {
