@@ -583,7 +583,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         // TODO: appears in attackTowerById, move to separate method?
         // closing connection with spectators
         for (var spectator : session.getSpectators()) {
-            // TODO: send response of session expiration to spectators
+            // TODO: send 'AttackSessionExpired' to spectators
             spectator.streamObserver().onCompleted();
         }
 

@@ -3,11 +3,7 @@ package components.session;
 import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
 import io.grpc.stub.StreamObserver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.IntConsumer;
 
 public class AttackSessionManager {
@@ -41,6 +37,7 @@ public class AttackSessionManager {
                return;
             }
          }
+         throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
       }
    }
 
