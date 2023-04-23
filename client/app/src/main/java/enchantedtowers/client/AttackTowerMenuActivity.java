@@ -81,24 +81,21 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 .build();
         requestBuilder.setTowerId(towerId);
         asyncStub.tryAttackTowerById(requestBuilder.build(), new StreamObserver<>() {
+            boolean serverErrorReceived = false;
             @Override
             public void onNext(ActionResultResponse response) {
                 // Handle the response
                 if (response.hasError()) {
-                    System.err.println("attackTowerById::Received error: " + response.getError().getMessage());
+                    serverErrorReceived = true;
+                    String message = "attackTowerById::Received error: " + response.getError().getMessage();
+                    System.err.println(message);
+                    showToastOnUIThread(message, Toast.LENGTH_LONG);
                 }
                 else {
                     // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                     System.out.println("attackTowerById::Received response: success=" + response.getSuccess());
                     ClientStorage.getInstance().setPlayerId(playerId);
                     ClientStorage.getInstance().setTowerId(towerId);
-                    /*
-                    int sessionId = response.getSessionId();
-                    System.out.println("attackTowerById::Received response: sessionId=" + sessionId);
-                    ClientStorage.getInstance().setPlayerId(playerId);
-                    ClientStorage.getInstance().setSessionId(sessionId);
-                    */
-                    // ClientStorage.getInstance().setTowerIdUnderAttack(towerId);
                 }
             }
 
@@ -106,16 +103,21 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             public void onError(Throwable t) {
                 // Handle the error
                 System.err.println("attackTowerById::Error: " + t.getMessage());
-                Toast.makeText(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+                showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
             }
 
             @Override
             public void onCompleted() {
                 // Handle the completion
-                System.out.println("attackTowerById::Completed");
-                Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
-                intent.putExtra("isAttacking", true);
-                startActivity(intent);
+                if (!serverErrorReceived) {
+                    System.out.println("attackTowerById::Completed: redirecting to CanvasActivity intent");
+                    Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
+                    intent.putExtra("isAttacking", true);
+                    startActivity(intent);
+                }
+                else {
+                    System.out.println("tryAttackTowerById::Completed: server responded with an error");
+                }
             }
         });
 
@@ -136,7 +138,9 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 // Handle the response
                 if (response.hasError()) {
                     serverErrorReceived = true;
-                    System.err.println("spectateTowerById::Received error: " + response.getError().getMessage());
+                    String message = "spectateTowerById::Received error: " + response.getError().getMessage();
+                    System.err.println(message);
+                    showToastOnUIThread(message, Toast.LENGTH_LONG);
                 }
                 else {
                     int sessionId = response.getSessionId();
@@ -144,7 +148,6 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                     // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                     ClientStorage.getInstance().setPlayerId(playerId);
                     ClientStorage.getInstance().setSessionId(sessionId);
-                    // ClientStorage.getInstance().setTowerIdUnderSpectate(towerId);
                 }
             }
 
@@ -152,14 +155,14 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             public void onError(Throwable t) {
                 // Handle the error
                 System.err.println("trySpectateTowerById::Error: " + t.getMessage());
-                Toast.makeText(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+                showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
             }
 
             @Override
             public void onCompleted() {
                 if (!serverErrorReceived) {
                     // Handle the completion
-                    System.out.println("trySpectateTowerById::Completed: redirecting to new intent");
+                    System.out.println("trySpectateTowerById::Completed: redirecting to CanvasActivity intent");
                     Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
                     intent.putExtra("isSpectating", true);
                     startActivity(intent);
@@ -171,6 +174,10 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         });
     }
 
+    private void showToastOnUIThread(String message, int type) {
+        assert(type == Toast.LENGTH_SHORT || type == Toast.LENGTH_LONG);
+        this.runOnUiThread(() -> Toast.makeText(this, message, type).show());
+    }
 
     @Override
     protected void onDestroy() {
