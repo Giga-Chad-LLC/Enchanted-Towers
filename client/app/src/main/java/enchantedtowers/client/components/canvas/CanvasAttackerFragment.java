@@ -51,7 +51,7 @@ public class CanvasAttackerFragment extends CanvasFragment {
 
     public void clearCanvas() {
         if (canvasWidget != null) {
-            canvasWidget.clearCanvas();
+            canvasWidget.onClearCanvas();
         }
     }
 

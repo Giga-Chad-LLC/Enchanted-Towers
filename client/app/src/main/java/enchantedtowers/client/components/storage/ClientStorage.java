@@ -20,6 +20,11 @@ public class ClientStorage {
         return playerData.sessionId;
     }
 
+    public Optional<Integer> getTowerId() {
+        // TODO: return playerData.sessionId.get() that throws
+        return playerData.towerId;
+    }
+
     // setters
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
@@ -29,11 +34,18 @@ public class ClientStorage {
         playerData.sessionId = Optional.of(sessionId);
     }
 
+    public void setTowerId(int towerId) {
+        playerData.towerId = Optional.of(towerId);
+    }
+
+
     private final PlayerData playerData;
 
     private static class PlayerData {
         public Optional<Integer> playerId = Optional.empty();
         public Optional<Integer> sessionId = Optional.empty();
+        // id of tower that is being under attack of player
+        public Optional<Integer> towerId  = Optional.empty();
     }
 
     private ClientStorage() {

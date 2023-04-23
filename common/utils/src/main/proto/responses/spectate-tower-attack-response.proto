@@ -23,6 +23,7 @@ message SpectateTowerAttackResponse {
     SELECT_SPELL_COLOR = 1;
     DRAW_SPELL = 2;
     FINISH_SPELL = 3;
+    CLEAR_CANVAS = 4; // does not require any additional data in response (serves as marker to clean canvas)
   };
 
   ResponseType responseType = 1;

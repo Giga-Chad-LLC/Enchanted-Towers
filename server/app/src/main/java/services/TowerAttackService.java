@@ -2,11 +2,14 @@ package services;
 
 import enchantedtowers.common.utils.proto.requests.*;
 import enchantedtowers.common.utils.proto.responses.*;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
 // components
@@ -27,30 +30,30 @@ import enchantedtowers.game_models.utils.Vector2;
 
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
     private final AttackSessionManager sessionManager = new AttackSessionManager();
-    private static final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
+    private final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
+
+    private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
 
     // rpc calls
     /**
-     * If player is neither in an attack session nor in a spectating mode, then creates an attack session associated with current player.
-     * Otherwise, sends error.
+     * <p>If player is neither in an attack session nor in a spectating mode, then notifies client that creation of an attack session is allowed. Otherwise, sends error.</p>
+     * <p>This method serves as a convenient check that attack session can be entered on the client side. Although, the {@link TowerAttackService#attackTowerById} method is still required to make the appropriate validations.</p>
      */
     @Override
-    public void attackTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> responseObserver) {
+    public void tryAttackTowerById(TowerIdRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         int playerId = request.getPlayerData().getPlayerId();
         int towerId = request.getTowerId();
 
-        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
 
-        logger.info("attackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
+        logger.info("tryAttackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
 
         if (!isAttacking && !isSpectating) {
-            // creating new attack session associated with player
-            logger.info("Creating attack session for player with id " + playerId);
-            int sessionId = sessionManager.add(playerId, towerId);
-            responseBuilder.setSessionId(sessionId);
+            // establishment of attack session is allowed
+            responseBuilder.setSuccess(true);
         }
         else if (isAttacking) {
             // if player is already in attack session
@@ -69,6 +72,75 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
+    }
+
+    /**
+     * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
+     */
+    @Override
+    public void attackTowerById(TowerIdRequest request, StreamObserver<AttackTowerByIdResponse> streamObserver) {
+        int playerId = request.getPlayerData().getPlayerId();
+        int towerId = request.getTowerId();
+
+        AttackTowerByIdResponse.Builder responseBuilder = AttackTowerByIdResponse.newBuilder();
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+
+        logger.info("attackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
+
+        if (!isAttacking && !isSpectating) {
+            // creating new attack session associated with player and registering onSessionExpiredCallback
+            logger.info("Creating attack session for player with id " + playerId);
+            AttackSession session = sessionManager.createAttackSession(
+                    playerId, towerId, streamObserver, onSessionExpiredCallback);
+
+            final int sessionId = session.getId();
+
+            // create cancel handler to hook the event of client closing the connection
+            // in this case spectators must be disconnected and attack session must be removed
+            var callObserver = (ServerCallStreamObserver<AttackTowerByIdResponse>) streamObserver;
+            // `setOnCancelHandler` must be called before any `onNext` calls
+            callObserver.setOnCancelHandler(() -> {
+                logger.info("Attacker with id " + playerId + " cancelled stream. Destroying the corresponding attack session...");
+
+                // disconnecting spectators
+                for (var spectator : session.getSpectators()) {
+                    // TODO: send 'attackerDisconnected' response to spectators
+                    spectator.streamObserver().onCompleted();
+                }
+
+                sessionManager.remove(session);
+            });
+
+            // setting session id into response
+            responseBuilder.setType(AttackTowerByIdResponse.ResponseType.ATTACK_SESSION_ID);
+            responseBuilder.getSessionBuilder()
+                    .setSessionId(sessionId)
+                    .build();
+
+            streamObserver.onNext(responseBuilder.build());
+        }
+        else if (isAttacking) {
+            // if player is already in attack session
+            logger.info("Player with id " + playerId + " is already in attack session");
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is already in attack session");
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
+        else {
+            // if player is already spectating
+            logger.info("Player with id " + playerId + " is already spectating someone's attack session");
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is already spectating someone's attack session");
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
     }
 
     /**
@@ -91,7 +163,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         if (sessionExists && isPlayerAssociatedWithFoundSession) {
             AttackSession session = sessionManager.getSessionById(sessionId).get();
 
-            // send onComplete() to all spectators
+            // send onCompleted() to all spectators
             for (var spectator : session.getSpectators()) {
                 spectator.streamObserver().onCompleted();
             }
@@ -210,6 +282,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             session.addPointToCurrentSpell(new Vector2(x, y));
 
             // send new point to all spectators
+            logger.info("drawSpell: number of spectators: " + session.getSpectators().size());
+
             for (var spectator : session.getSpectators()) {
                 // create response with type of `DRAW_SPELL`
                 SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
@@ -375,25 +449,94 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+    // TODO: write description
+    @Override
+    public void clearCanvas(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        boolean isRequestValid = (request.getRequestType() == RequestType.CLEAR_CANVAS);
+        boolean sessionExists  = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
+        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+
+        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
+            assert(sessionManager.getSessionById(sessionId).isPresent());
+            AttackSession session = sessionManager.getSessionById(sessionId).get();
+
+            // clearing drawn spells
+            session.clearDrawnSpellsDescriptions();
+
+            // notifying spectators to clear the canvas
+            for (var spectator : session.getSpectators()) {
+                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+                spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
+
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
+
+            responseBuilder.setSuccess(true);
+        }
+        else if (!isRequestValid) {
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Invalid request: request type must be 'CLEAN_CANVAS', got '" + request.getRequestType() + "'");
+        }
+        else if (!sessionExists) {
+            // session does not exist
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    "Attack session with id " + sessionId + " not found");
+        }
+        else {
+            // attacker id does not match player id
+            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Attacker id " + attackerId + " does not match player id " + playerId);
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
     // spectating related methods
 
     /**
-     * Retrieves any session associated with provided tower id and sends its id (i.e. session id) the client.
+     * Retrieves any session associated with provided tower id and sends its id (i.e. session id) to the client.
      * If session not found, sends error.
      */
     @Override
     public void trySpectateTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
         int towerId = request.getTowerId();
+        int playerId = request.getPlayerData().getPlayerId();
         AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
         Optional<AttackSession> session = sessionManager.getAnyAttackSessionByTowerId(towerId);
 
-        if (session.isPresent()) {
+        if (!isAttacking && !isSpectating && session.isPresent()) {
             responseBuilder.setSessionId(session.get().getId());
         }
-        else {
+        else if (session.isEmpty()) {
+            logger.info("trySpectateTowerById: session associated with tower id " + towerId + " not found");
             buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session associated with tower id of " + towerId + " not found");
+        }
+        else if (isAttacking) {
+            logger.info("trySpectateTowerById: player with id " + playerId + " is already in attack");
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + playerId + " is already in attack");
+        }
+        else {
+            logger.info("trySpectateTowerById: player with id " + playerId + " is already in spectating mode");
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + playerId + " is already in spectating mode");
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -402,6 +545,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     /**
      * Registers player as spectator to the events of the requested attack session.
+     * <p>
+     * Creates <code>callObserver</code> instance of {@link ServerCallStreamObserver<SpectateTowerAttackResponse>} class
+     * and registers {@link ServerCallStreamObserver#setOnCancelHandler(Runnable)} callback that invalidates spectator
+     * (i.e. marks the underlining spectator's {@link StreamObserver} to be no longer valid and to be removed from spectators list).
+     * <p>
+     * Note that the handler only marks the spectator as invalid, the removal itself is being held inside {@link AttackSession}
+     * and is opaque to the caller. In particular, the removal of an invalid spectator is done inside {@link AttackSession#getSpectators} method, thus making the removal lazy. The caller must not rely on this implementation.
      */
     @Override
     public void spectateTowerBySessionId(AttackSessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
@@ -409,9 +559,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
 
-        if (sessionOpt.isPresent()) {
+        if (!isAttacking && !isSpectating && sessionOpt.isPresent()) {
             AttackSession session = sessionOpt.get();
             // create response with canvas state
             responseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
@@ -419,16 +572,44 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             addSpellDescriptionsOfDrawnSpells(responseBuilder, session);
             // build canvas
             responseBuilder.getCanvasStateBuilder().build();
-            // send canvas state to spectator
-            streamObserver.onNext(responseBuilder.build());
+
             // adding spectator
             session.addSpectator(spectatingPlayerId, streamObserver);
+
+            // create cancel handler to hook the event of client closing the connection (deleting spectator in this case)
+            var callObserver = (ServerCallStreamObserver<SpectateTowerAttackResponse>) streamObserver;
+            // `setOnCancelHandler` must be called before any `onNext` calls
+            callObserver.setOnCancelHandler(() -> {
+                logger.info("Spectator with id " + spectatingPlayerId + " cancelled stream. Invalidating the spectator...");
+                session.invalidateSpectator(spectatingPlayerId);
+            });
+
+            // send canvas state to spectator
+            streamObserver.onNext(responseBuilder.build());
         }
-        else {
-            // session does not exist
+        else if (sessionOpt.isEmpty()) {
+            // session not found
             buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
+        else if (isAttacking) {
+            // player is already attacking
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + spectatingPlayerId + " is already in attack");
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
+        else {
+            // player is already spectating
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + spectatingPlayerId + " is already in spectating mode");
 
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
@@ -478,7 +659,35 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
 
+
+
     // helper methods
+    private void onSessionExpired(int sessionId) {
+        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        if (sessionOpt.isEmpty()) {
+            throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
+        }
+        AttackSession session = sessionOpt.get();
+
+        // TODO: appears in attackTowerById, move to separate method?
+        // closing connection with spectators
+        for (var spectator : session.getSpectators()) {
+            // TODO: send 'AttackSessionExpired' to spectators
+            spectator.streamObserver().onCompleted();
+        }
+
+        // sending response with session expiration to attacker and closing connection
+        AttackTowerByIdResponse.Builder responseBuilder = AttackTowerByIdResponse.newBuilder();
+        responseBuilder.setType(AttackTowerByIdResponse.ResponseType.ATTACK_SESSION_EXPIRED);
+        responseBuilder.getExpirationBuilder().build();
+
+        var attackerResponseObserver = session.getAttackerResponseObserver();
+        attackerResponseObserver.onNext(responseBuilder.build());
+        attackerResponseObserver.onCompleted();
+
+        sessionManager.remove(session);
+    }
+
     /**
     * Adds currently being drawn spell to {@link SpectateTowerAttackResponse} if the one exists.
     */

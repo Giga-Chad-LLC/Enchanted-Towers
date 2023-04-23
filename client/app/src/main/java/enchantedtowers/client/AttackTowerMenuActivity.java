@@ -26,7 +26,6 @@ import io.grpc.stub.StreamObserver;
 public class AttackTowerMenuActivity extends AppCompatActivity {
     private TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private ManagedChannel channel;
-    private boolean hadResponseError = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +36,8 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         int port = ServerApiStorage.getInstance().getPort();
 
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+        /*String target = host + ":" + port;
+         channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();*/
         asyncStub = TowerAttackServiceGrpc.newStub(channel);
 
         // buttons
@@ -51,7 +52,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             try {
                 int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
                 int towerId  = Integer.parseInt(towerIdTextInput.getText().toString());
-                callAsyncAttackTowerById(playerId, towerId);
+                callAsyncTryAttackTowerById(playerId, towerId);
             }
             catch(NumberFormatException err) {
                 System.out.println(err.getMessage());
@@ -78,108 +79,119 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         System.out.println("AttackTowerMenuActivity onStart extras: " + extras);
 
         if (extras != null && extras.getBoolean("showToastOnStart", false)) {
-            showToast(extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
+            showToastOnUIThread(extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
         }
 
         super.onStart();
     }
 
-    private void showToast(final String message, int toastLengthType) {
-        AttackTowerMenuActivity.this.runOnUiThread(() -> Toast.makeText(AttackTowerMenuActivity.this, message, toastLengthType).show());
-    }
 
-    private void callAsyncAttackTowerById(int playerId, int towerId) {
-        AttackTowerMenuActivity.this.hadResponseError = false;
-
+    private void callAsyncTryAttackTowerById(int playerId, int towerId) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
-        asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                 .attackTowerById(requestBuilder.build(), new StreamObserver<>() {
-                    @Override
-                    public void onNext(AttackSessionIdResponse response) {
-                        // Handle the response
-                        if (response.hasError()) {
-                            System.err.println("attackTowerById::Received error: " + response.getError().getMessage());
-                            showToast(response.getError().getMessage(), Toast.LENGTH_SHORT);
-                            AttackTowerMenuActivity.this.hadResponseError = true;
-                        }
-                        else {
-                            // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
-                            int sessionId = response.getSessionId();
-                            System.out.println("attackTowerById::Received response: sessionId=" + sessionId);
-                            ClientStorage.getInstance().setPlayerId(playerId);
-                            ClientStorage.getInstance().setSessionId(sessionId);
-                        }
-                    }
+        asyncStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .tryAttackTowerById(requestBuilder.build(), new StreamObserver<>() {
+            boolean serverErrorReceived = false;
+            @Override
+            public void onNext(ActionResultResponse response) {
+                // Handle the response
+                if (response.hasError()) {
+                    serverErrorReceived = true;
+                    String message = "attackTowerById::Received error: " + response.getError().getMessage();
+                    System.err.println(message);
+                    showToastOnUIThread(message, Toast.LENGTH_LONG);
+                }
+                else {
+                    // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                    System.out.println("attackTowerById::Received response: success=" + response.getSuccess());
+                    ClientStorage.getInstance().setPlayerId(playerId);
+                    ClientStorage.getInstance().setTowerId(towerId);
+                }
+            }
 
-                    @Override
-                    public void onError(Throwable t) {
-                        // Handle the error
-                        System.err.println("attackTowerById::Error: " + t.getMessage());
-                        showToast(t.getMessage(), Toast.LENGTH_SHORT);
-                    }
+            @Override
+            public void onError(Throwable t) {
+                // Handle the error
+                System.err.println("attackTowerById::Error: " + t.getMessage());
+                showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
+            }
 
-                    @Override
-                    public void onCompleted() {
-                        // Handle the completion
-                        if (!AttackTowerMenuActivity.this.hadResponseError) {
-                            System.out.println("attackTowerById::Completed");
-                            Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
-                            intent.putExtra("isAttacking", true);
-                            startActivity(intent);
-                        }
-                    }
-                 });
+            @Override
+            public void onCompleted() {
+                // Handle the completion
+                if (!serverErrorReceived) {
+                    System.out.println("attackTowerById::Completed: redirecting to CanvasActivity intent");
+                    Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
+                    intent.putExtra("isAttacking", true);
+                    startActivity(intent);
+                }
+                else {
+                    System.out.println("tryAttackTowerById::Completed: server responded with an error");
+                }
+            }
+        });
+
     }
+
+
 
     private void callAsyncTrySpectateTowerById(int playerId, int towerId) {
-        AttackTowerMenuActivity.this.hadResponseError = false;
-
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
-        asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                 .trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
-                    @Override
-                    public void onNext(AttackSessionIdResponse response) {
-                        // Handle the response
-                        if (response.hasError()) {
-                            System.err.println("spectateTowerById::Received error: " + response.getError().getMessage());
-                            showToast(response.getError().getMessage(), Toast.LENGTH_SHORT);
-                            AttackTowerMenuActivity.this.hadResponseError = true;
-                        }
-                        else {
-                            int sessionId = response.getSessionId();
-                            System.out.println("spectateTowerById::Received response: sessionId=" + response.getSessionId());
-                            // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
-                            ClientStorage.getInstance().setPlayerId(playerId);
-                            ClientStorage.getInstance().setSessionId(sessionId);
-                        }
-                    }
+        asyncStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
+            boolean serverErrorReceived = false;
+            @Override
+            public void onNext(AttackSessionIdResponse response) {
+                // Handle the response
+                if (response.hasError()) {
+                    serverErrorReceived = true;
+                    String message = "spectateTowerById::Received error: " + response.getError().getMessage();
+                    System.err.println(message);
+                    showToastOnUIThread(message, Toast.LENGTH_LONG);
+                }
+                else {
+                    int sessionId = response.getSessionId();
+                    System.out.println("spectateTowerById::Received response: sessionId=" + response.getSessionId());
+                    // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                    ClientStorage.getInstance().setPlayerId(playerId);
+                    ClientStorage.getInstance().setSessionId(sessionId);
+                }
+            }
 
-                    @Override
-                    public void onError(Throwable t) {
-                        // Handle the error
-                        System.err.println("spectateTowerById::Error: " + t.getMessage());
-                        showToast(t.getMessage(), Toast.LENGTH_SHORT);
-                    }
+            @Override
+            public void onError(Throwable t) {
+                // Handle the error
+                System.err.println("trySpectateTowerById::Error: " + t.getMessage());
+                showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
+            }
 
-                    @Override
-                    public void onCompleted() {
-                        // Handle the completion
-                        if (!AttackTowerMenuActivity.this.hadResponseError) {
-                            System.out.println("spectateTowerById::Completed");
-                            Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
-                            intent.putExtra("isSpectating", true);
-                            startActivity(intent);
-                        }
-                    }
-                 });
+            @Override
+            public void onCompleted() {
+                if (!serverErrorReceived) {
+                    // Handle the completion
+                    System.out.println("trySpectateTowerById::Completed: redirecting to CanvasActivity intent");
+                    Intent intent = new Intent(AttackTowerMenuActivity.this, CanvasActivity.class);
+                    intent.putExtra("isSpectating", true);
+                    startActivity(intent);
+                }
+                else {
+                    System.out.println("trySpectateTowerById::Completed: server responded with an error");
+                }
+            }
+        });
+    }
+
+    private void showToastOnUIThread(String message, int type) {
+        this.runOnUiThread(() -> Toast.makeText(this, message, type).show());
     }
 
     @Override

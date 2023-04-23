@@ -17,19 +17,21 @@ import "responses/action-result-response.proto";
 import "responses/spell-finish-response.proto";
 import "responses/spectate-tower-attack-response.proto";
 import "responses/tower-attack-service/attack-session-id-response.proto";
-
+import "responses/tower-attack-service/attack-tower-by-id-response.proto";
 
 
 service TowerAttackService {
 //  rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
 
-  rpc AttackTowerById(request_models.TowerIdRequest) returns (response_models.AttackSessionIdResponse) {}
+  rpc TryAttackTowerById(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc AttackTowerById(request_models.TowerIdRequest) returns (stream response_models.AttackTowerByIdResponse) {}
   rpc LeaveAttack(request_models.LeaveAttackRequest) returns (response_models.ActionResultResponse) {}
 
   // drawing related methods
   rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
+  rpc ClearCanvas(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
 
   // TODO: how to remove this redundant method 'TrySpectateTowerById'?
   rpc TrySpectateTowerById(request_models.TowerIdRequest) returns (response_models.AttackSessionIdResponse) {}

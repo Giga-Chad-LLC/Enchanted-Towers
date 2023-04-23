@@ -56,18 +56,27 @@ public class CanvasWidget extends View {
         }
     }
 
+    // TODO: invalidated inside interators or check for `eventHandled` boolean (see onTouchEvent, onDraw, onClearCanvas methods)
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean eventHandled = false;
         for (CanvasInteractor interactor : interactors) {
             eventHandled |= interactor.onTouchEvent(state, event.getX(), event.getY(), event.getAction());
         }
-
         if (eventHandled) {
             invalidate();
         }
-
         return eventHandled;
+    }
+
+    public void onClearCanvas() {
+        boolean eventHandled = false;
+        for (CanvasInteractor interactor : interactors) {
+            eventHandled |= interactor.onClearCanvas(state);
+        }
+        if (eventHandled) {
+            invalidate();
+        }
     }
 
     public void setBrushColor(int newColor) {
@@ -76,10 +85,5 @@ public class CanvasWidget extends View {
 
     public void setBrushColor(Color newColor) {
         state.setBrushColor(newColor.toArgb());
-    }
-
-    public void clearCanvas() {
-        state.clear();
-        invalidate();
     }
 }

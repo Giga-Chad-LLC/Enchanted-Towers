@@ -58,12 +58,7 @@ public class CanvasFragment extends Fragment {
     }
 
     protected void registerOnClickActionOnView(View view, int itemId, Runnable action) {
-        View clearCanvasButton = view.findViewById(itemId);
-        clearCanvasButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                action.run();
-            }
-        });
+        View trigger = view.findViewById(itemId);
+        trigger.setOnClickListener(view1 -> action.run());
     }
 }

@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,15 +23,23 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
+import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+
 import io.grpc.StatusRuntimeException;
 
 class AttackEventWorker extends Thread {
@@ -142,6 +151,21 @@ class AttackEventWorker extends Thread {
 
             return new Event(requestBuilder.build());
         }
+
+        public static Event createEventWithClearCanvasRequest() {
+            SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
+            // set request type
+            requestBuilder.setRequestType(SpellRequest.RequestType.CLEAR_CANVAS);
+
+            // TODO: check that playerId and sessionId exists
+            // set session id
+            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            // set player id
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+
+            return new Event(requestBuilder.build());
+        }
     };
 
     public AttackEventWorker(CanvasState state, CanvasWidget canvasWidget) {
@@ -223,6 +247,11 @@ class AttackEventWorker extends Thread {
                                 }
                             }
                         }
+                        case CLEAR_CANVAS -> {
+                            ActionResultResponse response = blockingStub.clearCanvas(event.getRequest());
+                            logger.info("Got response from clearCanvas: success=" + response.getSuccess() +
+                                    "\nmessage='" + response.getError().getMessage() + "'");
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -262,9 +291,11 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
-    private final AttackEventWorker worker;
+    private AttackEventWorker worker;
 
     private static final Logger logger = Logger.getLogger(CanvasDrawSpellInteractor.class.getName());
+    private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
+    private final ManagedChannel channel;
 
     public CanvasDrawSpellInteractor(CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
@@ -272,11 +303,32 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
         worker = new AttackEventWorker(state, canvasWidget);
         worker.start();
+
+        // configuring async client stub
+        {
+            String host = ServerApiStorage.getInstance().getClientHost();
+            int port = ServerApiStorage.getInstance().getPort();
+            channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+            asyncStub = TowerAttackServiceGrpc.newStub(channel);
+        }
+
+        callAsyncAttackTowerById(state, canvasWidget);
     }
 
     @Override
     public void onDraw(CanvasState state, Canvas canvas) {
         canvas.drawPath(path, brush);
+    }
+
+    @Override
+    public boolean onClearCanvas(CanvasState state) {
+        state.clear();
+        System.out.println("CanvasDrawSpellInteractor.onClearCanvas");
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithClearCanvasRequest())) {
+            logger.warning("'Clear canvas' event lost");
+        }
+        // notifying that event was processes
+        return true;
     }
 
     @Override
@@ -291,8 +343,64 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     @Override
     public void onDestroy() {
-        logger.info("Finishing worker...");
-        worker.finish();
+        // TODO: wrap worker with Optional<T>
+        if (worker != null) {
+            logger.info("Finishing worker...");
+            worker.finish();
+        }
+
+    }
+
+    private void callAsyncAttackTowerById(CanvasState state, CanvasWidget canvasWidget) {
+        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
+        // creating request
+        {
+            int playerId = ClientStorage.getInstance().getPlayerId().get();
+            int towerId = ClientStorage.getInstance().getTowerId().get();
+            requestBuilder.setTowerId(towerId);
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(playerId)
+                    .build();
+        }
+
+        asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
+            @Override
+            public void onNext(AttackTowerByIdResponse response) {
+                if (response.hasError()) {
+                    // TODO: leave attack session
+                    System.out.println("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
+                }
+                else {
+                    System.out.println("attackTowerById::onNext: type=" + response.getType());
+
+                    switch (response.getType()) {
+                        case ATTACK_SESSION_ID -> {
+                            int sessionId = response.getSession().getSessionId();
+                            ClientStorage.getInstance().setSessionId(sessionId);
+
+                            logger.info("Start worker");
+                            worker = new AttackEventWorker(state, canvasWidget);
+                            worker.start();
+                        }
+                        case ATTACK_SESSION_EXPIRED -> {
+                            // TODO: leave attack session
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                // TODO: leave attack session
+                System.out.println("attackTowerById::onError: message='" + t.getMessage() + "'");
+            }
+
+            @Override
+            public void onCompleted() {
+                // TODO: leave attack session
+                System.out.println("attackTowerById::onCompleted: finished");
+            }
+        });
     }
 
     private Vector2 getPathOffset(Path path) {

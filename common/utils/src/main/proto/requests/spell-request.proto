@@ -17,6 +17,7 @@ message SpellRequest {
     SELECT_SPELL_COLOR = 0;
     DRAW_SPELL = 1;
     FINISH_SPELL = 2;
+    CLEAR_CANVAS = 3;
   };
 
   common.PlayerData playerData = 1;
