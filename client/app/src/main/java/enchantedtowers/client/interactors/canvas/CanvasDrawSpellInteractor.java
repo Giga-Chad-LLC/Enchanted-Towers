@@ -1,5 +1,6 @@
 package enchantedtowers.client.interactors.canvas;
 
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -7,6 +8,7 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -32,10 +34,13 @@ import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+import io.grpc.StatusRuntimeException;
 
 class AttackEventWorker extends Thread {
     private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
@@ -66,16 +71,18 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_COLOR);
 
-            // TODO: check that playerId and sessionId exists
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
             // set session id
-            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            requestBuilder.setSessionId(storage.getSessionId().get());
 
             // set player id
             requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
+                    .setPlayerId(storage.getPlayerId().get())
                     .build();
 
-            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get() + ", SESSION_ID: " + ClientStorage.getInstance().getSessionId().get());
+            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
 
             // creating spell color request
             var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
@@ -92,15 +99,17 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.DRAW_SPELL);
 
-            // TODO: check that playerId and sessionId exists
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
             // set session id
-            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            requestBuilder.setSessionId(storage.getSessionId().get());
 
             // set player id
             requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+                    .setPlayerId(storage.getPlayerId().get()).build();
 
-            System.out.println("PLAYER_ID: " + ClientStorage.getInstance().getPlayerId().get() + ", SESSION_ID: " + ClientStorage.getInstance().getSessionId().get());
+            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
 
             // creating draw spell request
             var drawSpellRequestBuilder = requestBuilder.getDrawSpellBuilder();
@@ -120,12 +129,15 @@ class AttackEventWorker extends Thread {
             // set request type
             requestBuilder.setRequestType(SpellRequest.RequestType.FINISH_SPELL);
 
-            // TODO: check that playerId and sessionId exists
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
             // set session id
-            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            requestBuilder.setSessionId(storage.getSessionId().get());
+
             // set player id
             requestBuilder.getPlayerDataBuilder()
-                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
+                    .setPlayerId(storage.getPlayerId().get()).build();
 
             // creating draw spell request
             var finishSpellBuilder = requestBuilder.getFinishSpellBuilder();
@@ -177,23 +189,32 @@ class AttackEventWorker extends Thread {
         while (isRunning.get()) {
             try {
                 Event event = eventQueue.poll(30, TimeUnit.MILLISECONDS);
-
                 if (event != null) {
                     logger.info("Sending request of type: " + event.requestType().toString());
-
                     switch (event.requestType()) {
                         case SELECT_SPELL_COLOR -> {
-                            ActionResultResponse response = blockingStub.selectSpellColor(event.getRequest());
-                            logger.info("Got response from selectSpellColor: success=" + response.getSuccess() +
+                            ActionResultResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .selectSpellColor(event.getRequest());
+
+                            logger.info(
+                                    "Got response from selectSpellColor: success=" + response.getSuccess() +
                                         "\nmessage='" + response.getError().getMessage() + "'");
+
                         }
                         case DRAW_SPELL -> {
-                            ActionResultResponse response = blockingStub.drawSpell(event.getRequest());
+                            ActionResultResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .drawSpell(event.getRequest());
+
                             logger.info("Got response from drawSpell: success=" + response.getSuccess() +
                                     "\nmessage='" + response.getError().getMessage() + "'");
                         }
                         case FINISH_SPELL -> {
-                            SpellFinishResponse response = blockingStub.finishSpell(event.getRequest());
+                            SpellFinishResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .finishSpell(event.getRequest());
+
                             logger.info("Got FINISH_SPELL response");
 
                             if (response.hasError()) {
@@ -233,10 +254,22 @@ class AttackEventWorker extends Thread {
                         }
                     }
                 }
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
-                break;
+
+                logger.warning("CanvasDrawSpellInteractor error while blocking stub '" + e.getMessage() + "'");
+
+                // redirect to base activity
+                Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                intent.putExtra("showToastOnStart", true);
+                intent.putExtra("toastMessage", e.getMessage());
+
+                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
+
+                canvasWidget.getContext().startActivity(intent);
             }
         }
 
@@ -266,6 +299,10 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
     public CanvasDrawSpellInteractor(CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
+        logger.info("Start worker");
+
+        worker = new AttackEventWorker(state, canvasWidget);
+        worker.start();
 
         // configuring async client stub
         {
@@ -298,7 +335,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
-            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(state, x, y);
+            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(x, y);
             case MotionEvent.ACTION_MOVE -> onActionMoveContinuePath(x, y);
             default -> false;
         };
@@ -392,7 +429,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         return true;
     }
 
-    private boolean onActionUpFinishPathAndSubstitute(CanvasState state, float x, float y) {
+    private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
         path.lineTo(x, y);
         Vector2 point = new Vector2(x, y);
         pathPoints.add(point);

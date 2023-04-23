@@ -1,11 +1,15 @@
 package enchantedtowers.client.interactors.canvas;
 
+
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -30,6 +34,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
+    private final CanvasWidget canvasWidget;
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
 
     // TODO: watch for the race conditions in this class
@@ -37,7 +42,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
     public CanvasSpectateInteractor(CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
-        brush = state.getBrushCopy();
+        this.brush = state.getBrushCopy();
+        this.canvasWidget = canvasWidget;
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
@@ -52,9 +58,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         var sessionId = ClientStorage.getInstance().getSessionId();
 
         if (!(playerId.isPresent() && sessionId.isPresent())) {
-            // TODO: refactor later
-            logger.warning("CanvasSpectateInteractor interactor constructor failure: present playerId=" + playerId.isPresent() + ", sessionId=" + sessionId.isPresent());
-            throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId is not present");
+            logger.warning("CanvasSpectateInteractor interactor constructor failure: present playerId=" + playerId.isPresent() + ", present sessionId=" + sessionId.isPresent());
+            throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId or sessionId is not present");
         }
 
         AttackSessionIdRequest.Builder requestBuilder = AttackSessionIdRequest.newBuilder();
@@ -68,11 +73,13 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             public void onNext(SpectateTowerAttackResponse response) {
                 if (response.hasError()) {
                     logger.info("CanvasSpectateInteractor::Received: " + response.getError().getMessage());
-                    // TODO: deal with error somehow
                     if (response.getError().getType() == ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
                         // attacker did not manage to create a spell, then we just delete his drawing
                         currentPath.reset();
                         canvasWidget.invalidate();
+                    }
+                    else {
+                        redirectToBaseActivity(Optional.of(response.getError().getMessage()));
                     }
                     return;
                 }
@@ -104,14 +111,13 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             @Override
             public void onError(Throwable t) {
                 logger.warning("onError: " + t.getMessage());
-                // TODO: deal with error
-
+                redirectToBaseActivity(Optional.ofNullable(t.getMessage()));
             }
 
             @Override
             public void onCompleted() {
                 logger.info("onCompleted");
-                // TODO: redirect to another activity
+                redirectToBaseActivity(Optional.empty());
             }
         });
     }
@@ -129,6 +135,22 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return false;
+    }
+
+    /**
+     * Goes back in activity history and removes all activities that do not match the {@code AttackTowerMenuActivity} class.
+     */
+    private void redirectToBaseActivity(Optional<String> message) {
+        Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        if (message.isPresent()) {
+            intent.putExtra("showToastOnStart", true);
+            intent.putExtra("toastMessage", message.get());
+        }
+
+        logger.info("redirectToBaseActivity(): from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
+        canvasWidget.getContext().startActivity(intent);
     }
 
     private void onCurrentCanvasStateReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
@@ -150,7 +172,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 newSpellPath.lineTo((float)point.getX(), (float)point.getY());
             }
 
-            // TODO: add mutex of smth (in order to prevent data race with onDraw method)
+            // TODO: add mutex (in order to prevent data race with onDraw method)
             // set class members values
             brush.setColor(currentSpellColor);
             currentPath.set(newSpellPath);
@@ -168,7 +190,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
             templateSpell.setOffset(templateOffset);
 
-            // TODO: state.addItem should be thread safe actually, make sure it is
             state.addItem(new CanvasSpellDecorator(
                     templateColor,
                     templateSpell
@@ -180,7 +201,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     }
 
     private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
-        // TODO: think about data race typa-shit...
+        // TODO: add mutex (in order to prevent data race with onDraw method)
         currentPath.reset();
         brush.setColor(value.getSpellColor().getColorId());
         logger.info("onSelectSpellColorReceived: newSpellColor=" + brush.getColor());

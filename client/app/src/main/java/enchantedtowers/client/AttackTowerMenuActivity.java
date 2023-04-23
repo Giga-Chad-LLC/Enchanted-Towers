@@ -46,7 +46,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
 
         // text inputs
         EditText playerIdTextInput = findViewById(R.id.playerIdTextInput);
-        EditText towerIdTextInput  = findViewById(R.id.towerIdTextInput);
+        EditText towerIdTextInput = findViewById(R.id.towerIdTextInput);
 
         attackButton.setOnClickListener(view -> {
             try {
@@ -73,6 +73,18 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onStart() {
+        Bundle extras = getIntent().getExtras();
+        System.out.println("AttackTowerMenuActivity onStart extras: " + extras);
+
+        if (extras != null && extras.getBoolean("showToastOnStart", false)) {
+            showToastOnUIThread(extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
+        }
+
+        super.onStart();
+    }
+
 
     private void callAsyncTryAttackTowerById(int playerId, int towerId) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
@@ -80,7 +92,9 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
-        asyncStub.tryAttackTowerById(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .tryAttackTowerById(requestBuilder.build(), new StreamObserver<>() {
             boolean serverErrorReceived = false;
             @Override
             public void onNext(ActionResultResponse response) {
@@ -131,7 +145,9 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
-        asyncStub.trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
             boolean serverErrorReceived = false;
             @Override
             public void onNext(AttackSessionIdResponse response) {
@@ -175,19 +191,18 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     }
 
     private void showToastOnUIThread(String message, int type) {
-        assert(type == Toast.LENGTH_SHORT || type == Toast.LENGTH_LONG);
         this.runOnUiThread(() -> Toast.makeText(this, message, type).show());
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         channel.shutdownNow();
         try {
             channel.awaitTermination(300, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        super.onDestroy();
     }
 }

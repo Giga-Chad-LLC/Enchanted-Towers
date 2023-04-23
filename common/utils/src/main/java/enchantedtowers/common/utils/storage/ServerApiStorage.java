@@ -13,6 +13,7 @@ public class ServerApiStorage {
     final String serverHost;
     final String clientHost;
     final int port;
+    final int clientRequestTimeout = 5000; // ms
 
     /**
      * Available endpoints:
@@ -42,5 +43,9 @@ public class ServerApiStorage {
 
     public int getPort() {
         return port;
+    }
+
+    public int getClientRequestTimeout() {
+        return clientRequestTimeout;
     }
 }
