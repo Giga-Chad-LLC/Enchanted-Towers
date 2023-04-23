@@ -166,6 +166,12 @@ public class AttackSession {
         }
     }
 
+    public void clearDrawnSpellsDescriptions() {
+        synchronized (lock) {
+            drawnSpellsDescriptions.clear();
+        }
+    }
+
     /**
      * This method must be called after successful {@link AttackSession#getMatchedTemplate} invocation
      */
@@ -227,7 +233,7 @@ public class AttackSession {
 
     /**
      * Removes spectator by player id (if spectator exists).
-     * Does not call close the connection of spectator's stream observer.
+     * Does not close the connection of spectator's stream observer.
      * @return either <code>Optional.empty()</code> or <code>Optional.of(removedSpectator)</code>
      */
     public Optional<Spectator> pollSpectatorById(int playerId) {

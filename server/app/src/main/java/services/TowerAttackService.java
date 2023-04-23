@@ -449,6 +449,58 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+    // TODO: write description
+    @Override
+    public void clearCanvas(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        boolean isRequestValid = (request.getRequestType() == RequestType.CLEAR_CANVAS);
+        boolean sessionExists  = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
+        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+
+        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
+            assert(sessionManager.getSessionById(sessionId).isPresent());
+            AttackSession session = sessionManager.getSessionById(sessionId).get();
+
+            // clearing drawn spells
+            session.clearDrawnSpellsDescriptions();
+
+            // notifying spectators to clear the canvas
+            for (var spectator : session.getSpectators()) {
+                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+                spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
+
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
+
+            responseBuilder.setSuccess(true);
+        }
+        else if (!isRequestValid) {
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Invalid request: request type must be 'CLEAN_CANVAS', got '" + request.getRequestType() + "'");
+        }
+        else if (!sessionExists) {
+            // session does not exist
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    "Attack session with id " + sessionId + " not found");
+        }
+        else {
+            // attacker id does not match player id
+            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Attacker id " + attackerId + " does not match player id " + playerId);
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
     // spectating related methods
 
     /**
