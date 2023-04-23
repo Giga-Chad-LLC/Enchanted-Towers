@@ -18,5 +18,7 @@ public interface CanvasInteractor {
      */
     boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType);
 
+    boolean onClearCanvas(CanvasState state);
+
     default void onDestroy() {}
 }

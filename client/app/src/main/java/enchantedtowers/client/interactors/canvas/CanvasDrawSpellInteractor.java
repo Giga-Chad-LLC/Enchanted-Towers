@@ -123,7 +123,6 @@ class AttackEventWorker extends Thread {
             // TODO: check that playerId and sessionId exists
             // set session id
             requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
-
             // set player id
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
@@ -137,6 +136,21 @@ class AttackEventWorker extends Thread {
 
             // building draw spell request
             finishSpellBuilder.build();
+
+            return new Event(requestBuilder.build());
+        }
+
+        public static Event createEventWithClearCanvasRequest() {
+            SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
+            // set request type
+            requestBuilder.setRequestType(SpellRequest.RequestType.CLEAR_CANVAS);
+
+            // TODO: check that playerId and sessionId exists
+            // set session id
+            requestBuilder.setSessionId(ClientStorage.getInstance().getSessionId().get());
+            // set player id
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(ClientStorage.getInstance().getPlayerId().get()).build();
 
             return new Event(requestBuilder.build());
         }
@@ -163,15 +177,15 @@ class AttackEventWorker extends Thread {
         while (isRunning.get()) {
             try {
                 Event event = eventQueue.poll(30, TimeUnit.MILLISECONDS);
+
                 if (event != null) {
                     logger.info("Sending request of type: " + event.requestType().toString());
+
                     switch (event.requestType()) {
                         case SELECT_SPELL_COLOR -> {
                             ActionResultResponse response = blockingStub.selectSpellColor(event.getRequest());
-                            logger.info(
-                                    "Got response from selectSpellColor: success=" + response.getSuccess() +
+                            logger.info("Got response from selectSpellColor: success=" + response.getSuccess() +
                                         "\nmessage='" + response.getError().getMessage() + "'");
-
                         }
                         case DRAW_SPELL -> {
                             ActionResultResponse response = blockingStub.drawSpell(event.getRequest());
@@ -211,6 +225,11 @@ class AttackEventWorker extends Thread {
                                     canvasWidget.invalidate();
                                 }
                             }
+                        }
+                        case CLEAR_CANVAS -> {
+                            ActionResultResponse response = blockingStub.clearCanvas(event.getRequest());
+                            logger.info("Got response from clearCanvas: success=" + response.getSuccess() +
+                                    "\nmessage='" + response.getError().getMessage() + "'");
                         }
                     }
                 }
@@ -262,6 +281,17 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     @Override
     public void onDraw(CanvasState state, Canvas canvas) {
         canvas.drawPath(path, brush);
+    }
+
+    @Override
+    public boolean onClearCanvas(CanvasState state) {
+        state.clear();
+        System.out.println("CanvasDrawSpellInteractor.onClearCanvas");
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithClearCanvasRequest())) {
+            logger.warning("'Clear canvas' event lost");
+        }
+        // notifying that event was processes
+        return true;
     }
 
     @Override

@@ -25,14 +25,19 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
             item.draw(canvas, brush);
 
             // For DEBUG purposes (will be removed later)
-//            if (item instanceof CanvasEnchantment) {
-//                ((CanvasEnchantment)item).drawOnCanvasByPoints(canvas, brush);
-//            }
+            /*if (item instanceof CanvasEnchantment) {
+                ((CanvasEnchantment)item).drawOnCanvasByPoints(canvas, brush);
+            }*/
         }
     }
 
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
+        return false;
+    }
+
+    @Override
+    public boolean onClearCanvas(CanvasState state) {
         return false;
     }
 

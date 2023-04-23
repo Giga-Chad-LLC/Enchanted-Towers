@@ -23,6 +23,8 @@ import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.stub.StreamObserver;
 
+// TODO: replace canvasWidget.invalidate() with canvasWidget.postInvalidate() where needed (aka calls from non-UI threads)
+
 public class CanvasSpectateInteractor implements CanvasInteractor {
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     // TODO: unite the functionality of Attack and Spectate canvas interactors
@@ -72,7 +74,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         currentPath.reset();
                         canvasWidget.invalidate();
                     }
-
                     return;
                 }
 
@@ -92,6 +93,10 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     case FINISH_SPELL -> {
                         logger.info("Received FINISH_SPELL");
                         onFinishSpellReceived(response, state, canvasWidget);
+                    }
+                    case CLEAR_CANVAS -> {
+                        logger.info("Received CLEAR_CANVAS");
+                        onClearCanvasReceived(response, state, canvasWidget);
                     }
                 }
             }
@@ -114,6 +119,11 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     @Override
     public void onDraw(CanvasState state, Canvas canvas) {
         canvas.drawPath(currentPath, brush);
+    }
+
+    @Override
+    public boolean onClearCanvas(CanvasState state) {
+        return false;
     }
 
     @Override
@@ -186,7 +196,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
 
         // trigger the rendering
-        canvasWidget.invalidate();
+        canvasWidget.postInvalidate();
     }
 
     private void onFinishSpellReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
@@ -210,5 +220,12 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         ));
 
         canvasWidget.invalidate();
+    }
+
+
+    private void onClearCanvasReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+        state.clear();
+        // trigger the rendering
+        canvasWidget.postInvalidate();
     }
 }
