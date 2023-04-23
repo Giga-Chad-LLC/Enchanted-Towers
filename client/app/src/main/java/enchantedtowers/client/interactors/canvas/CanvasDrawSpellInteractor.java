@@ -21,6 +21,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
@@ -242,7 +243,9 @@ class AttackEventWorker extends Thread {
                             }
                         }
                         case CLEAR_CANVAS -> {
-                            ActionResultResponse response = blockingStub.clearCanvas(event.getRequest());
+                            ActionResultResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .clearCanvas(event.getRequest());
                             logger.info("Got response from clearCanvas: success=" + response.getSuccess() +
                                     "\nmessage='" + response.getError().getMessage() + "'");
                         }
@@ -323,6 +326,11 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         }
         // notifying that event was processes
         return true;
+    }
+
+    @Override
+    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
+        return false;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package enchantedtowers.client.components.canvas;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import enchantedtowers.client.interactors.canvas.CanvasInteractor;
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 
 public class CanvasWidget extends View {
@@ -57,6 +59,7 @@ public class CanvasWidget extends View {
     }
 
     // TODO: invalidated inside interators or check for `eventHandled` boolean (see onTouchEvent, onDraw, onClearCanvas methods)
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean eventHandled = false;
@@ -74,6 +77,18 @@ public class CanvasWidget extends View {
         for (CanvasInteractor interactor : interactors) {
             eventHandled |= interactor.onClearCanvas(state);
         }
+
+        if (eventHandled) {
+            invalidate();
+        }
+    }
+
+    public void onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType) {
+        boolean eventHandled = false;
+        for (CanvasInteractor interactor : interactors) {
+            eventHandled |= interactor.onToggleSpectatingAttacker(requestType, state);
+        }
+
         if (eventHandled) {
             invalidate();
         }

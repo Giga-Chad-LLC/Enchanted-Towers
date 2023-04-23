@@ -9,6 +9,7 @@ import java.util.Map;
 import enchantedtowers.client.components.canvas.CanvasDrawable;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 
@@ -19,7 +20,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         Paint brush = state.getBrushCopy();
 
         // for DEBUG purposes
-        drawTemplates(state, canvas);
+        // drawTemplates(state, canvas);
 
         for (CanvasDrawable item : state.getItems()) {
             item.draw(canvas, brush);
@@ -38,6 +39,11 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
 
     @Override
     public boolean onClearCanvas(CanvasState state) {
+        return false;
+    }
+
+    @Override
+    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
         return false;
     }
 

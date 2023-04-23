@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
+import com.google.android.gms.common.api.Api;
+
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -16,6 +18,9 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.AttackSessionIdRequest;
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -71,11 +76,12 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 .setPlayerId(playerId.get())
                 .build();
 
-        asyncStub.spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub
+                .spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
             @Override
             public void onNext(SpectateTowerAttackResponse response) {
                 if (response.hasError()) {
-                    logger.info("CanvasSpectateInteractor::Received: " + response.getError().getMessage());
+                    logger.info("spectateTowerBySessionId::onReceived: " + response.getError().getMessage());
                     if (response.getError().getType() == ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
                         // attacker did not manage to create a spell, then we just delete his drawing
                         currentPath.reset();
@@ -114,7 +120,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
             @Override
             public void onError(Throwable t) {
-                logger.warning("onError: " + t.getMessage());
+                logger.warning("spectateTowerBySessionId::onError: " + t.getMessage());
                 // TODO: figure out how to prevent double redirect (when clicked "back" button we redirect,
                 //  but also server generates onError event, so double redirecting occurs, which we don't want
                 // redirectToBaseActivity(Optional.ofNullable(t.getMessage()));
@@ -122,7 +128,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
             @Override
             public void onCompleted() {
-                logger.info("onCompleted");
+                logger.info("spectateTowerBySessionId::onCompleted");
                 redirectToBaseActivity(Optional.empty());
             }
         });
@@ -136,6 +142,56 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     @Override
     public boolean onClearCanvas(CanvasState state) {
         return false;
+    }
+
+    @Override
+    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
+        logger.info("Show new attacker, showNext=" + requestType.name());
+
+        var playerId = ClientStorage.getInstance().getPlayerId();
+        var sessionId = ClientStorage.getInstance().getSessionId();
+
+        if (!(playerId.isPresent() && sessionId.isPresent())) {
+            logger.warning("CanvasSpectateInteractor interactor onToggleSpectatingAttacker failure: present playerId=" + playerId.isPresent() + ", present sessionId=" + sessionId.isPresent());
+            throw new RuntimeException("CanvasSpectateInteractor interactor onToggleSpectatingAttacker failure: playerId or sessionId is not present");
+        }
+
+        ToggleAttackerRequest.Builder requestBuilder = ToggleAttackerRequest.newBuilder();
+        requestBuilder
+                .setSessionId(sessionId.get())
+                .setRequestType(requestType);
+        requestBuilder.getPlayerDataBuilder()
+                .setPlayerId(playerId.get())
+                .build();
+
+        asyncStub.toggleAttacker(requestBuilder.build(), new StreamObserver<>() {
+            // TODO: think of meaningful handlers here
+            @Override
+            public void onNext(AttackSessionIdResponse value) {
+                StringBuilder messageBuilder = new StringBuilder();
+
+                if (value.hasError()) {
+                    messageBuilder.append("toggleAttacker::onReceived: error='").append(value.getError().getMessage()).append("'");
+                }
+                else {
+                    messageBuilder.append("toggleAttacker::onReceived: newSessionId=").append(value.getSessionId());
+                    ClientStorage.getInstance().setSessionId(value.getSessionId());
+                }
+
+                logger.info(messageBuilder.toString());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                logger.warning("toggleAttacker::onError: message='" + t.getMessage() + "'");
+            }
+
+            @Override
+            public void onCompleted() {
+                logger.info("toggleAttacker::onCompleted");
+            }
+        });
+        return true;
     }
 
     @Override
@@ -171,6 +227,11 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     }
 
     private void onCurrentCanvasStateReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+        // clear current state
+        state.clear();
+        currentPath.reset();
+
+        // append new drawings to the state
         var canvasHistory = value.getCanvasState();
 
         // fill current spell state
@@ -259,7 +320,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         canvasWidget.invalidate();
     }
-
 
     private void onClearCanvasReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
         state.clear();

@@ -5,9 +5,12 @@ import android.graphics.Canvas;
 import org.json.JSONException;
 
 import enchantedtowers.client.components.canvas.CanvasState;
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 public interface CanvasInteractor {
     void onDraw(CanvasState state, Canvas canvas);
+
+    default void onExecutionInterrupt() {}
 
     /**
      * @param state           canvas state
@@ -20,5 +23,5 @@ public interface CanvasInteractor {
 
     boolean onClearCanvas(CanvasState state);
 
-    default void onExecutionInterrupt() {}
+    boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state);
 }
