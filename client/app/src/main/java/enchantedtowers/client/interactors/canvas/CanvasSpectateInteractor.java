@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
@@ -25,12 +26,14 @@ import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
+import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 // TODO: replace canvasWidget.invalidate() with canvasWidget.postInvalidate() where needed (aka calls from non-UI threads)
 
 public class CanvasSpectateInteractor implements CanvasInteractor {
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
+    private final ManagedChannel channel;
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
@@ -47,7 +50,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
-        Channel channel = Grpc.newChannelBuilderForAddress(
+        channel = Grpc.newChannelBuilderForAddress(
                 host,
                 port,
                 InsecureChannelCredentials.create()
@@ -79,7 +82,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         canvasWidget.postInvalidate();
                     }
                     else {
-                        redirectToBaseActivity(Optional.of(response.getError().getMessage()));
+                        // TODO: figure out if required to call redirectToBaseActivity() here
+                        // redirectToBaseActivity(Optional.of(response.getError().getMessage()));
                     }
                     return;
                 }
@@ -111,7 +115,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             @Override
             public void onError(Throwable t) {
                 logger.warning("onError: " + t.getMessage());
-                redirectToBaseActivity(Optional.ofNullable(t.getMessage()));
+                // TODO: figure out how to prevent double redirect (when clicked "back" button we redirect,
+                //  but also server generates onError event, so double redirecting occurs, which we don't want
+                // redirectToBaseActivity(Optional.ofNullable(t.getMessage()));
             }
 
             @Override
@@ -135,6 +141,17 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return false;
+    }
+
+    @Override
+    public void onExecutionInterrupt() {
+        logger.info("Shutting down grpc channel...");
+        channel.shutdownNow();
+        try {
+            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

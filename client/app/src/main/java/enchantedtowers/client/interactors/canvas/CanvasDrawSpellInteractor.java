@@ -6,9 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
-import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -34,13 +32,9 @@ import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
-import io.grpc.Grpc;
-import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-
-import io.grpc.StatusRuntimeException;
 
 class AttackEventWorker extends Thread {
     private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
