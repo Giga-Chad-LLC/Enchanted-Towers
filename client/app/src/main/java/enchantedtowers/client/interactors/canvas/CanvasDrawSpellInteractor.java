@@ -243,7 +243,7 @@ class AttackEventWorker extends Thread {
                                     );
 
                                     state.addItem(canvasMatchedEnchantment);
-                                    canvasWidget.invalidate();
+                                    canvasWidget.postInvalidate();
                                 }
                             }
                         }

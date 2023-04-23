@@ -76,7 +76,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     if (response.getError().getType() == ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND) {
                         // attacker did not manage to create a spell, then we just delete his drawing
                         currentPath.reset();
-                        canvasWidget.invalidate();
+                        canvasWidget.postInvalidate();
                     }
                     else {
                         redirectToBaseActivity(Optional.of(response.getError().getMessage()));
@@ -197,7 +197,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
 
         // trigger the rendering
-        canvasWidget.invalidate();
+        canvasWidget.postInvalidate();
     }
 
     private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
