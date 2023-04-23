@@ -5,9 +5,20 @@ plugins {
 // expands to 'enchantedtowers.product.common'
 group = "${group}.common"
 
+
+/*
+disable `common:game-models:jar` task because when server is running, client cannot execute this task because
+the task requires removal of build/libs/game-models.jar file which is not possible due to the file being
+used by the running server.
+
+It is required to be set to `true` if changes were made in common/game-models components (do not know have in works...)
+*/
+tasks.jar.enabled = true
+
 def jtsVersion = '1.19.0'
 
 dependencies {
     // jts (2d geometry)
     implementation(group: "org.locationtech.jts", name: "jts-core", version: "${jtsVersion}")
+    implementation 'org.json:json:20220320'
 }

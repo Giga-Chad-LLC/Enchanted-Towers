@@ -4,6 +4,7 @@ plugins {
 
 group = "${group}.server"
 
+// must match with 'grpcVersion' in common:utils:build.gradle
 def grpcVersion = '1.53.0'
 
 dependencies {
@@ -12,6 +13,10 @@ dependencies {
 
     implementation("io.grpc:grpc-stub:${grpcVersion}")
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
+
+    // json
+    implementation 'org.json:json:20220320'
 
     // example:
     // implementation('com.example.myproduct.user-feature:table')

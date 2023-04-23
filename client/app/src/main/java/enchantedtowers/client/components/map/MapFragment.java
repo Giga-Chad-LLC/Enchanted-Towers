@@ -1,4 +1,4 @@
-package enchantedtowers.client;
+package enchantedtowers.client.components.map;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Objects;
 
+import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 
 

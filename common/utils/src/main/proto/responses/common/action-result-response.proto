@@ -5,12 +5,10 @@ option java_multiple_files = true;
 
 package response_models;
 
-message GameError {
-  enum ErrorType {
-    TOWER_TOO_FAR = 0;
-  }
+// responses
+import "responses/common/server-error.proto";
 
-  bool hasError = 1;
-  ErrorType type = 2;
-  string message = 3;
+message ActionResultResponse {
+  bool success = 1;
+  response_models.ServerError error = 2;
 };

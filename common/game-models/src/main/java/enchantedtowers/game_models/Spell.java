@@ -1,5 +1,6 @@
 package enchantedtowers.game_models;
 
+import java.util.ArrayList;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -86,5 +87,19 @@ public class Spell {
         }
 
         curve = factory.createLineString(coordinates);
+    }
+
+    public List<Vector2> getPointsList() {
+        List<Vector2> pointsList = new ArrayList<>();
+        Coordinate[] points = curve.getCoordinates();
+
+        for (Coordinate point : points) {
+            pointsList.add(new Vector2(
+                point.getX(),
+                point.getY()
+            ));
+        }
+
+        return pointsList;
     }
 }

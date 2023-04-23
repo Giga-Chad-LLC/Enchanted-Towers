@@ -4,15 +4,20 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.List;
 
+import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
+import enchantedtowers.client.components.canvas.CanvasFragment;
+import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
+import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.client.components.fs.EnchantmetTemplatesFileReader;
-import enchantedtowers.game_models.utils.Vector2;
+import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
+import enchantedtowers.game_models.SpellTemplate;
 
 public class CanvasActivity extends AppCompatActivity {
     @Override
@@ -22,13 +27,38 @@ public class CanvasActivity extends AppCompatActivity {
 
         if (!SpellBook.isInstantiated()) {
             try {
-                EnchantmetTemplatesFileReader reader = new EnchantmetTemplatesFileReader(getBaseContext());
-                List<List<Vector2>> data = reader.processFile(R.raw.canvas_templates_config);
+                List<SpellTemplate> data = EnchantmetTemplatesProvider.parseJson(
+                        AndroidFileReader.readRawFile(getBaseContext(), R.raw.canvas_templates_config)
+                );
                 SpellBook.instantiate(data);
             } catch (JSONException | IOException e) {
                 Log.e("JSON-CONFIG", e.getMessage());
                 System.err.println(e.getMessage());
             }
         }
+
+        System.out.println("Load canvas fragment to the canvas activity");
+        // create fragment
+        Bundle extras = getIntent().getExtras();
+        CanvasFragment canvasFragment;
+
+        if (extras.getBoolean("isAttacking", false)) {
+            System.out.println("Attacking on canvas");
+            canvasFragment = CanvasAttackerFragment.newInstance();
+        }
+        else if (extras.getBoolean("isSpectating", false)) {
+            System.out.println("Spectating on canvas");
+            canvasFragment = CanvasSpectatorFragment.newInstance();
+        }
+        else {
+            System.out.println("No actions on canvas");
+            canvasFragment = CanvasFragment.newInstance();
+        }
+
+        // mount fragment into layout
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.canvas_frame_layout, canvasFragment)
+                .commit();
     }
 }

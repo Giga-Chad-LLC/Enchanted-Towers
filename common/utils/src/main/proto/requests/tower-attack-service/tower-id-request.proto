@@ -5,9 +5,9 @@ option java_multiple_files = true;
 
 package request_models;
 
-import "requests/player-coordinates-request.proto";
+import "common/player-data.proto";
 
-message TowerAttackRequest {
+message TowerIdRequest {
   int32 towerId = 1;
-  request_models.PlayerCoordinatesRequest playerCoordinates = 2;
+  common.PlayerData playerData = 2;
 };

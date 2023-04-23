@@ -1,6 +1,3 @@
 <resources>
     <string name="app_name">Enchanted Towers</string>
-    <string name="title_activity_test_maps">testMapsActivity</string>
-    <string name="title_activity_fragment_map">fragmentMap</string>
-    <string name="title_activity_map_fragment">MapFragment</string>
 </resources>

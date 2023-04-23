@@ -18,12 +18,17 @@ public class MainActivity extends AppCompatActivity {
         if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
             startActivity(intent);
-        } else if(view.getId() == R.id.changeToMapActivity) {
+        }
+        else if (view.getId() == R.id.changeToMapActivity) {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         }
+        else if (view.getId() == R.id.changeToAttackTowerMenu) {
+            Intent intent = new Intent(MainActivity.this, AttackTowerMenuActivity.class);
+            startActivity(intent);
+        }
         else {
-            System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view.toString());
+            System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view);
         }
     }
 }

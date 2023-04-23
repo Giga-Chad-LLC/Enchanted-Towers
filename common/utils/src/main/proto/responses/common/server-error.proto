@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+message ServerError {
+  enum ErrorType {
+    TOWER_TOO_FAR = 0;
+    ATTACK_SESSION_NOT_FOUND = 1;
+    INVALID_REQUEST = 2;
+    SPELL_TEMPLATE_NOT_FOUND = 3;
+  }
+
+  ErrorType type = 2;
+  string message = 3;
+};
