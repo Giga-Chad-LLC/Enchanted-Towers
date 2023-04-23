@@ -1,89 +1,40 @@
 package enchantedtowers.client;
 
 
-
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
-import androidx.core.location.LocationListenerCompat;
-import androidx.fragment.app.Fragment;
-
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.location.LocationListenerCompat;
+import androidx.fragment.app.Fragment;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
 import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
-import enchantedtowers.common.utils.proto.responses.TowerResponse;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.StatusRuntimeException;
-
-
-// ================
-
-
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.location.LocationListenerCompat;
-import androidx.fragment.app.Fragment;
-
-import android.provider.Settings;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.maps.model.LatLng;
-
-import java.util.Objects;
-
-import enchantedtowers.client.components.permissions.PermissionManager;
 
 
 public class MapFragment extends Fragment {
@@ -142,8 +93,7 @@ public class MapFragment extends Fragment {
             this.googleMap.setOnMarkerClickListener(markerClickListener);
 
             // enabling user location
-            // TODO: use PermissionManager.checkLocationPermission(requireContext())
-            if (checkRequiredLocationPermission()) {
+            if (PermissionManager.checkLocationPermission(requireContext())) {
                 googleMap.setMyLocationEnabled(true);
 
                 registerOnLocationUpdatesListener();
@@ -167,24 +117,6 @@ public class MapFragment extends Fragment {
         return view;
     }
 
-    /**
-     * Returns {@code true} if either of
-     *      {@link Manifest.permission#ACCESS_FINE_LOCATION} or
-     *      {@link Manifest.permission#ACCESS_COARSE_LOCATION}
-     *  permissions are granted,
-     * otherwise returns {@code false}.
-     *
-     * @Note Name of function <b>must start</b> with <b><i>'check'</i></b> and <b>end</b> with <b><i>'permission'</i></b>, otherwise linter complains (see: <a href="https://stackoverflow.com/questions/36031218/check-android-permissions-in-a-method">Check Android Permissions in a Method</a>)
-     */
-    private boolean checkRequiredLocationPermission() {
-        boolean accessFineLocationPermissionGranted =
-                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-        boolean accessCoarseLocationPermissionGranted =
-                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-        return accessFineLocationPermissionGranted || accessCoarseLocationPermissionGranted;
-    }
 
     private void registerOnLocationUpdatesListener() throws SecurityException {
         Objects.requireNonNull(googleMap);
@@ -251,16 +183,11 @@ public class MapFragment extends Fragment {
 
     private void registerOnMyMarkerClickListener() {
         Objects.requireNonNull(googleMap);
-
-        markerClickListener = new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(@NonNull Marker marker) {
-                Intent intent = new Intent(getActivity(), CanvasActivity.class);
-                startActivity(intent);
-                return false;
-            }
+        markerClickListener = marker -> {
+            Intent intent = new Intent(getActivity(), CanvasActivity.class);
+            startActivity(intent);
+            return false;
         };
-
     }
 
     private void registerOnMyLocationButtonClickListener() {
