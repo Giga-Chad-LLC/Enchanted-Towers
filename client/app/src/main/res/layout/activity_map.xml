@@ -6,17 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MapActivity">
 
-
-    <!--    <com.google.android.gms.maps.MapView-->
-    <!--        android:id="@+id/mapView2"-->
-    <!--        android:layout_width="391dp"-->
-    <!--        android:layout_height="709dp"-->
-    <!--        android:contentDescription="Google Map"-->
-    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent" />-->
-
     <FrameLayout
         android:id="@+id/map_frame_layout"
         android:layout_width="match_parent"

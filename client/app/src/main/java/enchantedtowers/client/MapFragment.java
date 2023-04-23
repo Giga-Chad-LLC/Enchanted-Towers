@@ -1,5 +1,7 @@
 package enchantedtowers.client;
 
+
+
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,6 +47,43 @@ import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.StatusRuntimeException;
+
+
+// ================
+
+
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.location.LocationListenerCompat;
+import androidx.fragment.app.Fragment;
+
+import android.provider.Settings;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.Objects;
+
+import enchantedtowers.client.components.permissions.PermissionManager;
 
 
 public class MapFragment extends Fragment {
@@ -103,6 +142,7 @@ public class MapFragment extends Fragment {
             this.googleMap.setOnMarkerClickListener(markerClickListener);
 
             // enabling user location
+            // TODO: use PermissionManager.checkLocationPermission(requireContext())
             if (checkRequiredLocationPermission()) {
                 googleMap.setMyLocationEnabled(true);
 
@@ -272,14 +312,14 @@ public class MapFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        // this.GPSAlertDialog = null;
-
+        // TODO: unregister all listeners
         // TODO: figure out whether it is even correct
-        // unregistering location listener
-        logger.log(Level.INFO, "Unregistering location listener");
-        LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.removeUpdates(locationUpdatesListener);
-
+        // unregistering location listener if not null
+        if (locationUpdatesListener != null) {
+            logger.log(Level.INFO, "Unregistering location listener");
+            LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+            locationManager.removeUpdates(locationUpdatesListener);
+        }
         super.onDestroy();
     }
 }
