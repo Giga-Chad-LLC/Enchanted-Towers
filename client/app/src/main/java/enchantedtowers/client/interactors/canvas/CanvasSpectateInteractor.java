@@ -50,7 +50,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         var playerId = ClientStorage.getInstance().getPlayerId();
         var sessionId = ClientStorage.getInstance().getSessionId();
-        // var towerId = ClientStorage.getInstance().getTowerIdUnderSpectate();
+
         if (!(playerId.isPresent() && sessionId.isPresent())) {
             // TODO: refactor later
             logger.warning("CanvasSpectateInteractor interactor constructor failure: present playerId=" + playerId.isPresent() + ", sessionId=" + sessionId.isPresent());
@@ -195,7 +195,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             currentPath.lineTo((float) newPoint.getX(), (float) newPoint.getY());
         }
 
-        // trigger the rendering
+        // trigger rendering
         canvasWidget.postInvalidate();
     }
 
@@ -225,7 +225,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
     private void onClearCanvasReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
         state.clear();
-        // trigger the rendering
+        currentPath.reset();
+        // trigger rendering
         canvasWidget.postInvalidate();
     }
 }
