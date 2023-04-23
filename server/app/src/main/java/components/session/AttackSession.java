@@ -72,6 +72,14 @@ public class AttackSession {
         }
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof AttackSession) {
+            return this.getId() == ((AttackSession) other).getId();
+        }
+        return false;
+    }
+
     public int getId() {
         synchronized (lock) {
             return id;

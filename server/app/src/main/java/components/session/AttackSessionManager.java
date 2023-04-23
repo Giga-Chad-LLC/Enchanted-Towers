@@ -94,18 +94,16 @@ public class AttackSessionManager {
       }
    }
 
-   /**
-    * Invariant: if key exists then the list of sessions must be non-empty
-    */
    public Optional<AttackSession> getAnyAttackSessionByTowerId(int towerId) {
       synchronized (sessions) {
          if (sessions.containsKey(towerId)) {
-            assert(sessions.get(towerId) != null && !sessions.get(towerId).isEmpty());
-            // returning first session
-            AttackSession firstSession = sessions.get(towerId).get(0);
-            return Optional.of(firstSession);
-         }
+            var sessionList = sessions.get(towerId);
 
+            // returning first session, if exists
+            for (var session : sessionList) {
+               return Optional.of(session);
+            }
+         }
          return Optional.empty();
       }
    }
