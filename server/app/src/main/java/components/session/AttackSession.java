@@ -92,7 +92,13 @@ public class AttackSession {
         }
     }
 
-    public StreamObserver<AttackTowerByIdResponse> getAttackerResponseObserver () {
+    public int getAttackedTowerId() {
+        synchronized (lock) {
+            return attackedTowerId;
+        }
+    }
+
+    public StreamObserver<AttackTowerByIdResponse> getAttackerResponseObserver() {
         synchronized (lock) {
             return attackerResponseObserver;
         }

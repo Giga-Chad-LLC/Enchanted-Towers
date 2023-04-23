@@ -1,5 +1,6 @@
 package services;
 
+import components.session.AttackSession.Spectator;
 import enchantedtowers.common.utils.proto.requests.*;
 import enchantedtowers.common.utils.proto.responses.*;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -614,6 +615,82 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
         }
+    }
+
+
+    /**
+     * Changes the attacker that is being spectated by the player who called this method. Spectator specifies if he/she wants to
+     * spectate next or previous attacker.
+     *
+     * Changes are made to the {@code StreamObserver<AttackSessionIdResponse>} object that is store inside a session,
+     * here we only return <code>ActionResultResponse</code>: success or failure.
+     */
+    @Override
+    public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
+        final int sessionId = request.getSessionId();
+        final int spectatingPlayerId = request.getPlayerData().getPlayerId();
+
+        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
+        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+
+        if (!isAttacking && isSpectating && sessionOpt.isPresent()) {
+            AttackSession session = sessionOpt.get();
+
+            // changing the under spectating player
+            Optional<Spectator> spectatorOpt = session.pollSpectatorById(spectatingPlayerId); // checking for isPresent is done in calculation of `isSpectating` flag
+            // TODO: refactor this assertion later
+            assert(spectatorOpt.isPresent());
+
+            Spectator spectator = spectatorOpt.get();
+
+            AttackSession newSession;
+            System.out.println("Getting getKthNeighbourOfSession of current sessionId=" + session.getId() + ", for towerId=" + session.getAttackedTowerId());
+
+            if (request.getRequestType() == ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER) {
+                newSession = sessionManager.getKthNeighbourOfSession(session.getAttackedTowerId(), session, 1);
+            }
+            else {
+                newSession = sessionManager.getKthNeighbourOfSession(session.getAttackedTowerId(), session, -1);
+            }
+
+            responseBuilder.setSessionId(newSession.getId());
+            newSession.addSpectator(spectator.playerId(), spectator.streamObserver());
+
+            // create response with canvas state
+            SpectateTowerAttackResponse.Builder canvasStateResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            canvasStateResponseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
+            addCurrentSpellIfExists(canvasStateResponseBuilder, newSession);
+            addSpellDescriptionsOfDrawnSpells(canvasStateResponseBuilder, newSession);
+            // build canvas
+            canvasStateResponseBuilder.getCanvasStateBuilder().build();
+
+            // send canvas state to spectator
+            spectator.streamObserver().onNext(canvasStateResponseBuilder.build());
+        }
+        else if (sessionOpt.isEmpty()) {
+            // session not found
+            buildServerError(responseBuilder.getErrorBuilder(),
+                ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                "Attack session with id " + sessionId + " not found");
+        }
+        else if (!isSpectating) {
+            // player is not spectating
+            buildServerError(responseBuilder.getErrorBuilder(),
+                ServerError.ErrorType.INVALID_REQUEST,
+                "player with id " + spectatingPlayerId + " is not spectating");
+        }
+        else {
+            // player is in attacking mode
+            buildServerError(responseBuilder.getErrorBuilder(),
+                ServerError.ErrorType.INVALID_REQUEST,
+                "player with id " + spectatingPlayerId + " is in attacking mode");
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
     }
 
     /**

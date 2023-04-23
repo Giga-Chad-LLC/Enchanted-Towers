@@ -41,6 +41,20 @@ public class AttackSessionManager {
       }
    }
 
+   public AttackSession getKthNeighbourOfSession(int towerId, AttackSession session, int k) {
+      var allSessionsList = sessions.get(towerId);
+      int index = allSessionsList.indexOf(session);
+      // TODO: think of a better way of checking this condition
+      assert(index != -1);
+
+      int neighbour = (index + k + allSessionsList.size()) % allSessionsList.size();
+
+      System.out.println("Last spectated after attacker in session index: " + index);
+      System.out.println("Now spectating after attacker in session index: " + neighbour);
+
+      return allSessionsList.get(neighbour);
+   }
+
    /**
     * @return <code>true</code> if there exists attack session that is associated with player with provided id.
     * Otherwise, returns <code>false</code>.
