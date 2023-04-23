@@ -52,7 +52,7 @@ public class CanvasFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        canvasWidget.onDestroy();
+        canvasWidget.onExecutionInterrupt();
 
         super.onDestroy();
     }

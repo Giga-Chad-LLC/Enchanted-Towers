@@ -20,5 +20,5 @@ public interface CanvasInteractor {
 
     boolean onClearCanvas(CanvasState state);
 
-    default void onDestroy() {}
+    default void onExecutionInterrupt() {}
 }

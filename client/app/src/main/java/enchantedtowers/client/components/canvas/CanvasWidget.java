@@ -43,9 +43,9 @@ public class CanvasWidget extends View {
      * This method is not part of android java API (it is a custom one).
      * Method is required to stop worker inside CanvasDrawSpellInteractor (and maybe other things in the future)
      */
-    public void onDestroy() {
+    public void onExecutionInterrupt() {
         for (CanvasInteractor interactor : interactors) {
-            interactor.onDestroy();
+            interactor.onExecutionInterrupt();
         }
     }
 

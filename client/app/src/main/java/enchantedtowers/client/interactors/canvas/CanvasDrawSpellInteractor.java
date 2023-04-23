@@ -342,13 +342,20 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     }
 
     @Override
-    public void onDestroy() {
-        // TODO: wrap worker with Optional<T>
+    public void onExecutionInterrupt() {
+        // TODO: ? wrap worker with Optional<T>
         if (worker != null) {
             logger.info("Finishing worker...");
             worker.finish();
         }
 
+        logger.info("Shutting down grpc channel...");
+        channel.shutdownNow();
+        try {
+            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void callAsyncAttackTowerById(CanvasState state, CanvasWidget canvasWidget) {
