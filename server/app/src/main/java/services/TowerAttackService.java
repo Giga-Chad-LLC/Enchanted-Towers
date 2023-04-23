@@ -458,17 +458,33 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     @Override
     public void trySpectateTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
         int towerId = request.getTowerId();
+        int playerId = request.getPlayerData().getPlayerId();
         AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
         Optional<AttackSession> session = sessionManager.getAnyAttackSessionByTowerId(towerId);
 
-        if (session.isPresent()) {
+        if (!isAttacking && !isSpectating && session.isPresent()) {
             responseBuilder.setSessionId(session.get().getId());
         }
-        else {
+        else if (session.isEmpty()) {
             logger.info("trySpectateTowerById: session associated with tower id " + towerId + " not found");
             buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session associated with tower id of " + towerId + " not found");
+        }
+        else if (isAttacking) {
+            logger.info("trySpectateTowerById: player with id " + playerId + " is already in attack");
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + playerId + " is already in attack");
+        }
+        else {
+            logger.info("trySpectateTowerById: player with id " + playerId + " is already in spectating mode");
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + playerId + " is already in spectating mode");
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -491,9 +507,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
+
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
 
-        if (sessionOpt.isPresent()) {
+        if (!isAttacking && !isSpectating && sessionOpt.isPresent()) {
             AttackSession session = sessionOpt.get();
             // create response with canvas state
             responseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
@@ -516,11 +535,29 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // send canvas state to spectator
             streamObserver.onNext(responseBuilder.build());
         }
-        else {
-            // session does not exist
+        else if (sessionOpt.isEmpty()) {
+            // session not found
             buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
+        else if (isAttacking) {
+            // player is already attacking
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + spectatingPlayerId + " is already in attack");
+
+            streamObserver.onNext(responseBuilder.build());
+            streamObserver.onCompleted();
+        }
+        else {
+            // player is already spectating
+            buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "player with id " + spectatingPlayerId + " is already in spectating mode");
 
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
