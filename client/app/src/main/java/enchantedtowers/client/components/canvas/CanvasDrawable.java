@@ -3,7 +3,8 @@ package enchantedtowers.client.components.canvas;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-public interface CanvasItem {
+public interface CanvasDrawable {
     void draw(Canvas canvas, Paint brush);
+
     int getColor();
 }

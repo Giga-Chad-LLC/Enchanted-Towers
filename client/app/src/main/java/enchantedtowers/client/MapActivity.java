@@ -1,9 +1,7 @@
 package enchantedtowers.client;
 
 import android.Manifest;
-import android.content.Intent;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
