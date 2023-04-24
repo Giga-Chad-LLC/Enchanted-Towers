@@ -34,6 +34,7 @@ import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
 import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.StatusRuntimeException;
@@ -86,8 +87,13 @@ public class MapFragment extends Fragment {
 
             // creating client stub
             logger.info("Creating blocking stub");
+
+            // creating client stub
+            String host   = ServerApiStorage.getInstance().getClientHost();
+            int port      = ServerApiStorage.getInstance().getPort();
+            String target = host + ":" + port;
             blockingStub = TowersServiceGrpc.newBlockingStub(
-                    Grpc.newChannelBuilder("10.0.2.2:50051", InsecureChannelCredentials.create()).build());
+                    Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
 
             applyCustomGoogleMapStyle();
 

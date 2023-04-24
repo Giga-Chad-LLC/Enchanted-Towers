@@ -7,6 +7,18 @@
     tools:context=".MainActivity">
 
     <Button
+        android:id="@+id/changeToAttackTowerMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="360dp"
+        android:onClick="changeActivity"
+        android:text="Attack Tower Menu"
+        app:barrierAllowsGoneWidgets="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
         android:id="@+id/changeToCanvasActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

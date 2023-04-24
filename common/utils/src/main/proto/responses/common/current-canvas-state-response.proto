@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// common
+import "common/vector2.proto";
+// responses
+import "responses/tower-attack-service/spell-description-response.proto";
+
+message CurrentCanvasStateResponse {
+  message CurrentSpellState {
+    int32 colorId = 1;
+    repeated common.Vector2 points = 2;
+  }
+
+  CurrentSpellState currentSpellState = 1;
+  repeated response_models.SpellDescriptionResponse spellDescriptions = 2;
+};

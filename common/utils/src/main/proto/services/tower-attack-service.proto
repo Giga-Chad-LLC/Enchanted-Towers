@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/tower-attack-service/spell-request.proto";
+import "requests/tower-attack-service/tower-id-request.proto";
+import "requests/tower-attack-service/leave-attack-request.proto";
+import "requests/tower-attack-service/leave-spectating-request.proto";
+import  "requests/tower-attack-service/attack-session-id-request.proto";
+import  "requests/tower-attack-service/toggle-attacker.proto";
+// responses
+import "responses/common/action-result-response.proto";
+import "responses/tower-attack-service/spell-finish-response.proto";
+import "responses/tower-attack-service/spectate-tower-attack-response.proto";
+import "responses/tower-attack-service/attack-session-id-response.proto";
+import "responses/tower-attack-service/attack-tower-by-id-response.proto";
+
+
+service TowerAttackService {
+  rpc TryAttackTowerById(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc AttackTowerById(request_models.TowerIdRequest) returns (stream response_models.AttackTowerByIdResponse) {}
+  // TODO: it seems like we don't even need this rpc
+  rpc LeaveAttack(request_models.LeaveAttackRequest) returns (response_models.ActionResultResponse) {}
+
+  // drawing related methods
+  rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
+  rpc ClearCanvas(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+
+  // TODO: how to remove this redundant method 'TrySpectateTowerById'?
+  rpc TrySpectateTowerById(request_models.TowerIdRequest) returns (response_models.AttackSessionIdResponse) {}
+  rpc SpectateTowerBySessionId(request_models.AttackSessionIdRequest) returns (stream response_models.SpectateTowerAttackResponse) {}
+  rpc ToggleAttacker(request_models.ToggleAttackerRequest) returns (response_models.AttackSessionIdResponse) {}
+  // TODO: it seems like we don't even need this rpc
+  rpc LeaveSpectating(request_models.LeaveSpectatingRequest) returns (response_models.ActionResultResponse) {}
+}

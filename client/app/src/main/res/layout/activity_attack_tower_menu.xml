@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:id="@+id/frame_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp" >
+
+        <EditText
+            android:id="@+id/playerIdTextInput"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="280dp"
+            android:layout_marginLeft="50dp"
+            android:hint="PlayerId"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/towerIdTextInput"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="350dp"
+            android:layout_marginLeft="50dp"
+            android:hint="TowerId"
+            android:inputType="text" />
+
+        <Button
+            android:id="@+id/attackButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="80dp"
+            android:layout_marginTop="480dp"
+            android:text="Attack"
+            app:barrierAllowsGoneWidgets="false" />
+
+        <Button
+            android:id="@+id/spectateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="210dp"
+            android:layout_marginTop="480dp"
+            android:text="Spectate"
+            app:barrierAllowsGoneWidgets="false" />
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

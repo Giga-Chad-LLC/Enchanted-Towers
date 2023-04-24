@@ -18,4 +18,9 @@ public class Vector2 {
         x += dx;
         y += dy;
     }
+
+    @Override
+    public String toString() {
+        return "Vector2[" + x + ", " + y + "]";
+    }
 }

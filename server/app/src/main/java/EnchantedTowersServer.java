@@ -1,11 +1,19 @@
-import io.grpc.Grpc;
-import io.grpc.InsecureServerCredentials;
+import components.fs.FileReader;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
+import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.SpellTemplate;
 import io.grpc.Server;
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-
-// services
+import org.json.JSONException;
+import services.TowerAttackService;
 import services.TowersService;
 
 
@@ -14,13 +22,17 @@ public class EnchantedTowersServer {
     private Server server;
 
     private void start() throws IOException {
-        /* The port on which the server should run */
-        int port = 50051;
-        server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
+        String host = ServerApiStorage.getInstance().getServerHost();
+        int port = ServerApiStorage.getInstance().getPort();
+
+        server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
+                // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
+                .addService(new TowerAttackService())
                 .addService(new TowersService())
                 .build()
                 .start();
-        logger.info("Server started, listening on port " + port);
+
+        logger.info("Server started: host='" + host + "', port='" + port + "'");
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -52,12 +64,34 @@ public class EnchantedTowersServer {
     }
 
     /**
+     * Loads spell templates from file system.
+     * @param resourceUrl - {@link URL} to the JSON file containing description of spell templates
+     */
+    private static void loadSpellTemplatesFromFile(URL resourceUrl) {
+        if (!SpellBook.isInstantiated()) {
+            try {
+                List<SpellTemplate> data = EnchantmetTemplatesProvider.parseJson(
+                    FileReader.readRawFile(resourceUrl)
+                );
+                SpellBook.instantiate(data);
+            } catch (JSONException | IOException e) {
+                System.err.println("Error in loadSpellTemplatesFromFile: " + e.getMessage() + "\n" + Arrays.toString(
+                    e.getStackTrace()));
+            }
+        }
+    }
+
+    /**
      * Main launches the server from the command line.
      */
     public static void main(String[] args) throws IOException, InterruptedException {
+        // reading spell templates from json file
+        URL url = EnchantedTowersServer.class.getClassLoader().getResource("canvas_templates_config.json");
+        loadSpellTemplatesFromFile(url);
+
+        // starting server
         final EnchantedTowersServer server = new EnchantedTowersServer();
         server.start();
         server.blockUntilShutdown();
     }
 }
-

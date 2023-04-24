@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// responses
+import "responses/common/server-error.proto";
+
+message ActionResultResponse {
+  bool success = 1;
+  response_models.ServerError error = 2;
+};

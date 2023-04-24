@@ -4,14 +4,26 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CanvasState {
-    public ArrayList<CanvasDrawable> items;
+    private final CopyOnWriteArrayList<CanvasDrawable> items = new CopyOnWriteArrayList<>();
     private final Paint brush = new Paint();
 
     public CanvasState() {
-        items = new ArrayList<>();
         initBrush();
+    }
+
+//    /**
+//     *
+//     * @return
+//     */
+    // ??: a copy of stored items (copying is required for the thread safety)
+    public List<CanvasDrawable> getItems() {
+        return Collections.unmodifiableList(items);
     }
 
     public void addItem(CanvasDrawable newItem) {
@@ -26,7 +38,11 @@ public class CanvasState {
         items.clear();
     }
 
-    public Paint getBrush() {
+    /**
+     *
+     * @return a copy of brush that is used inside a {@code CanvasState} with all settings included
+     */
+    public Paint getBrushCopy() {
         return new Paint(brush);
     }
 

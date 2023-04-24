@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.requests";
+option java_multiple_files = true;
+
+package request_models;
+
+// common
+import "common/player-data.proto";
+
+
+message LeaveAttackRequest {
+  int32 sessionId = 1;
+  common.PlayerData playerData = 2;
+};

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// common
+import "common/vector2.proto";
+// responses
+import "responses/tower-attack-service/spell-description-response.proto";
+import "responses/common/server-error.proto";
+import "responses/common/current-canvas-state-response.proto";
+
+
+message SpectateTowerAttackResponse {
+  message SelectSpellColor {
+    int32 colorId = 1;
+  }
+
+  enum ResponseType {
+    CURRENT_CANVAS_STATE = 0;
+    SELECT_SPELL_COLOR = 1;
+    DRAW_SPELL = 2;
+    FINISH_SPELL = 3;
+    CLEAR_CANVAS = 4; // does not require any additional data in response (serves as marker to clean canvas)
+  };
+
+  ResponseType responseType = 1;
+  response_models.ServerError error = 2;
+
+  // CURRENT_CANVAS_STATE
+  response_models.CurrentCanvasStateResponse canvasState = 3;
+  // SELECT_SPELL_COLOR
+  SelectSpellColor spellColor = 4;
+  // DRAW_SPELL
+  common.Vector2 spellPoint = 5;
+  // FINISH_SPELL
+   response_models.SpellDescriptionResponse spellDescription = 6;
+};

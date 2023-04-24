@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.requests";
+option java_multiple_files = true;
+
+package request_models;
+
+import "common/player-data.proto";
+
+message ToggleAttackerRequest {
+  enum RequestType {
+    SHOW_NEXT_ATTACKER = 0;
+    SHOW_PREV_ATTACKER = 1;
+  };
+
+  common.PlayerData playerData = 1;
+  int32 sessionId = 2;
+  RequestType requestType = 3;
+};

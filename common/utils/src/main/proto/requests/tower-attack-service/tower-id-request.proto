@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.requests";
+option java_multiple_files = true;
+
+package request_models;
+
+import "common/player-data.proto";
+
+message TowerIdRequest {
+  int32 towerId = 1;
+  common.PlayerData playerData = 2;
+};

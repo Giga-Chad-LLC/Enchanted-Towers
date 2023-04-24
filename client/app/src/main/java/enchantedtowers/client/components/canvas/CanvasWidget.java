@@ -1,5 +1,6 @@
 package enchantedtowers.client.components.canvas;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -9,42 +10,45 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-import enchantedtowers.client.interactors.canvas.CanvasDrawSpellInteractor;
-import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
-import enchantedtowers.client.interactors.canvas.CanvasInteractor;
-
 import java.util.ArrayList;
+import java.util.List;
+
+import enchantedtowers.client.interactors.canvas.CanvasInteractor;
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 
 public class CanvasWidget extends View {
-    private CanvasState state;
-    private ArrayList<CanvasInteractor> interactors;
+    private CanvasState state = new CanvasState();
+    private List<CanvasInteractor> interactors = new ArrayList<>();
 
     public CanvasWidget(Context context) {
         super(context);
-        init();
     }
 
     public CanvasWidget(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public CanvasWidget(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
     }
 
-    private void init() {
-        state = new CanvasState();
-        interactors = new ArrayList<>();
+    public CanvasState getState() {
+        return state;
+    }
 
-        interactors.add(
-                new CanvasDrawStateInteractor()
-        );
-        interactors.add(
-                new CanvasDrawSpellInteractor(state)
-        );
+    public void setInteractors(List<CanvasInteractor> interactors) {
+        this.interactors = interactors;
+    }
+
+    /**
+     * This method is not part of android java API (it is a custom one).
+     * Method is required to stop worker inside CanvasDrawSpellInteractor (and maybe other things in the future)
+     */
+    public void onExecutionInterrupt() {
+        for (CanvasInteractor interactor : interactors) {
+            interactor.onExecutionInterrupt();
+        }
     }
 
     @Override
@@ -54,18 +58,40 @@ public class CanvasWidget extends View {
         }
     }
 
+    // TODO: invalidated inside interators or check for `eventHandled` boolean (see onTouchEvent, onDraw, onClearCanvas methods)
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean eventHandled = false;
         for (CanvasInteractor interactor : interactors) {
             eventHandled |= interactor.onTouchEvent(state, event.getX(), event.getY(), event.getAction());
         }
+        if (eventHandled) {
+            invalidate();
+        }
+        return eventHandled;
+    }
+
+    public void onClearCanvas() {
+        boolean eventHandled = false;
+        for (CanvasInteractor interactor : interactors) {
+            eventHandled |= interactor.onClearCanvas(state);
+        }
 
         if (eventHandled) {
             invalidate();
         }
+    }
 
-        return eventHandled;
+    public void onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType) {
+        boolean eventHandled = false;
+        for (CanvasInteractor interactor : interactors) {
+            eventHandled |= interactor.onToggleSpectatingAttacker(requestType, state);
+        }
+
+        if (eventHandled) {
+            invalidate();
+        }
     }
 
     public void setBrushColor(int newColor) {
@@ -74,10 +100,5 @@ public class CanvasWidget extends View {
 
     public void setBrushColor(Color newColor) {
         state.setBrushColor(newColor.toArgb());
-    }
-
-    public void clearCanvas() {
-        state.clear();
-        invalidate();
     }
 }
