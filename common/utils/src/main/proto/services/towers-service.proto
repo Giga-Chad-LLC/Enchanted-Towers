@@ -6,14 +6,11 @@ option java_multiple_files = true;
 package services;
 
 // requests
-import "requests/player-coordinates-request.proto";
-import "requests/tower-attack-request.proto";
+import "requests/towers-service/player-coordinates-request.proto";
 // responses
-import "responses/towers-aggregation-response.proto";
-import "responses/attack-tower-response.proto";
+import "responses/towers-service/towers-aggregation-response.proto";
 
 
 service TowersService {
     rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
-    rpc AttackTower(request_models.TowerAttackRequest) returns (response_models.AttackTowerResponse) {}
 }
