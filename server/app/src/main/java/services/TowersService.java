@@ -18,10 +18,9 @@ import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
 public class TowersService extends TowersServiceGrpc.TowersServiceImplBase {
     @Override
     public void getTowersCoordinates(PlayerCoordinatesRequest request, StreamObserver<TowersAggregationResponse> responseObserver) {
-        System.out.println("getTowersCoordinates:\tPlayerCoordinatesRequest[x=" + request.getX() + ", y=" + request.getY() + "]");
+        System.out.println("getTowersCoordinates: player cords: [x=" + request.getX() + ", y=" + request.getY() + "]");
 
         CreateTowersResponseInteractor interactor = new CreateTowersResponseInteractor();
-
         TowersAggregationResponse response = interactor.execute(request);
 
         responseObserver.onNext(response);

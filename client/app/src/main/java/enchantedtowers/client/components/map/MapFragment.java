@@ -1,4 +1,4 @@
-package enchantedtowers.client;
+package enchantedtowers.client.components.map;
 
 
 import android.content.Context;
@@ -27,6 +27,8 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.CanvasActivity;
+import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
 import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;

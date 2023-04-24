@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
 
 
