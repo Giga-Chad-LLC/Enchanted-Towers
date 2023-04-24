@@ -1,37 +1,44 @@
 package enchantedtowers.client.components.map;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.location.LocationListenerCompat;
-import androidx.fragment.app.Fragment;
-
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.location.LocationListenerCompat;
+import androidx.fragment.app.Fragment;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
+import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
+import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
+import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
+import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.StatusRuntimeException;
+
 
 
 public class MapFragment extends Fragment {
@@ -39,13 +46,10 @@ public class MapFragment extends Fragment {
     private GoogleMap googleMap;
     private AlertDialog GPSAlertDialog;
     private LocationListener locationUpdatesListener;
-    private final CircleOptions circleOptions = new CircleOptions()
-            .radius(200)
-            .strokeColor(Color.BLACK)
-            .fillColor(Color.argb(48, 255, 0, 0))
-            .strokeWidth(2);
+    private GoogleMap.OnMarkerClickListener markerClickListener;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
-
+    private TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
+    private final MapDrawTowersInteractor drawInteractor = new MapDrawTowersInteractor();
 
     public MapFragment() {
         // Required empty public constructor
@@ -79,11 +83,25 @@ public class MapFragment extends Fragment {
             // for convenient use if methods
             this.googleMap = googleMap;
 
+            this.googleMap.setOnMarkerClickListener(markerClickListener);
+
+            // creating client stub
+            logger.info("Creating blocking stub");
+
+            // creating client stub
+            String host   = ServerApiStorage.getInstance().getClientHost();
+            int port      = ServerApiStorage.getInstance().getPort();
+            String target = host + ":" + port;
+            blockingStub = TowersServiceGrpc.newBlockingStub(
+                    Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
+
             applyCustomGoogleMapStyle();
 
-            // registering click listeners on MyLocation button and location point
+            // registering click listeners on MyLocation button, location point and marker's
             registerOnMyLocationButtonClickListener();
             registerOnMyLocationClickListener();
+            registerOnMyMarkerClickListener();
+            this.googleMap.setOnMarkerClickListener(markerClickListener);
 
             // enabling user location
             if (PermissionManager.checkLocationPermission(requireContext())) {
@@ -96,9 +114,10 @@ public class MapFragment extends Fragment {
                 Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                 if (lastKnownLocation != null) {
-                     double latitude = lastKnownLocation.getLatitude();
+                    getTowers(lastKnownLocation);
+                    double latitude = lastKnownLocation.getLatitude();
                      double longitude = lastKnownLocation.getLongitude();
-                    drawCircleAroundPoint(new LatLng(latitude, longitude));
+                    drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap);
                 }
             }
             else {
@@ -108,6 +127,7 @@ public class MapFragment extends Fragment {
 
         return view;
     }
+
 
     private void registerOnLocationUpdatesListener() throws SecurityException {
         Objects.requireNonNull(googleMap);
@@ -122,9 +142,10 @@ public class MapFragment extends Fragment {
             public void onLocationChanged(@NonNull Location location) {
                 logger.log(Level.INFO, "New location: " + location);
                 googleMap.clear();
+                getTowers(location);
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
-                drawCircleAroundPoint(new LatLng(latitude, longitude));
+                drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap);
             }
 
             @Override
@@ -171,6 +192,15 @@ public class MapFragment extends Fragment {
         }
     }
 
+    private void registerOnMyMarkerClickListener() {
+        Objects.requireNonNull(googleMap);
+        markerClickListener = marker -> {
+            Intent intent = new Intent(getActivity(), CanvasActivity.class);
+            startActivity(intent);
+            return false;
+        };
+    }
+
     private void registerOnMyLocationButtonClickListener() {
         Objects.requireNonNull(googleMap);
 
@@ -205,14 +235,29 @@ public class MapFragment extends Fragment {
         }
     }
 
-    private void drawCircleAroundPoint(LatLng point) {
-        Objects.requireNonNull(googleMap);
-        circleOptions.center(point);
-        googleMap.addCircle(circleOptions);
+    private void getTowers(Location location) {
+        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder()
+                .setX(location.getLatitude())
+                .setY(location.getLongitude())
+                .build();
+        try {
+            logger.info("getTowers: requesting towers");
+            // TODO: performance bottle neck since it is blocking the execution thread (android studio warns about application not responding)
+            // TODO: change to async stub
+            TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
+            logger.info("getTowers: towers=" + response.getTowersList());
+
+            drawInteractor.execute(googleMap, response, location);
+        }
+        catch(StatusRuntimeException err) {
+            logger.log(Level.WARNING, "Towers request has fallen", err.getStatus());
+        }
     }
+
 
     @Override
     public void onDestroy() {
+        // TODO: unregister all listeners
         // TODO: figure out whether it is even correct
         // unregistering location listener if not null
         if (locationUpdatesListener != null) {
@@ -220,7 +265,6 @@ public class MapFragment extends Fragment {
             LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
             locationManager.removeUpdates(locationUpdatesListener);
         }
-
         super.onDestroy();
     }
 }

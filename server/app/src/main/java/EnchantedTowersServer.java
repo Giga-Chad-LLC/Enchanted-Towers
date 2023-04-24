@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import org.json.JSONException;
 import services.TowerAttackService;
-
+import services.TowersService;
 
 
 public class EnchantedTowersServer {
@@ -28,6 +28,7 @@ public class EnchantedTowersServer {
         server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
                 // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
                 .addService(new TowerAttackService())
+                .addService(new TowersService())
                 .build()
                 .start();
 

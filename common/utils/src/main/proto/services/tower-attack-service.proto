@@ -6,7 +6,6 @@ option java_multiple_files = true;
 package services;
 
 // requests
-import "requests/player-coordinates-request.proto";
 import "requests/tower-attack-service/spell-request.proto";
 import "requests/tower-attack-service/tower-id-request.proto";
 import "requests/tower-attack-service/leave-attack-request.proto";
@@ -22,8 +21,6 @@ import "responses/tower-attack-service/attack-tower-by-id-response.proto";
 
 
 service TowerAttackService {
-//  rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
-
   rpc TryAttackTowerById(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
   rpc AttackTowerById(request_models.TowerIdRequest) returns (stream response_models.AttackTowerByIdResponse) {}
   // TODO: it seems like we don't even need this rpc

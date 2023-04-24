@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 
 import org.json.JSONException;
 
@@ -15,8 +14,8 @@ import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
 import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
 import enchantedtowers.client.components.fs.AndroidFileReader;
-import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
+import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.SpellTemplate;
 
 public class CanvasActivity extends AppCompatActivity {
@@ -42,11 +41,11 @@ public class CanvasActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         CanvasFragment canvasFragment;
 
-        if (extras.getBoolean("isAttacking", false)) {
+        if (extras != null && extras.getBoolean("isAttacking", false)) {
             System.out.println("Attacking on canvas");
             canvasFragment = CanvasAttackerFragment.newInstance();
         }
-        else if (extras.getBoolean("isSpectating", false)) {
+        else if (extras != null && extras.getBoolean("isSpectating", false)) {
             System.out.println("Spectating on canvas");
             canvasFragment = CanvasSpectatorFragment.newInstance();
         }
