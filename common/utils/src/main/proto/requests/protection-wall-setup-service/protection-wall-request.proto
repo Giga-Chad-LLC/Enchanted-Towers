@@ -8,15 +8,17 @@ package request_models;
 // common
 import "common/player-data.proto";
 import "common/vector2.proto";
+import "common/spell.proto";
 
 
-message DrawnSpellRequest {
-  message Spell {
-    common.Vector2 offset = 1;
-    repeated common.Vector2 points = 2;
-  }
+message ProtectionWallRequest {
+  enum RequestType {
+    ADD_SPELL = 0;
+    CLEAR_CANVAS = 1; // no additional data
+  };
 
   common.PlayerData playerData = 1;
   int32 sessionId = 2;
-  Spell spell = 3;
+  // ADD_SPELL
+  common.Spell spell = 3;
 };
