@@ -51,6 +51,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
 
+        // TODO: check that tower is not under protection wall installation
+        // TODO: mark tower as being attacked
+
         logger.info("tryAttackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
 
         if (!isAttacking && !isSpectating) {

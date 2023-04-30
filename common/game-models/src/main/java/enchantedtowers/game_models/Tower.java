@@ -12,9 +12,10 @@ public class Tower {
     private final List<ProtectionWall> protectionWalls;
     private Optional<Integer> ownerId;
     private Optional<Instant> lastProtectionWallModificationTimestamp;
+    private boolean isUnderProtectionWallsInstallation;
 
     // lock variable is used to synchronization
-    private final Object lock = new Object();
+    private final Object lock;
 
 
     public Tower(int towerId, Vector2 position) {
@@ -27,11 +28,23 @@ public class Tower {
         );
         ownerId = Optional.empty();
         lastProtectionWallModificationTimestamp = Optional.empty();
+        isUnderProtectionWallsInstallation = false;
+        lock = new Object();
     }
 
     public int getId() {
         // towerId never changes, no need to sync
         return towerId;
+    }
+
+    public boolean isProtected() {
+        synchronized (lock) {
+            boolean hasProtection = false;
+            for (var wall : protectionWalls) {
+                hasProtection |= wall.isEnchanted();
+            }
+            return hasProtection;
+        }
     }
 
     public Optional<Integer> getOwnerId() {
@@ -64,7 +77,21 @@ public class Tower {
         }
     }
 
-    public void setLastModificationTimestamp() {
+    public void setLastProtectionWallModificationTimestamp(Instant timestamp) {
+        synchronized (lock) {
+            lastProtectionWallModificationTimestamp = Optional.of(timestamp);
+        }
+    }
 
+    public boolean isUnderProtectionWallsInstallation() {
+        synchronized (lock) {
+            return isUnderProtectionWallsInstallation;
+        }
+    }
+
+    public void setUnderProtectionWallsInstallation(boolean value) {
+        synchronized (lock) {
+            isUnderProtectionWallsInstallation = value;
+        }
     }
 }
