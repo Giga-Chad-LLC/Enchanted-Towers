@@ -10,7 +10,7 @@ import enchantedtowers.game_models.Tower;
 // proto
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
-
+import enchantedtowers.game_models.utils.Vector2;
 
 
 // TODO: create ResponseInteractor interface and implement it
@@ -20,9 +20,9 @@ public class CreateTowersResponseInteractor {
     final static double MAX_DISTANCE = 2000;
     public CreateTowersResponseInteractor() {
         storedTowers = new ArrayList<>();
-        storedTowers.add(new Tower(1, 1));
-        storedTowers.add(new Tower(2, 3));
-        storedTowers.add(new Tower(5, 12));
+        storedTowers.add(new Tower(0, new Vector2(1, 1)));
+        storedTowers.add(new Tower(1, new Vector2(2, 3)));
+        storedTowers.add(new Tower(2, new Vector2(5, 12)));
     }
 
     private static boolean isInsideRequiredArea(double x, double x0, double y, double y0) {
@@ -38,10 +38,13 @@ public class CreateTowersResponseInteractor {
         List<TowerResponse> towers = new ArrayList<>();
 
         for (Tower tower : storedTowers) {
-            if (isInsideRequiredArea(playerX, tower.getX(), playerY, tower.getY())) {
+            Vector2 position = tower.getPosition();
+
+            if (isInsideRequiredArea(playerX, position.x, playerY, position.y)) {
                 TowerResponse towerResponse = TowerResponse.newBuilder()
-                        .setX(tower.getX())
-                        .setY(tower.getY()).build();
+                        .setX(position.x)
+                        .setY(position.y)
+                        .build();
 
                 towers.add(towerResponse);
             }
