@@ -79,11 +79,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
      */
     @Override
-    public void attackTowerById(TowerIdRequest request, StreamObserver<AttackTowerByIdResponse> streamObserver) {
+    public void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         int playerId = request.getPlayerData().getPlayerId();
         int towerId = request.getTowerId();
 
-        AttackTowerByIdResponse.Builder responseBuilder = AttackTowerByIdResponse.newBuilder();
+        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
 
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
@@ -100,7 +100,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             // create cancel handler to hook the event of client closing the connection
             // in this case spectators must be disconnected and attack session must be removed
-            var callObserver = (ServerCallStreamObserver<AttackTowerByIdResponse>) streamObserver;
+            var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> {
                 logger.info("Attacker with id " + playerId + " cancelled stream. Destroying the corresponding attack session...");
@@ -115,7 +115,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             });
 
             // setting session id into response
-            responseBuilder.setType(AttackTowerByIdResponse.ResponseType.ATTACK_SESSION_ID);
+            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
             responseBuilder.getSessionBuilder()
                     .setSessionId(sessionId)
                     .build();
@@ -509,10 +509,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * If session not found, sends error.
      */
     @Override
-    public void trySpectateTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
+    public void trySpectateTowerById(TowerIdRequest request, StreamObserver<SessionIdResponse> streamObserver) {
         int towerId = request.getTowerId();
         int playerId = request.getPlayerData().getPlayerId();
-        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+        SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
 
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
@@ -555,7 +555,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * and is opaque to the caller. In particular, the removal of an invalid spectator is done inside {@link AttackSession#getSpectators} method, thus making the removal lazy. The caller must not rely on this implementation.
      */
     @Override
-    public void spectateTowerBySessionId(AttackSessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
+    public void spectateTowerBySessionId(SessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
         final int sessionId = request.getSessionId();
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
@@ -626,11 +626,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * here we only return <code>ActionResultResponse</code>: success or failure.
      */
     @Override
-    public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
+    public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<SessionIdResponse> streamObserver) {
         final int sessionId = request.getSessionId();
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
-        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+        SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
 
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
@@ -754,8 +754,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
 
         // sending response with session expiration to attacker and closing connection
-        AttackTowerByIdResponse.Builder responseBuilder = AttackTowerByIdResponse.newBuilder();
-        responseBuilder.setType(AttackTowerByIdResponse.ResponseType.ATTACK_SESSION_EXPIRED);
+        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
         responseBuilder.getExpirationBuilder().build();
 
         var attackerResponseObserver = session.getAttackerResponseObserver();

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.Grpc;
@@ -150,7 +150,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 .trySpectateTowerById(requestBuilder.build(), new StreamObserver<>() {
             boolean serverErrorReceived = false;
             @Override
-            public void onNext(AttackSessionIdResponse response) {
+            public void onNext(SessionIdResponse response) {
                 // Handle the response
                 if (response.hasError()) {
                     serverErrorReceived = true;

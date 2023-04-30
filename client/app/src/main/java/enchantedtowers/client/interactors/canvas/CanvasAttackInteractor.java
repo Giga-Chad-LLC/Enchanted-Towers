@@ -21,7 +21,7 @@ import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -355,7 +355,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(AttackTowerByIdResponse response) {
+            public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
                     // TODO: leave attack session
                     logger.warning("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
@@ -364,7 +364,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                     logger.info("attackTowerById::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
-                        case ATTACK_SESSION_ID -> {
+                        case SESSION_ID -> {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
 
@@ -372,7 +372,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             worker = new AttackEventWorker(canvasWidget);
                             worker.start();
                         }
-                        case ATTACK_SESSION_EXPIRED -> {
+                        case SESSION_EXPIRED -> {
                             // TODO: leave attack session
                         }
                     }

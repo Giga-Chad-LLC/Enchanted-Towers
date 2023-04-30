@@ -9,7 +9,7 @@ package response_models;
 import "responses/common/server-error.proto";
 
 
-message AttackSessionIdResponse {
+message SessionIdResponse {
   int32 sessionId = 1;
   response_models.ServerError error = 2;
 };

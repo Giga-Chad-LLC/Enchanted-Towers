@@ -14,7 +14,7 @@ import enchantedtowers.game_models.utils.Vector2;
 
 public class Spell {
     // must be relative to the bounded box of path
-    public Geometry curve;
+    private Geometry curve;
     // specifies offset for drawing path
     private final Vector2 offset = new Vector2(0, 0);
 
