@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,7 +13,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import java.util.Arrays;
 
 import enchantedtowers.client.R;
-import enchantedtowers.client.interactors.canvas.CanvasDrawSpellInteractor;
+import enchantedtowers.client.interactors.canvas.CanvasAttackInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 
 public class CanvasAttackerFragment extends CanvasFragment {
@@ -59,7 +58,7 @@ public class CanvasAttackerFragment extends CanvasFragment {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
         canvasWidget.setInteractors(Arrays.asList(
                 new CanvasDrawStateInteractor(),
-                new CanvasDrawSpellInteractor(canvasWidget.getState(), canvasWidget)
+                new CanvasAttackInteractor(canvasWidget.getState(), canvasWidget)
         ));
         canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
 
