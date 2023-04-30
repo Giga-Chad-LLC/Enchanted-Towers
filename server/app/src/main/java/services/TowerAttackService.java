@@ -555,7 +555,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * and is opaque to the caller. In particular, the removal of an invalid spectator is done inside {@link AttackSession#getSpectators} method, thus making the removal lazy. The caller must not rely on this implementation.
      */
     @Override
-    public void spectateTowerBySessionId(AttackSessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
+    public void spectateTowerBySessionId(SessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
         final int sessionId = request.getSessionId();
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 

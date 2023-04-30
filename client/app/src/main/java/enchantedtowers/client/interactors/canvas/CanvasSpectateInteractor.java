@@ -17,7 +17,7 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.common.utils.proto.requests.AttackSessionIdRequest;
+import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
@@ -70,7 +70,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId or sessionId is not present");
         }
 
-        AttackSessionIdRequest.Builder requestBuilder = AttackSessionIdRequest.newBuilder();
+        SessionIdRequest.Builder requestBuilder = SessionIdRequest.newBuilder();
         requestBuilder.setSessionId(sessionId.get());
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId.get())

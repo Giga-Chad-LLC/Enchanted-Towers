@@ -9,7 +9,7 @@ package request_models;
 import "common/player-data.proto";
 
 
-message AttackSessionIdRequest {
+message SessionIdRequest {
   int32 sessionId = 1;
   common.PlayerData playerData = 2;
 };

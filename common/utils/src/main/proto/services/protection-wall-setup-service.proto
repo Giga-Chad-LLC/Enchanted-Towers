@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/common/tower-id-request.proto";
+import "requests/common/session-id-request.proto";
+// responses
+import "responses/common/action-result-response.proto";
+
+
+service ProtectionWallSetupService {
+  rpc TryEnterProtectionWallCreationSession(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
+
+}
