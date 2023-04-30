@@ -24,7 +24,7 @@ import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -374,7 +374,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(AttackTowerByIdResponse response) {
+            public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
                     // TODO: leave attack session
                     System.out.println("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
@@ -383,7 +383,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
                     System.out.println("attackTowerById::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
-                        case ATTACK_SESSION_ID -> {
+                        case SESSION_ID -> {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
 
@@ -391,7 +391,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
                             worker = new AttackEventWorker(state, canvasWidget);
                             worker.start();
                         }
-                        case ATTACK_SESSION_EXPIRED -> {
+                        case SESSION_EXPIRED -> {
                             // TODO: leave attack session
                         }
                     }

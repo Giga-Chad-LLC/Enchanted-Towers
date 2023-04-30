@@ -1,6 +1,6 @@
 package components.session;
 
-import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.HausdorffMetric;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -19,7 +19,7 @@ public class AttackSession {
     private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
-    private final StreamObserver<AttackTowerByIdResponse> attackerResponseObserver;
+    private final StreamObserver<SessionInfoResponse> attackerResponseObserver;
     private final IntConsumer onSessionExpiredCallback;
     private final List<Vector2> currentSpellPoints = new ArrayList<>();
     private Optional<Integer> currentSpellColorId = Optional.empty();
@@ -34,7 +34,7 @@ public class AttackSession {
     AttackSession(int id,
                   int attackingPlayerId,
                   int attackedTowerId,
-                  StreamObserver<AttackTowerByIdResponse> attackerResponseObserver,
+                  StreamObserver<SessionInfoResponse> attackerResponseObserver,
                   IntConsumer onSessionExpiredCallback) {
         this.id = id;
         this.attackingPlayerId = attackingPlayerId;
@@ -98,7 +98,7 @@ public class AttackSession {
         }
     }
 
-    public StreamObserver<AttackTowerByIdResponse> getAttackerResponseObserver() {
+    public StreamObserver<SessionInfoResponse> getAttackerResponseObserver() {
         synchronized (lock) {
             return attackerResponseObserver;
         }

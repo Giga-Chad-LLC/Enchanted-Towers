@@ -1,6 +1,6 @@
 package components.session;
 
-import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import io.grpc.stub.StreamObserver;
 
 import java.util.*;
@@ -13,7 +13,7 @@ public class AttackSessionManager {
 
    public AttackSession createAttackSession(int playerId,
                                   int towerId,
-                                  StreamObserver<AttackTowerByIdResponse> attackerResponseObserver,
+                                  StreamObserver<SessionInfoResponse> attackerResponseObserver,
                                   IntConsumer onSessionExpiredCallback) {
       synchronized (sessions) {
          if (!sessions.containsKey(towerId)) {
