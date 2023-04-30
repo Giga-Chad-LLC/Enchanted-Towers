@@ -7,8 +7,6 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +19,6 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
-import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
@@ -42,7 +39,6 @@ class AttackEventWorker extends Thread {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final TowerAttackServiceGrpc.TowerAttackServiceBlockingStub blockingStub;
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
-    private final CanvasState state;
     private final CanvasWidget canvasWidget;
 
     // Event class
@@ -161,10 +157,9 @@ class AttackEventWorker extends Thread {
 
             return new Event(requestBuilder.build());
         }
-    };
+    }
 
-    public AttackEventWorker(CanvasState state, CanvasWidget canvasWidget) {
-        this.state = state;
+    public AttackEventWorker(CanvasWidget canvasWidget) {
         this.canvasWidget = canvasWidget;
 
         String host = ServerApiStorage.getInstance().getClientHost();
@@ -237,7 +232,7 @@ class AttackEventWorker extends Thread {
                                             template
                                     );
 
-                                    state.addItem(canvasMatchedEnchantment);
+                                    canvasWidget.getState().addItem(canvasMatchedEnchantment);
                                     canvasWidget.postInvalidate();
                                 }
                             }
@@ -284,22 +279,17 @@ class AttackEventWorker extends Thread {
 
 
 
-public class CanvasDrawSpellInteractor implements CanvasInteractor {
+public class CanvasAttackInteractor implements CanvasInteractor {
     private final Path path = new Path();
-    private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
     private AttackEventWorker worker;
 
-    private static final Logger logger = Logger.getLogger(CanvasDrawSpellInteractor.class.getName());
+    private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private final ManagedChannel channel;
 
-    public CanvasDrawSpellInteractor(CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasAttackInteractor(CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
-        logger.info("Start worker");
-
-        worker = new AttackEventWorker(state, canvasWidget);
-        worker.start();
 
         // configuring async client stub
         {
@@ -309,7 +299,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
             asyncStub = TowerAttackServiceGrpc.newStub(channel);
         }
 
-        callAsyncAttackTowerById(state, canvasWidget);
+        callAsyncAttackTowerById(canvasWidget);
     }
 
     @Override
@@ -355,7 +345,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         }
     }
 
-    private void callAsyncAttackTowerById(CanvasState state, CanvasWidget canvasWidget) {
+    private void callAsyncAttackTowerById(CanvasWidget canvasWidget) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         // creating request
         {
@@ -383,7 +373,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
                             ClientStorage.getInstance().setSessionId(sessionId);
 
                             logger.info("Start worker");
-                            worker = new AttackEventWorker(state, canvasWidget);
+                            worker = new AttackEventWorker(canvasWidget);
                             worker.start();
                         }
                         case ATTACK_SESSION_EXPIRED -> {
@@ -418,7 +408,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
         path.moveTo(x, y);
         Vector2 point = new Vector2(x, y);
-        pathPoints.add(point);
         // update color only when started the new shape
         brush.setColor(state.getBrushColor());
 
@@ -436,7 +425,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
         path.lineTo(x, y);
         Vector2 point = new Vector2(x, y);
-        pathPoints.add(point);
 
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Line to' event lost");
@@ -450,7 +438,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         logger.info("Run hausdorff on server!");
 
         path.reset();
-        pathPoints.clear();
 
         return true;
     }
@@ -458,7 +445,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     private boolean onActionMoveContinuePath(float x, float y) {
         path.lineTo(x, y);
         Vector2 point = new Vector2(x, y);
-        pathPoints.add(point);
 
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Line to' event lost");
