@@ -509,10 +509,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * If session not found, sends error.
      */
     @Override
-    public void trySpectateTowerById(TowerIdRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
+    public void trySpectateTowerById(TowerIdRequest request, StreamObserver<SessionIdResponse> streamObserver) {
         int towerId = request.getTowerId();
         int playerId = request.getPlayerData().getPlayerId();
-        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+        SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
 
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
@@ -626,11 +626,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * here we only return <code>ActionResultResponse</code>: success or failure.
      */
     @Override
-    public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<AttackSessionIdResponse> streamObserver) {
+    public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<SessionIdResponse> streamObserver) {
         final int sessionId = request.getSessionId();
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
-        AttackSessionIdResponse.Builder responseBuilder = AttackSessionIdResponse.newBuilder();
+        SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
 
         boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
         boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);

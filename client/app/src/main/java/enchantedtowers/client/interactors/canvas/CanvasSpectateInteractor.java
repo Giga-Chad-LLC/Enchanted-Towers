@@ -19,8 +19,7 @@ import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -167,7 +166,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         asyncStub.toggleAttacker(requestBuilder.build(), new StreamObserver<>() {
             // TODO: think of meaningful handlers here
             @Override
-            public void onNext(AttackSessionIdResponse value) {
+            public void onNext(SessionIdResponse value) {
                 StringBuilder messageBuilder = new StringBuilder();
 
                 if (value.hasError()) {
