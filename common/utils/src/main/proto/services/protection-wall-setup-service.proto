@@ -8,11 +8,16 @@ package services;
 // requests
 import "requests/common/tower-id-request.proto";
 import "requests/common/session-id-request.proto";
+import "requests/protection-wall-setup-service/drawn-spell-request.proto";
 // responses
 import "responses/common/action-result-response.proto";
+import "responses/common/session-info-response.proto";
 
 
 service ProtectionWallSetupService {
+  rpc CaptureTower(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
   rpc TryEnterProtectionWallCreationSession(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
-
+  rpc EnterProtectionWallCreationSession(request_models.TowerIdRequest) returns (response_models.SessionInfoResponse) {}
+  rpc AddSpell(request_models.DrawnSpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc ClearCanvas(request_models.SessionIdRequest) returns (response_models.ActionResultResponse) {}
 }
