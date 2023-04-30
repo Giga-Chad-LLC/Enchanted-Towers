@@ -329,11 +329,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     }
 
     @Override
-    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
-        return false;
-    }
-
-    @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);

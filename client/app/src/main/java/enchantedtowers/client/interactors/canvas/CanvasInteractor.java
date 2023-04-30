@@ -8,7 +8,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 public interface CanvasInteractor {
-    void onDraw(CanvasState state, Canvas canvas);
+    default void onDraw(CanvasState state, Canvas canvas) {}
 
     default void onExecutionInterrupt() {}
 
@@ -19,9 +19,15 @@ public interface CanvasInteractor {
      * @param motionEventType type of motion (UP, DOWN, MOVE)
      * @return `true` if event was handled, `false` otherwise.
      */
-    boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType);
+    default boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
+        return false;
+    }
 
-    boolean onClearCanvas(CanvasState state);
+    default boolean onClearCanvas(CanvasState state) {
+        return false;
+    }
 
-    boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state);
+    default boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
+        return false;
+    }
 }

@@ -32,21 +32,6 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         }
     }
 
-    @Override
-    public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
-        return false;
-    }
-
-    @Override
-    public boolean onClearCanvas(CanvasState state) {
-        return false;
-    }
-
-    @Override
-    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
-        return false;
-    }
-
     // For DEBUG purposes, will be removed later
     private void drawTemplates(CanvasState state, Canvas canvas) {
         Map<Integer, Spell> templates = SpellBook.getTemplates();

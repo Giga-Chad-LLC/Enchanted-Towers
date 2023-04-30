@@ -140,11 +140,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     }
 
     @Override
-    public boolean onClearCanvas(CanvasState state) {
-        return false;
-    }
-
-    @Override
     public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
         logger.info("Show new attacker, showNext=" + requestType.name());
 
@@ -192,11 +187,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             }
         });
         return true;
-    }
-
-    @Override
-    public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
-        return false;
     }
 
     @Override
