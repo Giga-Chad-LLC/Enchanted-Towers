@@ -73,8 +73,6 @@ class AttackEventWorker extends Thread {
                     .setPlayerId(storage.getPlayerId().get())
                     .build();
 
-            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
-
             // creating spell color request
             var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
             spellColorRequestBuilder.setColorId(colorId);
@@ -99,8 +97,6 @@ class AttackEventWorker extends Thread {
             // set player id
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(storage.getPlayerId().get()).build();
-
-            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
 
             // creating draw spell request
             var drawSpellRequestBuilder = requestBuilder.getDrawSpellBuilder();
@@ -250,7 +246,7 @@ class AttackEventWorker extends Thread {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
 
-                logger.warning("CanvasDrawSpellInteractor error while blocking stub '" + e.getMessage() + "'");
+                logger.warning("CanvasAttackInteractor error while blocking stub '" + e.getMessage() + "'");
 
                 // redirect to base activity
                 Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
@@ -310,7 +306,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
     @Override
     public boolean onClearCanvas(CanvasState state) {
         state.clear();
-        System.out.println("CanvasDrawSpellInteractor.onClearCanvas");
+        logger.info("onClearCanvas");
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithClearCanvasRequest())) {
             logger.warning("'Clear canvas' event lost");
         }
@@ -362,10 +358,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             public void onNext(AttackTowerByIdResponse response) {
                 if (response.hasError()) {
                     // TODO: leave attack session
-                    System.out.println("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
+                    logger.warning("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
                 }
                 else {
-                    System.out.println("attackTowerById::onNext: type=" + response.getType());
+                    logger.info("attackTowerById::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
                         case ATTACK_SESSION_ID -> {
@@ -386,13 +382,13 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             @Override
             public void onError(Throwable t) {
                 // TODO: leave attack session
-                System.out.println("attackTowerById::onError: message='" + t.getMessage() + "'");
+                logger.warning("attackTowerById::onError: message='" + t.getMessage() + "'");
             }
 
             @Override
             public void onCompleted() {
                 // TODO: leave attack session
-                System.out.println("attackTowerById::onCompleted: finished");
+                logger.warning("attackTowerById::onCompleted: finished");
             }
         });
     }
