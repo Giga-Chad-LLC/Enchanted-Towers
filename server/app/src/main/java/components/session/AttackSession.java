@@ -3,6 +3,7 @@ package components.session;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.HausdorffMetric;
+import enchantedtowers.game_logic.MatchedTemplateDescription;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
@@ -23,8 +24,8 @@ public class AttackSession {
     private final IntConsumer onSessionExpiredCallback;
     private final List<Vector2> currentSpellPoints = new ArrayList<>();
     private Optional<Integer> currentSpellColorId = Optional.empty();
-    private Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> lastTemplateMatchDescription = Optional.empty();
-    private final List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> drawnSpellsDescriptions = new ArrayList<>();
+    // private Optional<MatchedTemplateDescription> lastTemplateMatchDescription = Optional.empty();
+    private final List<MatchedTemplateDescription> drawnSpellsDescriptions = new ArrayList<>();
     private final List<Spectator> spectators = new ArrayList<>();
     // this lock object is used as mutual exclusion lock
     private final Object lock = new Object();
@@ -158,6 +159,12 @@ public class AttackSession {
         }
     }
 
+    public void addTemplateToCanvasState(MatchedTemplateDescription template) {
+        synchronized (lock) {
+            drawnSpellsDescriptions.add(template);
+        }
+    }
+
     public void clearCurrentDrawing() {
         synchronized (lock) {
             // clear out the current spell
@@ -166,7 +173,7 @@ public class AttackSession {
         }
     }
 
-    public List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getDrawnSpellsDescriptions() {
+    public List<MatchedTemplateDescription> getDrawnSpellsDescriptions() {
         synchronized (lock) {
             return Collections.unmodifiableList(drawnSpellsDescriptions);
         }
@@ -178,47 +185,42 @@ public class AttackSession {
         }
     }
 
-    /**
-     * This method must be called after successful {@link AttackSession#getMatchedTemplate} invocation
-     */
-    public void saveMatchedTemplate() {
-        synchronized (lock) {
-            assert(lastTemplateMatchDescription.isPresent());
-            // add current template spell to the canvas history
-            drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
-        }
-    }
+//    /**
+//     * This method must be called after successful {@link AttackSession#getMatchedTemplate} invocation
+//     */
+//    public void saveMatchedTemplate() {
+//        synchronized (lock) {
+//            assert(lastTemplateMatchDescription.isPresent());
+//            // add current template spell to the canvas history
+//            drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
+//        }
+//    }
 
-    public Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getMatchedTemplate(Vector2 offset) {
-        synchronized (lock) {
-            if (Utils.isValidPath(currentSpellPoints) && currentSpellColorId.isPresent()) {
-                Spell pattern = new Spell(
-                        Utils.getNormalizedPoints(currentSpellPoints, offset),
-                        offset
-                );
-
-                System.out.println("SESSION: currentSpellPoints.size=" + currentSpellPoints.size());
-
-                Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedSpellDescription = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
-                        SpellBook.getTemplates(),
-                        pattern,
-                        currentSpellColorId.get(),
-                        new HausdorffMetric()
-                );
-
-                if (matchedSpellDescription.isPresent()) {
-                    lastTemplateMatchDescription = matchedSpellDescription;
-                    return matchedSpellDescription;
-                }
-            }
-            else {
-                System.err.println("Path validity: " + Utils.isValidPath(currentSpellPoints));
-                System.err.println("Current spell color present: " + currentSpellColorId.isPresent());
-            }
-
-            return Optional.empty();
-        }
-    }
+//    public Optional<MatchedTemplateDescription> getMatchedTemplate(Vector2 offset) {
+//        synchronized (lock) {
+//            if (currentSpellColorId.isPresent()) {
+//                System.out.println("SESSION: currentSpellPoints.size=" + currentSpellPoints.size());
+//
+//                Optional<MatchedTemplateDescription> matchedSpellDescription = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+//                    currentSpellPoints,
+//                    offset,
+//                    currentSpellColorId.get()
+//                );
+//
+//                if (matchedSpellDescription.isPresent()) {
+//                    //lastTemplateMatchDescription = matchedSpellDescription;
+//                    drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
+//                    return matchedSpellDescription;
+//                }
+//            }
+//            else {
+//                System.err.println("Path validity: " + Utils.isValidPath(currentSpellPoints));
+//                System.err.println("Current spell color present: " + currentSpellColorId.isPresent());
+//            }
+//
+//            return Optional.empty();
+//        }
+//    }
 
     /**
      * Removes invalid spectators before returning the unmodifiable spectator list.
