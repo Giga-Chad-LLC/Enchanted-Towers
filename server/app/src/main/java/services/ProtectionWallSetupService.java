@@ -61,14 +61,18 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         int towerId = request.getTowerId();
+        int playerId = request.getPlayerData().getPlayerId();
+
         Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
 
         boolean towerExists    = towerOpt.isPresent();
         boolean towerProtected = towerExists && towerOpt.get().isProtected();
+        boolean towerAlreadyOwnedByPlayer = towerExists &&
+                                            towerOpt.get().getOwnerId().isPresent() &&
+                                            towerOpt.get().getOwnerId().get() == playerId;
 
-        if (towerExists && !towerProtected) {
+        if (towerExists && !towerProtected && !towerAlreadyOwnedByPlayer) {
             // tower may be captured
-            int playerId = request.getPlayerData().getPlayerId();
             Tower tower = towerOpt.get();
 
             // make player an owner of tower and allow to set up protection walls
@@ -93,6 +97,11 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                     ServerError.ErrorType.TOWER_NOT_FOUND,
                     "Tower with id " + towerId + " not found");
         }
+        else if (towerAlreadyOwnedByPlayer) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is already owned by player with id " + playerId);
+        }
         else {
             // tower is protected
             assert(towerOpt.get().getOwnerId().isPresent());
@@ -110,10 +119,13 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     public void tryEnterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        validateEnteringProtectionWallCreationSession(request, responseBuilder.getErrorBuilder());
+        Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
 
-        if (!responseBuilder.hasError()) {
+        if (serverError.isEmpty()) {
             responseBuilder.setSuccess(true);
+        }
+        else {
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -124,9 +136,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     public void enterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
 
-        validateEnteringProtectionWallCreationSession(request, responseBuilder.getErrorBuilder());
+        Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
 
-        if (!responseBuilder.hasError()) {
+        if (serverError.isEmpty()) {
             // create protection wall creation session
             int playerId = request.getPlayerData().getPlayerId();
             int towerId = request.getTowerId();
@@ -155,7 +167,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             streamObserver.onNext(responseBuilder.build());
         }
         else {
-            // send error to client
+            // error
+            responseBuilder.setError(serverError.get());
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
         }
@@ -338,9 +351,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      *     <li>Either {@link Tower#lastProtectionWallModificationTimestamp} is empty (which means that tower has been captured by a player, and he has time to set up 1st protection wall) or cooldown between protection wall updates exceeded</li>
      * </ol>
      */
-    private void validateEnteringProtectionWallCreationSession(
-            EnterProtectionWallCreationRequest request, ServerError.Builder errorBuilder) {
-
+    private Optional<ServerError> validateEnteringProtectionWallCreationSession(EnterProtectionWallCreationRequest request) {
         int towerId = request.getTowerId();
         int protectionWallId = request.getProtectionWallId();
         Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
@@ -358,17 +369,23 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         boolean cooldownTimeExceeded = hasLastProtectionWallModificationTimestamp &&
                 cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
 
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
         if (!towerExists) {
+            errorOccurred = true;
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.TOWER_NOT_FOUND,
                     "Tower with id " + towerId + " not found");
         }
         else if (!ProtectionWallExists) {
+            errorOccurred = true;
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Protection wall with id " + protectionWallId + " of tower with id " + towerId + " not found");
         }
         else if (!isPlayerOwner) {
+            errorOccurred = true;
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Player with id " + request.getPlayerData().getPlayerId() +
@@ -376,6 +393,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         }
         else if (hasLastProtectionWallModificationTimestamp && !cooldownTimeExceeded) {
             // cooldown not exceeded
+            errorOccurred = true;
             var timestamp = towerOpt.get().getLastProtectionWallModificationTimestamp().get();
             long remain = SESSION_CREATION_COOLDOWN_MS - Duration.between(timestamp, Instant.now()).toSeconds();
 
@@ -383,6 +401,14 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Cooldown after last protection wall installation not exceeded. Wait for: " + remain + "s");
         }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
+        }
+
         /*
         // either cooldown exceeded or modification timestamp was reset after capturing
         towerExists && (!hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded)
