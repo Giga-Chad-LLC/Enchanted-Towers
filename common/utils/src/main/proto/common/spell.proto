@@ -10,5 +10,6 @@ import "common/vector2.proto";
 
 message Spell {
   common.Vector2 offset = 1;
-  repeated common.Vector2 points = 2;
+  int32 colorId = 2;
+  repeated common.Vector2 points = 3;
 }
