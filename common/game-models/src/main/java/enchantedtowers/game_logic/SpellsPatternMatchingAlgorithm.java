@@ -1,5 +1,8 @@
 package enchantedtowers.game_logic;
 
+import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.utils.Utils;
+import java.util.List;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
@@ -12,31 +15,26 @@ import enchantedtowers.game_models.utils.Vector2;
 public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
-    static public class MatchedTemplateDescription {
-        private final int id;
-        private final int colorId;
-        private final Vector2 offset;
+    static public Optional<MatchedTemplateDescription> getMatchedTemplateWithHausdorffMetric(
+        List<Vector2> spellPoints, Vector2 offset, int spellColor) {
+        if (Utils.isValidPath(spellPoints)) {
+            Spell pattern = new Spell(
+                Utils.getNormalizedPoints(spellPoints, offset),
+                offset
+            );
 
-        MatchedTemplateDescription(int id, int colorId, Vector2 offset) {
-            this.id = id;
-            this.colorId = colorId;
-            this.offset = offset;
+            return getMatchedTemplate(
+                SpellBook.getTemplates(),
+                pattern,
+                spellColor,
+                new HausdorffMetric()
+            );
         }
 
-        public int id() {
-            return id;
-        }
-
-        public int colorId() {
-            return colorId;
-        }
-
-        public Vector2 offset() {
-            return offset;
-        }
+        return Optional.empty();
     }
 
-    static public <Metric extends CurvesMatchingMetric>
+    static private <Metric extends CurvesMatchingMetric>
     Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
                                                             Spell pattern, int patternColor, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();

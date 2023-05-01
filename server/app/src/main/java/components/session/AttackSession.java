@@ -2,7 +2,10 @@ package components.session;
 
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
+import enchantedtowers.game_logic.CanvasState;
 import enchantedtowers.game_logic.HausdorffMetric;
+import enchantedtowers.game_logic.MatchedTemplateDescription;
+import enchantedtowers.game_logic.SpellDrawingDescription;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
@@ -21,10 +24,8 @@ public class AttackSession {
     private final int attackedTowerId;
     private final StreamObserver<SessionInfoResponse> attackerResponseObserver;
     private final IntConsumer onSessionExpiredCallback;
-    private final List<Vector2> currentSpellPoints = new ArrayList<>();
-    private Optional<Integer> currentSpellColorId = Optional.empty();
-    private Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> lastTemplateMatchDescription = Optional.empty();
-    private final List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> drawnSpellsDescriptions = new ArrayList<>();
+    private final CanvasState canvasState = new CanvasState();
+    private final SpellDrawingDescription currentSpellDescription = new SpellDrawingDescription();
     private final List<Spectator> spectators = new ArrayList<>();
     // this lock object is used as mutual exclusion lock
     private final Object lock = new Object();
@@ -128,95 +129,57 @@ public class AttackSession {
     public int getCurrentSpellColorId() {
         synchronized (lock) {
             // asserting that this method will not be used before the value assigned to the field
-            assert(currentSpellColorId.isPresent());
-            return currentSpellColorId.get();
+            return currentSpellDescription.getColorId();
         }
     }
 
     public List<Vector2> getCurrentSpellPoints() {
         synchronized (lock) {
-            return Collections.unmodifiableList(currentSpellPoints);
+            return currentSpellDescription.getPoints();
         }
     }
 
     public boolean hasCurrentSpell() {
         synchronized (lock) {
             // TODO: explicitly set flag of the variable existence
-            return this.currentSpellColorId.isPresent();
+            return !currentSpellDescription.getPoints().isEmpty();
         }
     }
 
     public void setCurrentSpellColorId(int currentSpellColorId) {
         synchronized (lock) {
-            this.currentSpellColorId = Optional.of(currentSpellColorId);
+            currentSpellDescription.setColorId(currentSpellColorId);
         }
     }
 
     public void addPointToCurrentSpell(Vector2 point) {
         synchronized (lock) {
-            currentSpellPoints.add(point);
+            currentSpellDescription.addPoint(point);
+        }
+    }
+
+    public void addTemplateToCanvasState(MatchedTemplateDescription template) {
+        synchronized (lock) {
+            canvasState.addTemplate(template);
         }
     }
 
     public void clearCurrentDrawing() {
         synchronized (lock) {
             // clear out the current spell
-            currentSpellPoints.clear();
-            currentSpellColorId = Optional.empty();
+            currentSpellDescription.reset();
         }
     }
 
-    public List<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getDrawnSpellsDescriptions() {
+    public List<MatchedTemplateDescription> getDrawnSpellsDescriptions() {
         synchronized (lock) {
-            return Collections.unmodifiableList(drawnSpellsDescriptions);
+            return canvasState.getTemplates();
         }
     }
 
     public void clearDrawnSpellsDescriptions() {
         synchronized (lock) {
-            drawnSpellsDescriptions.clear();
-        }
-    }
-
-    /**
-     * This method must be called after successful {@link AttackSession#getMatchedTemplate} invocation
-     */
-    public void saveMatchedTemplate() {
-        synchronized (lock) {
-            assert(lastTemplateMatchDescription.isPresent());
-            // add current template spell to the canvas history
-            drawnSpellsDescriptions.add(lastTemplateMatchDescription.get());
-        }
-    }
-
-    public Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> getMatchedTemplate(Vector2 offset) {
-        synchronized (lock) {
-            if (Utils.isValidPath(currentSpellPoints) && currentSpellColorId.isPresent()) {
-                Spell pattern = new Spell(
-                        Utils.getNormalizedPoints(currentSpellPoints, offset),
-                        offset
-                );
-
-                System.out.println("SESSION: currentSpellPoints.size=" + currentSpellPoints.size());
-
-                Optional<SpellsPatternMatchingAlgorithm.MatchedTemplateDescription> matchedSpellDescription = SpellsPatternMatchingAlgorithm.getMatchedTemplate(
-                        SpellBook.getTemplates(),
-                        pattern,
-                        currentSpellColorId.get(),
-                        new HausdorffMetric()
-                );
-
-                if (matchedSpellDescription.isPresent()) {
-                    lastTemplateMatchDescription = matchedSpellDescription;
-                    return matchedSpellDescription;
-                }
-            }
-            else {
-                System.err.println("Path validity: " + Utils.isValidPath(currentSpellPoints));
-                System.err.println("Current spell color present: " + currentSpellColorId.isPresent());
-            }
-
-            return Optional.empty();
+            canvasState.clear();
         }
     }
 

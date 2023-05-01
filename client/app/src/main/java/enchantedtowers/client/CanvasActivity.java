@@ -12,6 +12,7 @@ import java.util.List;
 
 import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
 import enchantedtowers.client.components.canvas.CanvasFragment;
+import enchantedtowers.client.components.canvas.CanvasProtectorFragment;
 import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
 import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
@@ -41,13 +42,21 @@ public class CanvasActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         CanvasFragment canvasFragment;
 
-        if (extras != null && extras.getBoolean("isAttacking", false)) {
-            System.out.println("Attacking on canvas");
-            canvasFragment = CanvasAttackerFragment.newInstance();
-        }
-        else if (extras != null && extras.getBoolean("isSpectating", false)) {
-            System.out.println("Spectating on canvas");
-            canvasFragment = CanvasSpectatorFragment.newInstance();
+        if (extras != null) {
+            if (extras.getBoolean("isAttacking", false)) {
+                System.out.println("Attacking on canvas");
+                canvasFragment = CanvasAttackerFragment.newInstance();
+            } else if (extras.getBoolean("isSpectating", false)) {
+                System.out.println("Spectating on canvas");
+                canvasFragment = CanvasSpectatorFragment.newInstance();
+            } else if (extras.getBoolean("isProtecting", false)) {
+                System.out.println("Protecting on canvas");
+                canvasFragment = CanvasProtectorFragment.newInstance();
+            }
+            else {
+                System.out.println("No actions on canvas");
+                canvasFragment = CanvasProtectorFragment.newInstance();
+            }
         }
         else {
             System.out.println("No actions on canvas");
