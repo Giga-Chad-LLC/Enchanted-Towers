@@ -13,13 +13,14 @@ import "requests/protection-wall-setup-service/enter-protection-wall-creation-re
 // responses
 import "responses/common/action-result-response.proto";
 import "responses/common/session-info-response.proto";
+import "responses/common/spell-finish-response.proto";
 
 
 service ProtectionWallSetupService {
   rpc CaptureTower(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
   rpc TryEnterProtectionWallCreationSession(request_models.EnterProtectionWallCreationRequest) returns (response_models.ActionResultResponse) {}
   rpc EnterProtectionWallCreationSession(request_models.EnterProtectionWallCreationRequest) returns (stream response_models.SessionInfoResponse) {}
-  rpc AddSpell(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
+  rpc AddSpell(request_models.ProtectionWallRequest) returns (response_models.SpellFinishResponse) {}
   rpc ClearCanvas(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
   rpc completeEnchantment(request_models.SessionIdRequest) returns (response_models.ActionResultResponse) {}
 }
