@@ -16,7 +16,7 @@ import  "requests/tower-attack-service/toggle-attacker.proto";
 import "responses/common/action-result-response.proto";
 import "responses/common/session-id-response.proto";
 import "responses/common/session-info-response.proto";
-import "responses/tower-attack-service/spell-finish-response.proto";
+import "responses/common/spell-finish-response.proto";
 import "responses/tower-attack-service/spectate-tower-attack-response.proto";
 
 

@@ -8,7 +8,7 @@ package response_models;
 // common
 import "common/vector2.proto";
 // responses
-import "responses/tower-attack-service/spell-description-response.proto";
+import "responses/common/spell-description-response.proto";
 import "responses/common/server-error.proto";
 import "responses/common/current-canvas-state-response.proto";
 

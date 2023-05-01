@@ -12,6 +12,7 @@ import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.game_logic.TemplateDescription;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
@@ -175,8 +176,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void addSpell(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
-        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+    public void addSpell(ProtectionWallRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
+        SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
         final int playerId  = request.getPlayerData().getPlayerId();
@@ -213,6 +214,21 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 ProtectionWallSession session = sessionOpt.get();
 
                 session.addTemplateToCanvasState(template);
+
+                // setting template in response
+                {
+                    responseBuilder.getSpellDescriptionBuilder()
+                            .setSpellTemplateId(template.id())
+                            .setColorId(template.colorId());
+
+                    responseBuilder.getSpellDescriptionBuilder()
+                            .getSpellTemplateOffsetBuilder()
+                            .setX(template.offset().x)
+                            .setY(template.offset().y)
+                            .build();
+
+                    responseBuilder.getSpellDescriptionBuilder().build();
+                }
             }
             else {
                 // no template found
@@ -220,8 +236,6 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                         ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
                         "No template found to match provided spell");
             }
-
-            responseBuilder.setSuccess(true);
         }
         else if (!isRequestValid) {
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
