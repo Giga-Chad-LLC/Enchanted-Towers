@@ -1,17 +1,18 @@
 package enchantedtowers.game_models;
 
+import enchantedtowers.game_logic.TemplateDescription;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Enchantment {
-    private final List<Spell> spells;
+    private final List<TemplateDescription> spells;
 
-
-    Enchantment() {
+    public Enchantment() {
         this.spells = new ArrayList<>();
     }
 
-    Enchantment(List<Spell> spells) {
+    public Enchantment(List<TemplateDescription> spells) {
         this.spells = spells;
     }
 }

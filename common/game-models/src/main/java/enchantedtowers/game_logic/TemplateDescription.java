@@ -2,12 +2,12 @@ package enchantedtowers.game_logic;
 
 import enchantedtowers.game_models.utils.Vector2;
 
-public class MatchedTemplateDescription {
+public class TemplateDescription {
    private final int id;
    private final int colorId;
    private final Vector2 offset;
 
-   MatchedTemplateDescription(int id, int colorId, Vector2 offset) {
+   TemplateDescription(int id, int colorId, Vector2 offset) {
       this.id = id;
       this.colorId = colorId;
       this.offset = offset;
