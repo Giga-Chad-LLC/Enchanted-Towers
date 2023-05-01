@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
@@ -41,6 +42,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         /*String target = host + ":" + port;
          channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();*/
         towerAttackAsyncStub = TowerAttackServiceGrpc.newStub(channel);
+        towerProtectAsyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 
         // buttons
         Button attackButton   = findViewById(R.id.attackButton);
@@ -278,11 +280,13 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     }
 
     private void callAsyncTryEnterProtectionWallCreationSession(int playerId, int towerId, int wallId) {
-        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
+        EnterProtectionWallCreationRequest.Builder requestBuilder = EnterProtectionWallCreationRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
         requestBuilder.setTowerId(towerId);
+        requestBuilder.setProtectionWallId(wallId);
+
         towerProtectAsyncStub
                 .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
                 .tryEnterProtectionWallCreationSession(requestBuilder.build(), new StreamObserver<>() {
@@ -302,6 +306,8 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                             ClientStorage.getInstance().setPlayerId(playerId);
                             ClientStorage.getInstance().setTowerId(towerId);
+                            ClientStorage.getInstance().setProtectionWallId(wallId);
+
                             showToastOnUIThread("Can setup protection wall", Toast.LENGTH_LONG);
                         }
                     }

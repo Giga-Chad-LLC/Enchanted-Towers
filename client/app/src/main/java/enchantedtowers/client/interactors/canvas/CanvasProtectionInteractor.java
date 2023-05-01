@@ -16,16 +16,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.AndroidUtils;
+import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_models.Spell;
+import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -56,7 +61,7 @@ class ProtectionEventWorker extends Thread {
             return request;
         }
 
-        public static Event createEventWithSpellRequest(Vector2 offset, List<Vector2> points) {
+        public static Event createEventWithSpellRequest(List<Vector2> points, Vector2 offset, int colorId) {
             ProtectionWallRequest.Builder requestBuilder = ProtectionWallRequest.newBuilder();
             // set request type
             requestBuilder.setRequestType(ProtectionWallRequest.RequestType.ADD_SPELL);
@@ -81,9 +86,12 @@ class ProtectionEventWorker extends Thread {
                 protoPoints.add(vector2Builder.build());
             }
 
+            // set spell color
+
             requestBuilder.getSpellBuilder()
                     .addAllPoints(protoPoints)
                     .setOffset(protoOffset)
+                    .setColorId(colorId)
                     .build();
 
             return new Event(requestBuilder.build());
@@ -132,24 +140,56 @@ class ProtectionEventWorker extends Thread {
                 if (event != null) {
                     switch (event.requestType()) {
                         case ADD_SPELL -> {
-                            ActionResultResponse response = blockingStub
+                            SpellFinishResponse response = blockingStub
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
                                     .addSpell(event.getRequest());
 
-                            logger.info(
-                            "Got response from addSpell: success=" + response.getSuccess() +
-                                "\nmessage='" + response.getError().getMessage() + "'"
-                            );
+                            if (response.hasError()) {
+                                logger.warning("Got error from addSpell: message='" + response.getError().getMessage() + "'");
+                            }
+                            else {
+                                var description = response.getSpellDescription();
+                                var offset = description.getSpellTemplateOffset();
+                                var colorId = description.getColorId();
+                                var templateId = description.getSpellTemplateId();
+
+                                logger.info(
+                                "Got response from finishSpell: matchedSpellTemplateId='" + templateId + "'\n" +
+                                        "matchedTemplateOffset='[" + offset.getX() + ", " + offset.getY() + "]'\n" +
+                                        "matchedTemplateColor='" + colorId + "'"
+                                );
+
+
+                                // substitute current spell with template
+                                Spell template = SpellBook.getTemplateById(templateId);
+
+                                if (template != null) {
+                                    template.setOffset(new Vector2(offset.getX(), offset.getY()));
+                                    CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
+                                            colorId,
+                                            template
+                                    );
+
+                                    canvasWidget.getState().addItem(canvasMatchedEnchantment);
+                                    canvasWidget.postInvalidate();
+                                    System.out.println("Canvas widget state size: " + canvasWidget.getState().getItems().size());
+                                }
+                            }
                         }
                         case CLEAR_CANVAS -> {
                             ActionResultResponse response = blockingStub
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
                                     .clearCanvas(event.getRequest());
 
-                            logger.info(
-                            "Got response from clearCanvas: success=" + response.getSuccess() +
-                                "\nmessage='" + response.getError().getMessage() + "'"
-                            );
+                            if (response.hasError()) {
+                                logger.warning("Got error from clearCanvas: message='" + response.getError().getMessage() + "'");
+                            }
+                            else {
+                                logger.info(
+                                "Got response from clearCanvas: success=" + response.getSuccess() +
+                                        "\nmessage='" + response.getError().getMessage() + "'"
+                                );
+                            }
                         }
                     }
                 }
@@ -264,15 +304,18 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     }
 
     private void callAsyncEnterProtectionWall(CanvasWidget canvasWidget) {
-        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
+        EnterProtectionWallCreationRequest.Builder requestBuilder = EnterProtectionWallCreationRequest.newBuilder();
         // creating request
         {
             int playerId = ClientStorage.getInstance().getPlayerId().get();
             int towerId = ClientStorage.getInstance().getTowerId().get();
-            requestBuilder.setTowerId(towerId);
+            int wallId = ClientStorage.getInstance().getProtectionWallId().get();
+
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(playerId)
                     .build();
+            requestBuilder.setTowerId(towerId);
+            requestBuilder.setProtectionWallId(wallId);
         }
 
         // make async call here
@@ -336,11 +379,12 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         pathPoints.add(new Vector2(x, y));
 
         // TODO: send brushColor, pathOffset, and pathPoints to server here
-        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(AndroidUtils.getPathOffset(path), pathPoints))) {
+        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(pathPoints, AndroidUtils.getPathOffset(path), brush.getColor()))) {
             logger.warning("'Add spell' event lost");
         }
 
         path.reset();
+        pathPoints.clear();
         return true;
     }
 }
