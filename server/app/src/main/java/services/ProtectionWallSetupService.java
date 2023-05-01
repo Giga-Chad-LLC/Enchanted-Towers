@@ -61,14 +61,18 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         int towerId = request.getTowerId();
+        int playerId = request.getPlayerData().getPlayerId();
+
         Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
 
         boolean towerExists    = towerOpt.isPresent();
         boolean towerProtected = towerExists && towerOpt.get().isProtected();
+        boolean towerAlreadyOwnedByPlayer = towerExists &&
+                                            towerOpt.get().getOwnerId().isPresent() &&
+                                            towerOpt.get().getOwnerId().get() == playerId;
 
-        if (towerExists && !towerProtected) {
+        if (towerExists && !towerProtected && !towerAlreadyOwnedByPlayer) {
             // tower may be captured
-            int playerId = request.getPlayerData().getPlayerId();
             Tower tower = towerOpt.get();
 
             // make player an owner of tower and allow to set up protection walls
@@ -92,6 +96,11 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.TOWER_NOT_FOUND,
                     "Tower with id " + towerId + " not found");
+        }
+        else if (towerAlreadyOwnedByPlayer) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is already owned by player with id " + playerId);
         }
         else {
             // tower is protected
