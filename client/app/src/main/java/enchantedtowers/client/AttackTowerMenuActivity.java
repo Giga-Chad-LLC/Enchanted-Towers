@@ -51,6 +51,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         // text inputs
         EditText playerIdTextInput = findViewById(R.id.playerIdTextInput);
         EditText towerIdTextInput = findViewById(R.id.towerIdTextInput);
+        EditText wallIdTextInput = findViewById(R.id.wallIdTextInput);
 
         attackButton.setOnClickListener(view -> {
             try {
@@ -92,7 +93,8 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             try {
                 int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
                 int towerId  = Integer.parseInt(towerIdTextInput.getText().toString());
-                callAsyncTryEnterProtectionWallCreationSession(playerId, towerId);
+                int wallId   = Integer.parseInt(wallIdTextInput.getText().toString());
+                callAsyncTryEnterProtectionWallCreationSession(playerId, towerId, wallId);
             }
             catch(Exception err) {
                 System.out.println(err.getMessage());
@@ -256,6 +258,8 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                             System.out.println("captureTowerById::Received response: success=" + response.getSuccess());
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                             ClientStorage.getInstance().setPlayerId(playerId);
+                            ClientStorage.getInstance().setTowerId(towerId);
+                            showToastOnUIThread("Captured tower with id " + towerId, Toast.LENGTH_LONG);
                         }
                     }
 
@@ -273,7 +277,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                 });
     }
 
-    private void callAsyncTryEnterProtectionWallCreationSession(int playerId, int towerId) {
+    private void callAsyncTryEnterProtectionWallCreationSession(int playerId, int towerId, int wallId) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
@@ -298,6 +302,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                             ClientStorage.getInstance().setPlayerId(playerId);
                             ClientStorage.getInstance().setTowerId(towerId);
+                            showToastOnUIThread("Can setup protection wall", Toast.LENGTH_LONG);
                         }
                     }
 

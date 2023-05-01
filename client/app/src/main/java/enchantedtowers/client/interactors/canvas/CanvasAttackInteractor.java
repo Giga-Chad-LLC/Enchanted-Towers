@@ -18,6 +18,7 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.AndroidUtils;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -373,6 +374,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             worker.start();
                         }
                         case SESSION_EXPIRED -> {
+                            logger.info("Attack session expired!");
                             // TODO: leave attack session
                         }
                     }
@@ -391,14 +393,6 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                 logger.warning("attackTowerById::onCompleted: finished");
             }
         });
-    }
-
-    private Vector2 getPathOffset(Path path) {
-        // calculate bounding box for the path
-        RectF bounds = new RectF();
-        path.computeBounds(bounds, true);
-
-        return new Vector2(bounds.left, bounds.top);
     }
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
@@ -437,7 +431,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             logger.warning("'Line to' event lost");
         }
 
-        Vector2 pathOffset = getPathOffset(path);
+        Vector2 pathOffset = AndroidUtils.getPathOffset(path);
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithFinishSpellRequest(pathOffset))) {
             logger.warning("'Offset' event lost");
         }

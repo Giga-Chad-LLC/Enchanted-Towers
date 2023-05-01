@@ -83,6 +83,17 @@ public class CanvasWidget extends View {
         }
     }
 
+    public void onSubmitCanvas() {
+        boolean eventHandled = false;
+        for (CanvasInteractor interactor : interactors) {
+            eventHandled |= interactor.onSubmitCanvas(state);
+        }
+
+        if (eventHandled) {
+            invalidate();
+        }
+    }
+
     public void onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType) {
         boolean eventHandled = false;
         for (CanvasInteractor interactor : interactors) {

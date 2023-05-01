@@ -37,7 +37,7 @@ public class CanvasAttackerFragment extends CanvasFragment {
         initAttackerFunctionality(rootView);
     }
 
-    public void nextColor() {
+    private void nextColor() {
         currentCanvasBrushColor++;
         if (currentCanvasBrushColor >= brushColors.length) {
             currentCanvasBrushColor = 0;
@@ -48,7 +48,7 @@ public class CanvasAttackerFragment extends CanvasFragment {
         }
     }
 
-    public void clearCanvas() {
+    private void clearCanvas() {
         if (canvasWidget != null) {
             canvasWidget.onClearCanvas();
         }
@@ -73,7 +73,7 @@ public class CanvasAttackerFragment extends CanvasFragment {
     private void initAttackerLayout(View rootView) {
         ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
 
-        addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false);
-        addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true);
+        addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true, 20, 0);
     }
 }

@@ -30,4 +30,8 @@ public interface CanvasInteractor {
     default boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
         return false;
     }
+
+    default boolean onSubmitCanvas(CanvasState state) {
+        return false;
+    }
 }

@@ -19,9 +19,8 @@ import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.AndroidUtils;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
-import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
-import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
@@ -232,6 +231,12 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     }
 
     @Override
+    public boolean onSubmitCanvas(CanvasState state) {
+        logger.info("Submit protection wall!");
+        return true;
+    }
+
+    @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
@@ -275,7 +280,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
             @Override
             public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
-                    // TODO: leave attack session
+                    // TODO: leave protect session
                     logger.warning("enterProtectionWallCreationSession::onNext: error='" + response.getError().getMessage() + "'");
                 }
                 else {
@@ -291,7 +296,8 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
                             worker.start();
                         }
                         case SESSION_EXPIRED -> {
-                            // TODO: leave attack session
+                            logger.info("Protect wall session expired!");
+                            // TODO: leave protect session
                         }
                     }
                 }
@@ -309,14 +315,6 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
                 logger.warning("onCompleted: finished");
             }
         });
-    }
-
-    private Vector2 getPathOffset(Path path) {
-        // calculate bounding box for the path
-        RectF bounds = new RectF();
-        path.computeBounds(bounds, true);
-
-        return new Vector2(bounds.left, bounds.top);
     }
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
@@ -338,7 +336,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         pathPoints.add(new Vector2(x, y));
 
         // TODO: send brushColor, pathOffset, and pathPoints to server here
-        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(getPathOffset(path), pathPoints))) {
+        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(AndroidUtils.getPathOffset(path), pathPoints))) {
             logger.warning("'Add spell' event lost");
         }
 
