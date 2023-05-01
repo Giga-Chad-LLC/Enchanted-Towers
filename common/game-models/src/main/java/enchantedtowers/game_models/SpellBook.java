@@ -31,7 +31,11 @@ public class SpellBook {
     }
 
     static public Spell getTemplateById(int id) {
-        return new Spell(templates.get(id));
+        if (templates.containsKey(id)) {
+            return new Spell(templates.get(id));
+        }
+
+        return null;
     }
 
     static public Map<Integer, Spell> getTemplates() {
