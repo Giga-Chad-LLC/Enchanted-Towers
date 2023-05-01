@@ -7,7 +7,6 @@ package services;
 
 // requests
 import "requests/common/tower-id-request.proto";
-import "requests/common/session-id-request.proto";
 import "requests/protection-wall-setup-service/protection-wall-request.proto";
 import "requests/protection-wall-setup-service/enter-protection-wall-creation-request.proto";
 // responses
@@ -22,5 +21,5 @@ service ProtectionWallSetupService {
   rpc EnterProtectionWallCreationSession(request_models.EnterProtectionWallCreationRequest) returns (stream response_models.SessionInfoResponse) {}
   rpc AddSpell(request_models.ProtectionWallRequest) returns (response_models.SpellFinishResponse) {}
   rpc ClearCanvas(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
-  rpc completeEnchantment(request_models.SessionIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc completeEnchantment(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
 }

@@ -15,6 +15,7 @@ message ProtectionWallRequest {
   enum RequestType {
     ADD_SPELL = 0;
     CLEAR_CANVAS = 1; // no additional data
+    COMPLETE_ENCHANTMENT = 2; // no additional data
   };
 
   common.PlayerData playerData = 1;

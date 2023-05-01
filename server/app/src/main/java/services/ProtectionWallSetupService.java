@@ -302,7 +302,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void completeEnchantment(SessionIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public void completeEnchantment(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
@@ -310,10 +310,11 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
         Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
 
+        boolean isRequestValid = (request.getRequestType() == ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT);
         boolean sessionExists = sessionOpt.isPresent();
         boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
 
-        if (sessionExists && isPlayerIdValid) {
+        if (isRequestValid && sessionExists && isPlayerIdValid) {
             // complete enchantment and save it into protection wall of the tower
             ProtectionWallSession session = sessionOpt.get();
             Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
@@ -335,10 +336,16 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             // removing session
             sessionManager.remove(session);
         }
+        else if (!isRequestValid) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "Request type must be '" + ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT + "'" +
+                    ", got '" + request.getRequestType() + "'");
+        }
         else if (!sessionExists) {
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "ProtectionWallSession with id " + sessionId + " not found");
+            "ProtectionWallSession with id " + sessionId + " not found");
         }
         else {
             // player id is not the same as the player id stored inside session instance
