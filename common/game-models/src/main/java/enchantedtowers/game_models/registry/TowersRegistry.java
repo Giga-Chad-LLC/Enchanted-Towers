@@ -2,7 +2,9 @@ package enchantedtowers.game_models.registry;
 
 import enchantedtowers.game_models.Tower;
 
+import enchantedtowers.game_models.utils.Vector2;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +20,11 @@ public class TowersRegistry {
     }
 
     // instance fields
-    List<Tower> towers = new ArrayList<>();
+    List<Tower> towers = List.of(
+        new Tower(0, new Vector2(10, 10)),
+        new Tower(1, new Vector2(20, 20)),
+        new Tower(2, new Vector2(50, 50))
+    );
 
     private TowersRegistry() {}
 

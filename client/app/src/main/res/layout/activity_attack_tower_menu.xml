@@ -18,7 +18,7 @@
             android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="50dp"
-            android:layout_marginTop="280dp"
+            android:layout_marginTop="200dp"
             android:hint="PlayerId"
             android:inputType="text" />
 
@@ -27,8 +27,17 @@
             android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="50dp"
-            android:layout_marginTop="350dp"
+            android:layout_marginTop="270dp"
             android:hint="TowerId"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/wallIdTextInput"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="340dp"
+            android:hint="WallId"
             android:inputType="text" />
 
         <Button

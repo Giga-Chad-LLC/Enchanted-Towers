@@ -25,6 +25,10 @@ public class ClientStorage {
         return playerData.towerId;
     }
 
+    public Optional<Integer> getProtectionWallId() {
+        return playerData.protectionWallId;
+    }
+
     // setters
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
@@ -38,6 +42,10 @@ public class ClientStorage {
         playerData.towerId = Optional.of(towerId);
     }
 
+    public void setProtectionWallId(int wallId) {
+        playerData.protectionWallId = Optional.of(wallId);
+    }
+
 
     private final PlayerData playerData;
 
@@ -46,6 +54,7 @@ public class ClientStorage {
         public Optional<Integer> sessionId = Optional.empty();
         // id of tower that is being under attack of player
         public Optional<Integer> towerId  = Optional.empty();
+        public Optional<Integer> protectionWallId  = Optional.empty();
     }
 
     private ClientStorage() {

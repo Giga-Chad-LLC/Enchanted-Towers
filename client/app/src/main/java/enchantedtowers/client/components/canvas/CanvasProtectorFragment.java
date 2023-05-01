@@ -28,7 +28,7 @@ public class CanvasProtectorFragment extends CanvasFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflateFragment(R.layout.fragment_canvas, inflater, container);
-        initAttackerLayout(rootView);
+        initProtectorLayout(rootView);
         return rootView;
     }
 
@@ -38,7 +38,7 @@ public class CanvasProtectorFragment extends CanvasFragment {
         initProtectorFunctionality(rootView);
     }
 
-    public void nextColor() {
+    private void nextColor() {
         currentCanvasBrushColor++;
         if (currentCanvasBrushColor >= brushColors.length) {
             currentCanvasBrushColor = 0;
@@ -49,9 +49,15 @@ public class CanvasProtectorFragment extends CanvasFragment {
         }
     }
 
-    public void clearCanvas() {
+    private void clearCanvas() {
         if (canvasWidget != null) {
             canvasWidget.onClearCanvas();
+        }
+    }
+
+    private void submitCanvas() {
+        if (canvasWidget != null) {
+            canvasWidget.onSubmitCanvas();
         }
     }
 
@@ -69,12 +75,16 @@ public class CanvasProtectorFragment extends CanvasFragment {
         if (rootView.findViewById(R.id.clearCanvasButton) != null) {
             registerOnClickActionOnView(rootView, R.id.clearCanvasButton, this::clearCanvas);
         }
+        if (rootView.findViewById(R.id.submitCanvasButton) != null) {
+            registerOnClickActionOnView(rootView, R.id.submitCanvasButton, this::submitCanvas);
+        }
     }
 
-    private void initAttackerLayout(View rootView) {
+    private void initProtectorLayout(View rootView) {
         ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
 
-        addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false);
-        addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true);
+        addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.submitCanvasButton, "Submit", false, 470, 0);
     }
 }

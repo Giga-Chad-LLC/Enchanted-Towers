@@ -46,7 +46,9 @@ public class CanvasFragment extends Fragment {
             ConstraintLayout constraintLayout,
             int buttonId,
             String buttonText,
-            boolean constrainedToEnd
+            boolean constrainedToEnd,
+            int marginHorizontal,
+            int marginVertical
     ) {
         // create a new Button
         Button button = new Button(constraintLayout.getContext());
@@ -57,12 +59,14 @@ public class CanvasFragment extends Fragment {
                 ConstraintLayout.LayoutParams.WRAP_CONTENT,
                 ConstraintLayout.LayoutParams.WRAP_CONTENT
         );
-        layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+         layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
         if (constrainedToEnd) {
             layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+            layoutParams.setMargins(0, 0, marginHorizontal, marginVertical);
         }
         else {
             layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+            layoutParams.setMargins(marginHorizontal, marginVertical, 0, 0);
         }
 
         button.setLayoutParams(layoutParams);

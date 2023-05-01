@@ -3,6 +3,7 @@
     <!--  Controls for the canvas fragment  -->
     <item type="id" name="changeColorButton" />
     <item type="id" name="clearCanvasButton" />
+    <item type="id" name="submitCanvasButton" />
     <item type="id" name="showNextAttackerButton" />
     <item type="id" name="showPreviousAttackerButton" />
 </resources>

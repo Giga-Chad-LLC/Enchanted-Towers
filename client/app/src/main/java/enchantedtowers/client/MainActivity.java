@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     public void changeActivity(View view) {
         if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
+            intent.putExtra("isAttacking", true);
             startActivity(intent);
         }
         else if (view.getId() == R.id.changeToMapActivity) {
