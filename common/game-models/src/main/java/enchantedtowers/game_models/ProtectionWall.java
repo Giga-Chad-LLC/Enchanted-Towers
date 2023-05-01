@@ -21,23 +21,33 @@ public class ProtectionWall {
         }
     }
 
+    private int id;
     private final WallState state;
     Optional<Enchantment> enchantment;
 
-    ProtectionWall() {
+    ProtectionWall(int id) {
+        this.id = id;
         this.state = new WallState(false, false);
         this.enchantment = Optional.empty();
     }
 
-    boolean hasEnchantment() {
+    public int getId() {
+        return id;
+    }
+
+    public boolean hasEnchantment() {
         return enchantment.isPresent();
     }
 
-    boolean isBroken() {
+    public boolean isBroken() {
         return state.isBroken();
     }
 
-    boolean isEnchanted() {
+    public boolean isEnchanted() {
         return state.isEnchanted();
+    }
+
+    public void setEnchantment(Enchantment enchantment) {
+        this.enchantment = Optional.of(enchantment);
     }
 }

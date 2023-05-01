@@ -18,17 +18,24 @@ public class ProtectionWallSessionManager {
 
     public ProtectionWallSession createSession(int playerId,
                                                int towerId,
+                                               int protectionWallId,
                                                StreamObserver<SessionInfoResponse> playerResponseObserver,
                                                IntConsumer onSessionExpiredCallback) {
         synchronized (lock) {
             var session = new ProtectionWallSession(
-                    CURRENT_SESSION_ID++, playerId, towerId, playerResponseObserver, onSessionExpiredCallback);
+                        CURRENT_SESSION_ID++,
+                        playerId,
+                        towerId,
+                        protectionWallId,
+                        playerResponseObserver,
+                        onSessionExpiredCallback);
 
             sessions.put(towerId, session);
             return session;
         }
     }
 
+    // TODO: before removing session, cancel timeout of SessionExpiredCallback
     public void remove(ProtectionWallSession session) {
         synchronized (lock) {
             boolean removed = sessions.remove(session.getTowerId(), session);
