@@ -23,6 +23,7 @@ import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.AndroidUtils;
 import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
+import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
@@ -114,6 +115,22 @@ class ProtectionEventWorker extends Thread {
 
             return new Event(requestBuilder.build());
         }
+
+        public static Event createEventWithCompleteEnchantmentRequest() {
+            int playerId = ClientStorage.getInstance().getPlayerId().get();
+            int sessionId = ClientStorage.getInstance().getSessionId().get();
+
+            ProtectionWallRequest.Builder requestBuilder = ProtectionWallRequest.newBuilder();
+
+            requestBuilder
+                    .setRequestType(ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT)
+                    .setSessionId(sessionId);
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(playerId)
+                    .build();
+
+            return new Event(requestBuilder.build());
+        }
     }
 
     public ProtectionEventWorker(CanvasWidget canvasWidget) {
@@ -186,8 +203,21 @@ class ProtectionEventWorker extends Thread {
                             }
                             else {
                                 logger.info(
-                                "Got response from clearCanvas: success=" + response.getSuccess() +
-                                        "\nmessage='" + response.getError().getMessage() + "'"
+                                "Got response from clearCanvas: success=" + response.getSuccess()
+                                );
+                            }
+                        }
+                        case COMPLETE_ENCHANTMENT -> {
+                            ActionResultResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .completeEnchantment(event.getRequest());
+
+                            if (response.hasError()) {
+                                logger.warning("Got error from completeEnchantment: message='" + response.getError().getMessage() + "'");
+                            }
+                            else {
+                                logger.info(
+                                    "Got response from completeEnchantment: success=" + response.getSuccess()
                                 );
                             }
                         }
@@ -272,7 +302,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onSubmitCanvas(CanvasState state) {
-        logger.info("Submit protection wall!");
+        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithCompleteEnchantmentRequest())) {
+            logger.warning("'Add spell' event lost");
+        }
+
         return true;
     }
 
@@ -378,7 +411,6 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         path.lineTo(x, y);
         pathPoints.add(new Vector2(x, y));
 
-        // TODO: send brushColor, pathOffset, and pathPoints to server here
         if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(pathPoints, AndroidUtils.getPathOffset(path), brush.getColor()))) {
             logger.warning("'Add spell' event lost");
         }
