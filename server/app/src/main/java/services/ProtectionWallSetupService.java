@@ -14,16 +14,18 @@ import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import io.grpc.stub.StreamObserver;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
 
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
     private static final long SESSION_CREATION_TIMEOUT_MS = 30 * 60 * 1000; // 30min
+    private static final long SESSION_CREATION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
+
     private final Logger logger = Logger.getLogger(ProtectionWallSetupService.class.getName());
     private final Map<Integer, Timeout> timeouts = new HashMap<>();
 
@@ -93,21 +95,54 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void tryEnterProtectionWallCreationSession(TowerIdRequest request, StreamObserver<SessionIdResponse> streamObserver) {
-        /**
-             if (now - tower.timestamp >= 24h || tower.timestamp == -1) {
-                good;
-             }
-         */
+    public void tryEnterProtectionWallCreationSession(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
+        int towerId = request.getTowerId();
+        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+
+        boolean towerExists = towerOpt.isPresent();
+        boolean hasLastProtectionWallModificationTimestamp =
+                towerExists && towerOpt.get().getLastProtectionWallModificationTimestamp().isPresent();
+        boolean cooldownTimeExceeded = hasLastProtectionWallModificationTimestamp &&
+                cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
+
+        // either cooldown exceeded or modification timestamp was reset after capturing
+        if (towerExists && (!hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded)) {
+            responseBuilder.setSuccess(true);
+        }
+        else if (!towerExists) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.TOWER_NOT_FOUND,
+                    "Tower with id " + towerId + " not found");
+        }
+        else {
+            // cooldown not exceeded
+            var timestamp = towerOpt.get().getLastProtectionWallModificationTimestamp().get();
+            long remain = SESSION_CREATION_COOLDOWN_MS - Duration.between(timestamp, Instant.now()).toSeconds();
+
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Cooldown after last protection wall installation not exceeded. Wait for: " + remain + "s");
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
     }
 
     @Override
-    public void enterProtectionWallCreationSession(SessionIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {}
+    public void enterProtectionWallCreationSession(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
+
+    }
 
     @Override
     public void addSpell(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {}
 
     @Override
     public void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {}
+
+    // helper methods
+    private boolean cooldownTimeBetweenSessionsCreationExceeded(Instant timestamp) {
+        return Duration.between(timestamp, Instant.now()).toMillis() >= SESSION_CREATION_COOLDOWN_MS;
+    }
 }

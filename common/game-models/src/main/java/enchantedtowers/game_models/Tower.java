@@ -94,4 +94,10 @@ public class Tower {
             isUnderProtectionWallsInstallation = value;
         }
     }
+
+    public Optional<Instant> getLastProtectionWallModificationTimestamp() {
+        synchronized (lock) {
+            return lastProtectionWallModificationTimestamp;
+        }
+    }
 }
