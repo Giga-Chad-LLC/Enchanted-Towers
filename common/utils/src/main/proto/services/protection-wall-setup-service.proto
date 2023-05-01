@@ -18,7 +18,7 @@ import "responses/common/session-id-response.proto";
 service ProtectionWallSetupService {
   rpc CaptureTower(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
   rpc TryEnterProtectionWallCreationSession(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
-  rpc EnterProtectionWallCreationSession(request_models.TowerIdRequest) returns (response_models.SessionInfoResponse) {}
+  rpc EnterProtectionWallCreationSession(request_models.TowerIdRequest) returns (stream response_models.SessionInfoResponse) {}
   rpc AddSpell(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
   rpc ClearCanvas(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
 }
