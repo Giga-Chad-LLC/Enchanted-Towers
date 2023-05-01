@@ -182,7 +182,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session not found
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with provided id " + sessionId + " not found");
         }
         else {
@@ -246,7 +246,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -275,9 +275,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         boolean isRequestValid = (request.getRequestType() == RequestType.DRAW_SPELL) && (request.hasDrawSpell());
         boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
-        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
+        boolean attackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
 
-        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
+        if (isRequestValid && sessionExists && attackerIdMatchesPlayerId) {
             AttackSession session = sessionManager.getSessionById(sessionId).get();
 
             logger.info("Session found: " + session.hashCode());
@@ -316,7 +316,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -442,7 +442,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -501,7 +501,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!sessionExists) {
             // session does not exist
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
         }
         else {
@@ -538,7 +538,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (session.isEmpty()) {
             logger.info("trySpectateTowerById: session associated with tower id " + towerId + " not found");
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session associated with tower id of " + towerId + " not found");
         }
         else if (isAttacking) {
@@ -605,7 +605,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (sessionOpt.isEmpty()) {
             // session not found
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with id " + sessionId + " not found");
 
             streamObserver.onNext(responseBuilder.build());
@@ -687,7 +687,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (sessionOpt.isEmpty()) {
             // session not found
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                ServerError.ErrorType.SESSION_NOT_FOUND,
                 "Attack session with id " + sessionId + " not found");
         }
         else if (!isSpectating) {
@@ -741,7 +741,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else {
             // session not found
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.ATTACK_SESSION_NOT_FOUND,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
                     "Attack session with provided id " + sessionId + " not found");
         }
 

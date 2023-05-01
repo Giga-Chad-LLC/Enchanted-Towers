@@ -10,7 +10,7 @@ message ServerError {
     INVALID_REQUEST = 0;
     TOWER_NOT_FOUND = 1;
     TOWER_TOO_FAR = 2;
-    ATTACK_SESSION_NOT_FOUND = 3;
+    SESSION_NOT_FOUND = 3;
     SPELL_TEMPLATE_NOT_FOUND = 4;
   }
 
