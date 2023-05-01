@@ -472,6 +472,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         final int sessionId = request.getSessionId();
         final int playerId  = request.getPlayerData().getPlayerId();
 
+        // TODO: store sessionManager.getSessionById(sessionId) into sessionOpt variable and use it where needed (same applies to other methods)
         boolean isRequestValid = (request.getRequestType() == RequestType.CLEAR_CANVAS);
         boolean sessionExists  = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
         boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();

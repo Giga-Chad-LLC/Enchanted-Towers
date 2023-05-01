@@ -308,7 +308,45 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {}
+    public void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
+
+        boolean isRequestValid = (request.getRequestType() == ProtectionWallRequest.RequestType.CLEAR_CANVAS);
+        boolean sessionExists = isRequestValid && sessionOpt.isPresent();
+        boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
+
+        if (isRequestValid && sessionExists && isPlayerIdValid) {
+            ProtectionWallSession session = sessionOpt.get();
+            // clearing canvas
+            session.clearDrawnSpellsDescriptions();
+            responseBuilder.setSuccess(true);
+        }
+        else if (!isRequestValid) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Request type must be '" + ProtectionWallRequest.RequestType.CLEAR_CANVAS + "'" +
+                            ", got '" + request.getRequestType() + "'");
+        }
+        else if (!sessionExists) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+                    "ProtectionWallSession with id " + sessionId + " not found");
+        }
+        else {
+            // player id is not the same as the player id stored inside session instance
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player id " + playerId + " does not match the required id " + sessionOpt.get().getPlayerId());
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
 
     // helper methods
     private boolean cooldownTimeBetweenSessionsCreationExceeded(Instant timestamp) {
