@@ -29,6 +29,7 @@ public class AttackSessionManager {
       }
    }
 
+   // TODO: before removing session, cancel timeout of SessionExpiredCallback
    public void remove(AttackSession session) {
       synchronized (sessions) {
          for (var sessionList : sessions.values()) {

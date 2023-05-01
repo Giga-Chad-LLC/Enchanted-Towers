@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class CanvasState {
-   private final List<MatchedTemplateDescription> spellDescriptions = new ArrayList<>();
+   private final List<TemplateDescription> spellDescriptions = new ArrayList<>();
 
-   public void addTemplate(MatchedTemplateDescription template) {
+   public void addTemplate(TemplateDescription template) {
       spellDescriptions.add(template);
    }
 
-   public List<MatchedTemplateDescription> getTemplates() {
+   public List<TemplateDescription> getTemplates() {
       return Collections.unmodifiableList(spellDescriptions);
    }
 

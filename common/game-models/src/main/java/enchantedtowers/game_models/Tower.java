@@ -22,9 +22,9 @@ public class Tower {
         this.towerId = towerId;
         this.position = position;
         protectionWalls = List.of(
-            new ProtectionWall(),
-            new ProtectionWall(),
-            new ProtectionWall()
+            new ProtectionWall(0),
+            new ProtectionWall(1),
+            new ProtectionWall(2)
         );
         ownerId = Optional.empty();
         lastProtectionWallModificationTimestamp = Optional.empty();
@@ -99,5 +99,23 @@ public class Tower {
         synchronized (lock) {
             return lastProtectionWallModificationTimestamp;
         }
+    }
+
+    public Optional<ProtectionWall> getProtectionWallById(int protectionWallId) {
+        for (ProtectionWall wall : protectionWalls) {
+            if (protectionWallId == wall.getId()) {
+                return Optional.of(wall);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public boolean hasProtectionWallWithId(int protectionWallId) {
+        for (ProtectionWall wall : protectionWalls) {
+            if (protectionWallId == wall.getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

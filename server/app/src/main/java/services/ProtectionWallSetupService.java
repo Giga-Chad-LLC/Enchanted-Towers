@@ -1,17 +1,22 @@
 package services;
 
+import components.session.AttackSession;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
+import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
+import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
-import enchantedtowers.game_logic.MatchedTemplateDescription;
+import enchantedtowers.game_logic.TemplateDescription;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_models.Enchantment;
+import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
@@ -20,10 +25,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
@@ -33,6 +35,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     private static final long SESSION_CREATION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
     private final Logger logger = Logger.getLogger(ProtectionWallSetupService.class.getName());
+    private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
     private final ProtectionWallSessionManager sessionManager = new ProtectionWallSessionManager();
     private final Map<Integer, Timeout> timeouts = new HashMap<>();
 
@@ -103,108 +106,34 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
 
-    /**
-     * Validates the request and checks the conditions required to enter protection wall creation session.
-     * If validation fails then sets the appropriate error into response; otherwise does nothing.
-     * Caller should check for an error instance being set in a response model.
-     */
-    private void validateEnteringProtectionWallCreationSession(TowerIdRequest request, ServerError.Builder errorBuilder) {
-        int towerId = request.getTowerId();
-        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
-
-        boolean towerExists = towerOpt.isPresent();
-
-        boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() &&
-                                towerOpt.get().getOwnerId().get() == request.getPlayerData().getPlayerId();
-
-        boolean hasLastProtectionWallModificationTimestamp =
-                towerExists && towerOpt.get().getLastProtectionWallModificationTimestamp().isPresent();
-
-        boolean cooldownTimeExceeded = hasLastProtectionWallModificationTimestamp &&
-                cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
-
-        if (!towerExists) {
-            ProtoModelsUtils.buildServerError(errorBuilder,
-                    ServerError.ErrorType.TOWER_NOT_FOUND,
-                    "Tower with id " + towerId + " not found");
-        }
-        else if (!isPlayerOwner) {
-            ProtoModelsUtils.buildServerError(errorBuilder,
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player with id " + request.getPlayerData().getPlayerId() +
-                            " is not an owner of tower with id " + towerId);
-        }
-        else if (hasLastProtectionWallModificationTimestamp && !cooldownTimeExceeded) {
-            // cooldown not exceeded
-            var timestamp = towerOpt.get().getLastProtectionWallModificationTimestamp().get();
-            long remain = SESSION_CREATION_COOLDOWN_MS - Duration.between(timestamp, Instant.now()).toSeconds();
-
-            ProtoModelsUtils.buildServerError(errorBuilder,
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Cooldown after last protection wall installation not exceeded. Wait for: " + remain + "s");
-        }
-        /*
-        // either cooldown exceeded or modification timestamp was reset after capturing
-        towerExists && (!hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded)
-         */
-    }
-
     @Override
-    public void tryEnterProtectionWallCreationSession(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public void tryEnterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
         validateEnteringProtectionWallCreationSession(request, responseBuilder.getErrorBuilder());
 
-        // either cooldown exceeded or modification timestamp was reset after capturing
         if (!responseBuilder.hasError()) {
             responseBuilder.setSuccess(true);
         }
-
-        /*
-        int towerId = request.getTowerId();
-        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
-
-        boolean towerExists = towerOpt.isPresent();
-        boolean hasLastProtectionWallModificationTimestamp =
-                towerExists && towerOpt.get().getLastProtectionWallModificationTimestamp().isPresent();
-        boolean cooldownTimeExceeded = hasLastProtectionWallModificationTimestamp &&
-                cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
-
-        if (towerExists && (!hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded)) {
-            responseBuilder.setSuccess(true);
-        }
-        else if (!towerExists) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.TOWER_NOT_FOUND,
-                    "Tower with id " + towerId + " not found");
-        }
-        else {
-            // cooldown not exceeded
-            var timestamp = towerOpt.get().getLastProtectionWallModificationTimestamp().get();
-            long remain = SESSION_CREATION_COOLDOWN_MS - Duration.between(timestamp, Instant.now()).toSeconds();
-
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Cooldown after last protection wall installation not exceeded. Wait for: " + remain + "s");
-        }
-         */
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
     }
 
     @Override
-    public void enterProtectionWallCreationSession(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
+    public void enterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+
         validateEnteringProtectionWallCreationSession(request, responseBuilder.getErrorBuilder());
 
         if (!responseBuilder.hasError()) {
             // create protection wall creation session
             int playerId = request.getPlayerData().getPlayerId();
             int towerId = request.getTowerId();
+            int protectionWallId = request.getProtectionWallId();
 
-            // TODO: pass appropriate callback
-            IntConsumer dummyCallback = (int value) -> {};
-            ProtectionWallSession session = sessionManager.createSession(playerId, towerId, streamObserver, dummyCallback);
+            ProtectionWallSession session = sessionManager.createSession(
+                    playerId, towerId, protectionWallId, streamObserver, onSessionExpiredCallback);
 
             int sessionId = session.getId();
 
@@ -259,7 +188,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             logger.info("addSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<MatchedTemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                     spellPoints,
                     offset,
                     request.getSpell().getColorId()
@@ -267,7 +196,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             // add match spell into canvas state
             if (matchedTemplateDescriptionOpt.isPresent()) {
-                MatchedTemplateDescription template = matchedTemplateDescriptionOpt.get();
+                TemplateDescription template = matchedTemplateDescriptionOpt.get();
                 ProtectionWallSession session = sessionOpt.get();
 
                 session.addTemplateToCanvasState(template);
@@ -345,8 +274,144 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+    @Override
+    public void completeEnchantment(SessionIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
+
+        boolean sessionExists = sessionOpt.isPresent();
+        boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
+
+        if (sessionExists && isPlayerIdValid) {
+            // complete enchantment and save it into protection wall of the tower
+            ProtectionWallSession session = sessionOpt.get();
+            Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
+
+            // create enchantment from spell templates
+            Enchantment enchantment = new Enchantment(session.getTemplateDescriptions());
+
+            ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
+            wall.setEnchantment(enchantment);
+
+            // tower is no longer under protection wall installation
+            tower.setUnderProtectionWallsInstallation(false);
+
+            // TODO: call TowerRegistry.save() to save the updated tower state in DB
+
+            // closing connection with client
+            session.getPlayerResponseObserver().onCompleted();
+
+            // removing session
+            sessionManager.remove(session);
+        }
+        else if (!sessionExists) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+                    "ProtectionWallSession with id " + sessionId + " not found");
+        }
+        else {
+            // player id is not the same as the player id stored inside session instance
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player id " + playerId + " does not match the required id " + sessionOpt.get().getPlayerId());
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
+
     // helper methods
+    /**
+     * <p>Validates the request and checks the conditions required to enter protection wall creation session.
+     * If validation fails then sets the appropriate error into response; otherwise does nothing.</p>
+     * <p>Caller should check for an error instance being set in a response model.</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Tower with provided id exists</li>
+     *     <li>Protection wall with provided id exists inside tower</li>
+     *     <li>Player is an owner of a tower</li>
+     *     <li>Either {@link Tower#lastProtectionWallModificationTimestamp} is empty (which means that tower has been captured by a player, and he has time to set up 1st protection wall) or cooldown between protection wall updates exceeded</li>
+     * </ol>
+     */
+    private void validateEnteringProtectionWallCreationSession(
+            EnterProtectionWallCreationRequest request, ServerError.Builder errorBuilder) {
+
+        int towerId = request.getTowerId();
+        int protectionWallId = request.getProtectionWallId();
+        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+
+        boolean towerExists = towerOpt.isPresent();
+
+        boolean ProtectionWallExists = towerExists && towerOpt.get().hasProtectionWallWithId(protectionWallId);
+
+        boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() &&
+                towerOpt.get().getOwnerId().get() == request.getPlayerData().getPlayerId();
+
+        boolean hasLastProtectionWallModificationTimestamp =
+                towerExists && towerOpt.get().getLastProtectionWallModificationTimestamp().isPresent();
+
+        boolean cooldownTimeExceeded = hasLastProtectionWallModificationTimestamp &&
+                cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
+
+        if (!towerExists) {
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.TOWER_NOT_FOUND,
+                    "Tower with id " + towerId + " not found");
+        }
+        else if (!ProtectionWallExists) {
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Protection wall with id " + protectionWallId + " of tower with id " + towerId + " not found");
+        }
+        else if (!isPlayerOwner) {
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + request.getPlayerData().getPlayerId() +
+                            " is not an owner of tower with id " + towerId);
+        }
+        else if (hasLastProtectionWallModificationTimestamp && !cooldownTimeExceeded) {
+            // cooldown not exceeded
+            var timestamp = towerOpt.get().getLastProtectionWallModificationTimestamp().get();
+            long remain = SESSION_CREATION_COOLDOWN_MS - Duration.between(timestamp, Instant.now()).toSeconds();
+
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Cooldown after last protection wall installation not exceeded. Wait for: " + remain + "s");
+        }
+        /*
+        // either cooldown exceeded or modification timestamp was reset after capturing
+        towerExists && (!hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded)
+         */
+    }
+
+
     private boolean cooldownTimeBetweenSessionsCreationExceeded(Instant timestamp) {
         return Duration.between(timestamp, Instant.now()).toMillis() >= SESSION_CREATION_COOLDOWN_MS;
+    }
+
+    private void onSessionExpired(int sessionId) {
+        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        // TODO: better to ignore callback rather than throw
+        if (sessionOpt.isEmpty()) {
+            throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
+        }
+        ProtectionWallSession session = sessionOpt.get();
+
+        // sending response with session expiration and closing connection
+        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+        responseBuilder.getExpirationBuilder().build();
+
+        var responseObserver = session.getPlayerResponseObserver();
+        responseObserver.onNext(responseBuilder.build());
+        responseObserver.onCompleted();
+
+        // removing session
+        sessionManager.remove(session);
     }
 }

@@ -15,7 +15,7 @@ import enchantedtowers.game_models.utils.Vector2;
 public class SpellsPatternMatchingAlgorithm {
     private static final float SIMILARITY_THRESHOLD = 0.80f;
 
-    static public Optional<MatchedTemplateDescription> getMatchedTemplateWithHausdorffMetric(
+    static public Optional<TemplateDescription> getMatchedTemplateWithHausdorffMetric(
         List<Vector2> spellPoints, Vector2 offset, int spellColor) {
         if (Utils.isValidPath(spellPoints)) {
             Spell pattern = new Spell(
@@ -35,8 +35,8 @@ public class SpellsPatternMatchingAlgorithm {
     }
 
     static private <Metric extends CurvesMatchingMetric>
-    Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
-                                                            Spell pattern, int patternColor, Metric metric) {
+    Optional<TemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
+                                                     Spell pattern, int patternColor, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();
@@ -89,6 +89,6 @@ public class SpellsPatternMatchingAlgorithm {
 //                )
 //        );
 
-        return Optional.of(new MatchedTemplateDescription(matchedTemplateId, patternColor, matchedTemplateOffset));
+        return Optional.of(new TemplateDescription(matchedTemplateId, patternColor, matchedTemplateOffset));
     }
 }

@@ -4,11 +4,10 @@ import components.session.AttackSession.Spectator;
 import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.*;
 import enchantedtowers.common.utils.proto.responses.*;
-import enchantedtowers.game_logic.MatchedTemplateDescription;
+import enchantedtowers.game_logic.TemplateDescription;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
-import java.text.AttributedCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,7 +34,6 @@ import enchantedtowers.game_models.utils.Vector2;
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
     private final AttackSessionManager sessionManager = new AttackSessionManager();
     private final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
-
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
 
     // rpc calls
@@ -364,7 +362,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             logger.info("finishSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<MatchedTemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                 session.getCurrentSpellPoints(),
                 offset,
                 session.getCurrentSpellColorId()
@@ -390,12 +388,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 }
             }
             else {
-                MatchedTemplateDescription matchedTemplateDescription = matchedTemplateDescriptionOpt.get();
+                TemplateDescription templateDescription = matchedTemplateDescriptionOpt.get();
 
                 // send data to attacker
-                final int templateId = matchedTemplateDescription.id();
-                final double x = matchedTemplateDescription.offset().x;
-                final double y = matchedTemplateDescription.offset().y;
+                final int templateId = templateDescription.id();
+                final double x = templateDescription.offset().x;
+                final double y = templateDescription.offset().y;
 
                 // Build template offset
                 responseBuilder.getSpellDescriptionBuilder().getSpellTemplateOffsetBuilder()
@@ -410,7 +408,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     .build();
 
                 // save the template to the canvas state
-                session.addTemplateToCanvasState(matchedTemplateDescription);
+                session.addTemplateToCanvasState(templateDescription);
 
                 // send data to all spectators
                 final int colorId = session.getCurrentSpellColorId();
@@ -756,6 +754,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     // helper methods
     private void onSessionExpired(int sessionId) {
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        // TODO: better to ignore callback rather than throw
         if (sessionOpt.isEmpty()) {
             throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
         }

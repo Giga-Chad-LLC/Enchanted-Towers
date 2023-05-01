@@ -3,13 +3,8 @@ package components.session;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.CanvasState;
-import enchantedtowers.game_logic.HausdorffMetric;
-import enchantedtowers.game_logic.MatchedTemplateDescription;
+import enchantedtowers.game_logic.TemplateDescription;
 import enchantedtowers.game_logic.SpellDrawingDescription;
-import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
-import enchantedtowers.game_models.Spell;
-import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.utils.Utils;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
 
@@ -158,7 +153,7 @@ public class AttackSession {
         }
     }
 
-    public void addTemplateToCanvasState(MatchedTemplateDescription template) {
+    public void addTemplateToCanvasState(TemplateDescription template) {
         synchronized (lock) {
             canvasState.addTemplate(template);
         }
@@ -171,7 +166,7 @@ public class AttackSession {
         }
     }
 
-    public List<MatchedTemplateDescription> getDrawnSpellsDescriptions() {
+    public List<TemplateDescription> getDrawnSpellsDescriptions() {
         synchronized (lock) {
             return canvasState.getTemplates();
         }
