@@ -418,6 +418,17 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         return true;
     }
 
+    private boolean onActionMoveContinuePath(float x, float y) {
+        path.lineTo(x, y);
+        Vector2 point = new Vector2(x, y);
+
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
+            logger.warning("'Line to' event lost");
+        }
+
+        return true;
+    }
+
     private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
         path.lineTo(x, y);
         Vector2 point = new Vector2(x, y);
@@ -434,17 +445,6 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         logger.info("Run hausdorff on server!");
 
         path.reset();
-
-        return true;
-    }
-
-    private boolean onActionMoveContinuePath(float x, float y) {
-        path.lineTo(x, y);
-        Vector2 point = new Vector2(x, y);
-
-        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
-            logger.warning("'Line to' event lost");
-        }
 
         return true;
     }
