@@ -236,7 +236,76 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void addSpell(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {}
+    public void addSpell(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
+
+        boolean isRequestValid = (request.getRequestType() == ProtectionWallRequest.RequestType.ADD_SPELL) &&
+                                 (request.hasSpell());
+        boolean sessionExists = isRequestValid && sessionOpt.isPresent();
+        boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
+
+        if (isRequestValid && sessionExists && isPlayerIdValid) {
+            // find matching spell template
+            List<Vector2> spellPoints = request.getSpell().getPointsList().stream()
+                    .map(point -> new Vector2(point.getX(), point.getY()))
+                    .toList();
+
+            Vector2 offset = new Vector2(
+                    request.getSpell().getOffset().getX(),
+                    request.getSpell().getOffset().getY()
+            );
+
+            logger.info("addSpell: run hausdorff and return id of matched template and offset");
+
+            Optional<MatchedTemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+                    spellPoints,
+                    offset,
+                    request.getSpell().getColorId()
+            );
+
+            // add match spell into canvas state
+            if (matchedTemplateDescriptionOpt.isPresent()) {
+                MatchedTemplateDescription template = matchedTemplateDescriptionOpt.get();
+                ProtectionWallSession session = sessionOpt.get();
+
+                session.addTemplateToCanvasState(template);
+            }
+            else {
+                // no template found
+                ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                        ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
+                        "No template found to match provided spell");
+            }
+
+            responseBuilder.setSuccess(true);
+        }
+        else if (!isRequestValid) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "Request type must be '" + ProtectionWallRequest.RequestType.ADD_SPELL + "'" +
+                    ", got '" + request.getRequestType() + "'" +
+                    ", as well as Spell must be provided");
+        }
+        else if (!sessionExists) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+                    "ProtectionWallSession with id " + sessionId + " not found");
+        }
+        else {
+            // player id is not the same as the player id stored inside session instance
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player id " + playerId + " does not match the required id " + sessionOpt.get().getPlayerId());
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
 
     @Override
     public void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {}
