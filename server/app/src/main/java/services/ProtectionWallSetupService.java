@@ -302,9 +302,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             // TODO: call TowerRegistry.save() to save the updated tower state in DB
 
-            // TODO: need to close the connection?
             // closing connection with client
-            // session.getPlayerResponseObserver().onCompleted();
+            session.getPlayerResponseObserver().onCompleted();
 
             // removing session
             sessionManager.remove(session);
