@@ -513,8 +513,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     @Override
-    public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStats> streamObserver) {
-        MatchedSpellStats.Builder responseBuilder = MatchedSpellStats.newBuilder();
+    public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
+        MatchedSpellStatsResponse.Builder responseBuilder = MatchedSpellStatsResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
         final int playerId  = request.getPlayerData().getPlayerId();

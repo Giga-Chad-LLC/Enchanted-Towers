@@ -12,7 +12,7 @@ import "common/player-data.proto";
 import "responses/common/server-error.proto";
 
 
-message MatchedSpellStats {
+message MatchedSpellStatsResponse {
   message SpellStat {
     common.SpellType spellType = 1;
     double match = 2; // value in range of [0, 1] which defines percentage of match of the specified spell type
@@ -20,5 +20,5 @@ message MatchedSpellStats {
 
   common.PlayerData playerData = 1;
   response_models.ServerError error = 2;
-  repeated MatchedSpellStats stats = 3;
+  repeated SpellStat stats = 3;
 };

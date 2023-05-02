@@ -18,7 +18,7 @@ import "responses/common/session-id-response.proto";
 import "responses/common/session-info-response.proto";
 import "responses/common/spell-finish-response.proto";
 import "responses/tower-attack-service/spectate-tower-attack-response.proto";
-import "responses/tower-attack-service/matched-spell-stats.proto";
+import "responses/tower-attack-service/matched-spell-stats-response.proto";
 
 
 service TowerAttackService {
@@ -32,7 +32,7 @@ service TowerAttackService {
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
   rpc ClearCanvas(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
-  rpc CompareDrawnSpells(request_models.SpellRequest) returns (response_models.MatchedSpellStats) {}
+  rpc CompareDrawnSpells(request_models.SpellRequest) returns (response_models.MatchedSpellStatsResponse) {}
 
   // TODO: how to remove this redundant method 'TrySpectateTowerById'?
   rpc TrySpectateTowerById(request_models.TowerIdRequest) returns (response_models.SessionIdResponse) {}
