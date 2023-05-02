@@ -530,15 +530,32 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
             ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
 
-            // TODO: call compareEnchantments(wallEnchantmentSpells, drawnSpells);
             Enchantment guess = new Enchantment(session.getDrawnSpellsDescriptions());
             Enchantment actual = wall.getEnchantment().get();
 
-            logger.info("Call MatchStatsWithHausdorffMetric");
+            logger.info("Comparing player's guess enchantment with actual enchantment of protection wall...");
 
+            // [spell type] -> [match value in range of [0, 1]]
             Map<SpellType, Double> matches = EnchantmentMatchingAlgorithm.getEnchantmentMatchStatsWithHausdorffMetric(guess, actual);
 
             logger.info("Got matches: " + matches);
+
+            // add spell matching stats into response
+            List<MatchedSpellStatsResponse.SpellStat> spellStats = new ArrayList<>();
+
+            for (var entry : matches.entrySet()) {
+                SpellType type = entry.getKey();
+                double match = entry.getValue();
+
+                MatchedSpellStatsResponse.SpellStat stat = MatchedSpellStatsResponse.SpellStat.newBuilder()
+                        .setSpellType(type)
+                        .setMatch(match)
+                        .build();
+
+                spellStats.add(stat);
+            }
+
+            responseBuilder.addAllStats(spellStats);
         }
         else if (!isRequestValid) {
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),

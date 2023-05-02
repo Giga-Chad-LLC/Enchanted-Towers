@@ -18,7 +18,6 @@ message MatchedSpellStatsResponse {
     double match = 2; // value in range of [0, 1] which defines percentage of match of the specified spell type
   }
 
-  common.PlayerData playerData = 1;
   response_models.ServerError error = 2;
   repeated SpellStat stats = 3;
 };
