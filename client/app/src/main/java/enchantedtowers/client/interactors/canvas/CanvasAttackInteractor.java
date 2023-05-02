@@ -22,6 +22,7 @@ import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.MatchedSpellStatsResponse;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -154,6 +155,25 @@ class AttackEventWorker extends Thread {
 
             return new Event(requestBuilder.build());
         }
+
+        public static Event createEventWithCompareDrawnSpellsRequest() {
+            SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
+            // set request type
+            requestBuilder.setRequestType(SpellRequest.RequestType.COMPARE_DRAWN_SPELLS);
+
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
+            // set session id
+            requestBuilder.setSessionId(storage.getSessionId().get());
+
+            // set player id
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(storage.getPlayerId().get())
+                    .build();
+
+            return new Event(requestBuilder.build());
+        }
     }
 
     public AttackEventWorker(CanvasWidget canvasWidget) {
@@ -240,6 +260,13 @@ class AttackEventWorker extends Thread {
                                     .clearCanvas(event.getRequest());
                             logger.info("Got response from clearCanvas: success=" + response.getSuccess() +
                                     "\nmessage='" + response.getError().getMessage() + "'");
+                        }
+                        case COMPARE_DRAWN_SPELLS -> {
+                            MatchedSpellStatsResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .compareDrawnSpells(event.getRequest());
+
+                            logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "'");
                         }
                     }
                 }
@@ -340,6 +367,16 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean onSubmitCanvas(CanvasState state) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithCompareDrawnSpellsRequest())) {
+            logger.warning("'Compare drawn spells' event lost");
+        }
+        state.clear();
+
+        return true;
     }
 
     private void callAsyncAttackTowerById(CanvasWidget canvasWidget) {

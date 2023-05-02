@@ -39,6 +39,20 @@ public class EnchantmentMatchingAlgorithm {
       Geometry guessGeometry = getEnchantmentGeometryBySpellType(guess, spellType);
       Geometry actualGeometry = getEnchantmentGeometryBySpellType(actual, spellType);
 
+//      System.out.println(spellType + ": GUESS: " + guessGeometry.toText());
+//      System.out.println(spellType + ": ACTUAL: " + actualGeometry.toText());
+
+      boolean bothGeometriesEmpty = guessGeometry.isEmpty() && actualGeometry.isEmpty();
+      boolean singleGeometryEmpty = !bothGeometriesEmpty && (guessGeometry.isEmpty() || actualGeometry.isEmpty());
+
+      if (bothGeometriesEmpty) {
+         return 1;
+      }
+      else if (singleGeometryEmpty) {
+         return 0;
+      }
+
+      // jts calculates metric between empty and non-empty geometries as 1, which actually has to be 0 in our game
       return metric.calculate(guessGeometry, actualGeometry);
    }
 
@@ -62,25 +76,17 @@ public class EnchantmentMatchingAlgorithm {
 
          // apply translation to the curve and add it to the list
          Geometry curve = spell.getCurveCopy();
-         Vector2 offset = spell.getOffset();
+         Vector2 offset = template.offset(); // use real offset on the canvas
          curve.apply(
              AffineTransformation.translationInstance(offset.x, offset.y)
          );
          curves.add(curve);
       }
 
-      logger.info("Curves list for spell type: " + spellType);
-      for (var geometry : curves) {
-         logger.info(geometry.toText());
-      }
-
       Geometry[] geometries = new Geometry[curves.size()];
       curves.toArray(geometries);
       GeometryCollection geometryCollection = new GeometryCollection(geometries, factory);
-      Geometry combinedGeometry = geometryCollection.union();
 
-      logger.info("Combined geometry for type: " + spellType + ", geometry: " + combinedGeometry.toText());
-
-      return combinedGeometry;
+      return geometryCollection.union();
    }
 }
