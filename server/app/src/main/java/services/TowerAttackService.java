@@ -19,16 +19,11 @@ import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.ServerError;
-import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
-import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
-import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
+import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
-import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
-import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
@@ -462,6 +457,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
+
     // TODO: write description
     @Override
     public void clearCanvas(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
@@ -527,14 +523,16 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         int playerId = request.getPlayerData().getPlayerId();
         SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
         Optional<AttackSession> session = sessionManager.getAnyAttackSessionByTowerId(towerId);
 
-        if (!isAttacking && !isSpectating && session.isPresent()) {
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+        boolean sessionExists = session.isPresent();
+
+        if (!isAttacking && !isSpectating && sessionExists) {
             responseBuilder.setSessionId(session.get().getId());
         }
-        else if (session.isEmpty()) {
+        else if (!sessionExists) {
             logger.info("trySpectateTowerById: session associated with tower id " + towerId + " not found");
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.SESSION_NOT_FOUND,
@@ -574,11 +572,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
 
-        if (!isAttacking && !isSpectating && sessionOpt.isPresent()) {
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
+        boolean sessionExists = sessionOpt.isPresent();
+
+        if (!isAttacking && !isSpectating && sessionExists) {
             AttackSession session = sessionOpt.get();
             // create response with canvas state
             responseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
@@ -601,7 +601,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // send canvas state to spectator
             streamObserver.onNext(responseBuilder.build());
         }
-        else if (sessionOpt.isEmpty()) {
+        else if (!sessionExists) {
             // session not found
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.SESSION_NOT_FOUND,
