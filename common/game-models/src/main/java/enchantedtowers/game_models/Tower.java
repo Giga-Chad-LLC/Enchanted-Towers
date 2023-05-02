@@ -4,6 +4,7 @@ import enchantedtowers.game_models.utils.Vector2;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class Tower {
@@ -79,12 +80,6 @@ public class Tower {
         }
     }
 
-    /*public void resetLastProtectionWallModificationTimestamp() {
-        synchronized (lock) {
-            lastProtectionWallModificationTimestamp = Optional.empty();
-        }
-    }*/
-
     public void setLastProtectionWallModificationTimestamp(Instant timestamp) {
         synchronized (lock) {
             lastProtectionWallModificationTimestamp = Optional.of(timestamp);
@@ -129,7 +124,17 @@ public class Tower {
             }
             return false;
         }
+    }
 
+    public ProtectionWall getEnchantedProtectionWall() {
+        synchronized (lock) {
+            for (ProtectionWall wall : protectionWalls) {
+                if (wall.isEnchanted()) {
+                    return  wall;
+                }
+            }
+            throw new NoSuchElementException("Enchanted protection wall not found");
+        }
     }
 
     public boolean isUnderCaptureLock() {

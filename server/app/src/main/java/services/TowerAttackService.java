@@ -5,6 +5,7 @@ import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.*;
 import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.game_logic.TemplateDescription;
+import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -90,14 +91,19 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             int playerId = request.getPlayerData().getPlayerId();
             int towerId = request.getTowerId();
 
-            // creating new attack session associated with player and registering onSessionExpiredCallback
-            logger.info("Creating attack session for player with id " + playerId);
-            AttackSession session = sessionManager.createAttackSession(
-                    playerId, towerId, streamObserver, onSessionExpiredCallback);
-
+            // mark tower as being under attack and retrieve enchanted protection wall
             Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
             // mark tower as being under attack
             tower.setUnderAttack(true);
+
+            // retrieve any enchanted protection wall
+            ProtectionWall wall = tower.getEnchantedProtectionWall();
+
+            // creating new attack session associated with player and registering onSessionExpiredCallback
+            logger.info("Creating attack session for player with id " + playerId);
+
+            AttackSession session = sessionManager.createAttackSession(
+                    playerId, towerId, wall.getId(), streamObserver, onSessionExpiredCallback);
 
             final int sessionId = session.getId();
 
@@ -809,7 +815,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             errorOccurred = true;
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
-                    "Tower with id " + towerId + " has no enchanted protection wall");
+                    "Tower with id " + towerId + " has no enchanted protection walls");
         }
         else if (isTowerUnderCaptureLock) {
             errorOccurred = true;

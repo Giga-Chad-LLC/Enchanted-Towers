@@ -31,8 +31,8 @@ import java.util.logging.Logger;
 
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
     // TODO: test that logic that involves these constants works correctly
-    private static final long SESSION_CREATION_TIMEOUT_MS = 30 * 60 * 1000; // 30min
-    private static final long SESSION_CREATION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
+    private static final long SESSION_CREATION_TIMEOUT_MS = 15 * 1000; // 15s   /* 30 * 60 * 1000; // 30min */
+    private static final long SESSION_CREATION_COOLDOWN_MS = 30 * 1000; // 30s   /* 24 * 60 * 60 * 1000; // 24h */
 
     private final Logger logger = Logger.getLogger(ProtectionWallSetupService.class.getName());
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
@@ -82,7 +82,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             // setting timeout of protection walls installation
             timeouts.put(towerId, new Timeout(SESSION_CREATION_TIMEOUT_MS, () -> {
-                logger.info("timeout: towerId=" + tower.getId() + " playerId=" + playerId);
+                logger.info("Remove capture lock for tower with id " + tower.getId() + " of owner with id " + playerId);
                 tower.setLastProtectionWallModificationTimestamp(Instant.now());
                 tower.setUnderCaptureLock(false);
                 // removing timeout from map
