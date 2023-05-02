@@ -14,7 +14,7 @@ public class Enchantment {
         this.spells = spells;
     }
 
-//    public List<TemplateDescription> getSpellsByColorId(int colorId) {
-//
-//    }
+    public List<TemplateDescription> getSpells() {
+        return spells;
+    }
 }

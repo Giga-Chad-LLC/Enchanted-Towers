@@ -47,17 +47,21 @@ public class ProtectionWall {
         return enchantment.isPresent();
     }
 
+    public void setEnchantment(Enchantment enchantment) {
+        this.enchantment = Optional.of(enchantment);
+        this.state.setBroken(false);
+        this.state.setEnchanted(true);
+    }
+
+    public Optional<Enchantment> getEnchantment() {
+        return this.enchantment;
+    }
+
     public boolean isBroken() {
         return state.isBroken();
     }
 
     public boolean isEnchanted() {
         return state.isEnchanted();
-    }
-
-    public void setEnchantment(Enchantment enchantment) {
-        this.enchantment = Optional.of(enchantment);
-        this.state.setBroken(false);
-        this.state.setEnchanted(true);
     }
 }
