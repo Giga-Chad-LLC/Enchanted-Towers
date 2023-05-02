@@ -18,6 +18,7 @@ message SpellRequest {
     DRAW_SPELL = 1;
     FINISH_SPELL = 2;
     CLEAR_CANVAS = 3;
+    COMPARE_DRAWN_SPELLS = 4;
   };
 
   common.PlayerData playerData = 1;
