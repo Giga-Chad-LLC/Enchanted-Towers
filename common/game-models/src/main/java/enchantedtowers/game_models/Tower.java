@@ -13,6 +13,10 @@ public class Tower {
     private Optional<Integer> ownerId;
     private Optional<Instant> lastProtectionWallModificationTimestamp;
     private boolean isUnderProtectionWallsInstallation;
+    // defines whether the tower has been captured recently and whether owner can install enchantments on unprotected walls
+    private boolean isUnderCaptureLock;
+    private boolean isUnderAttack;
+
 
     // lock variable is used to synchronization
     private final Object lock;
@@ -29,6 +33,8 @@ public class Tower {
         ownerId = Optional.empty();
         lastProtectionWallModificationTimestamp = Optional.empty();
         isUnderProtectionWallsInstallation = false;
+        isUnderCaptureLock = false;
+        isUnderAttack = false;
         lock = new Object();
     }
 
@@ -55,6 +61,8 @@ public class Tower {
 
     public void setOwnerId(int ownerId) {
         synchronized (lock) {
+            // because there is a new owner who did not do any modifications yet
+            this.lastProtectionWallModificationTimestamp = Optional.empty();
             this.ownerId = Optional.of(ownerId);
         }
     }
@@ -71,11 +79,11 @@ public class Tower {
         }
     }
 
-    public void resetLastProtectionWallModificationTimestamp() {
+    /*public void resetLastProtectionWallModificationTimestamp() {
         synchronized (lock) {
             lastProtectionWallModificationTimestamp = Optional.empty();
         }
-    }
+    }*/
 
     public void setLastProtectionWallModificationTimestamp(Instant timestamp) {
         synchronized (lock) {
@@ -102,20 +110,50 @@ public class Tower {
     }
 
     public Optional<ProtectionWall> getProtectionWallById(int protectionWallId) {
-        for (ProtectionWall wall : protectionWalls) {
-            if (protectionWallId == wall.getId()) {
-                return Optional.of(wall);
+        synchronized (lock) {
+            for (ProtectionWall wall : protectionWalls) {
+                if (protectionWallId == wall.getId()) {
+                    return Optional.of(wall);
+                }
             }
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     public boolean hasProtectionWallWithId(int protectionWallId) {
-        for (ProtectionWall wall : protectionWalls) {
-            if (protectionWallId == wall.getId()) {
-                return true;
+        synchronized (lock) {
+            for (ProtectionWall wall : protectionWalls) {
+                if (protectionWallId == wall.getId()) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
+
+    }
+
+    public boolean isUnderCaptureLock() {
+        synchronized (lock) {
+            return isUnderCaptureLock;
+        }
+    }
+
+    public void setUnderCaptureLock(boolean underCaptureLock) {
+        synchronized (lock) {
+            isUnderCaptureLock = underCaptureLock;
+
+        }
+    }
+
+    public boolean isUnderAttack() {
+        synchronized (lock) {
+            return isUnderAttack;
+        }
+    }
+
+    public void setUnderAttack(boolean underAttack) {
+        synchronized (lock) {
+            isUnderAttack = underAttack;
+        }
     }
 }
