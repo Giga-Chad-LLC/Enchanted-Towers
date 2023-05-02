@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 
 
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
+    // TODO: test that logic that involves these constants works correctly
     private static final long SESSION_CREATION_TIMEOUT_MS = 30 * 60 * 1000; // 30min
     private static final long SESSION_CREATION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
@@ -38,6 +39,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     private final ProtectionWallSessionManager sessionManager = new ProtectionWallSessionManager();
     private final Map<Integer, Timeout> timeouts = new HashMap<>();
 
+    // TODO: add isBeingAttacked inside Tower and check that tower is not being attacked in tryEnterProtectionWallCreateionSession
 
     @Override
     public void captureTower(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
@@ -76,15 +78,13 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             // make player an owner of tower and allow to set up protection walls
             tower.setOwnerId(playerId);
-            tower.resetLastProtectionWallModificationTimestamp();
-            // block other players from attacking the tower
-            tower.setUnderProtectionWallsInstallation(true);
+            tower.setUnderCaptureLock(true);
 
             // setting timeout of protection walls installation
             timeouts.put(towerId, new Timeout(SESSION_CREATION_TIMEOUT_MS, () -> {
                 logger.info("timeout: towerId=" + tower.getId() + " playerId=" + playerId);
                 tower.setLastProtectionWallModificationTimestamp(Instant.now());
-                tower.setUnderProtectionWallsInstallation(false);
+                tower.setUnderCaptureLock(false);
                 // removing timeout from map
                 timeouts.remove(towerId);
             }));
@@ -166,6 +166,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             int sessionId = session.getId();
 
+            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+            // block other players from attacking the tower
+            tower.setUnderProtectionWallsInstallation(true);
+
             // create cancel handler to hook the event of client closing the connection
             {
                 var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
@@ -173,6 +177,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 callObserver.setOnCancelHandler(() -> {
                     logger.info("Player with id " + playerId +
                             " cancelled stream. Destroying corresponding protection wall session with id " + sessionId + "...");
+                    // unblock other players from attacking the tower
+                    tower.setUnderProtectionWallsInstallation(false);
                     sessionManager.remove(session);
                 });
             }
@@ -348,7 +354,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             wall.setEnchantment(enchantment);
 
             // tower is no longer under protection wall installation
-            tower.setUnderProtectionWallsInstallation(false);
+             tower.setUnderProtectionWallsInstallation(false);
 
             // TODO: call TowerRegistry.save() to save the updated tower state in DB
 
@@ -384,6 +390,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+    // TODO: create destroyEnchantment method that destroys enchantment of protection wall
 
     // helper methods
     /**
@@ -393,9 +400,14 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      * <p><b>Required conditions:</b></p>
      * <ol>
      *     <li>Tower with provided id exists</li>
+     *     <li>Player is an owner of the tower</li>
      *     <li>Protection wall with provided id exists inside tower</li>
-     *     <li>Player is an owner of a tower</li>
-     *     <li>Either {@link Tower#lastProtectionWallModificationTimestamp} is empty (which means that tower has been captured by a player, and he has time to set up 1st protection wall) or cooldown between protection wall updates exceeded</li>
+     *     <li>Protection wall is not already enchanted (must destroy enchantment before creating new one)</li>
+     *     <li><b>One of the following is true:</b></li>
+     *     <ol>
+     *         <li>Tower is under capture lock</li>
+     *         <li>Protection wall modification allowed: either tower was not modified by an owner yet or cooldown before subsequence modifications exceeded</li>
+     *     </ol>
      * </ol>
      */
     private Optional<ServerError> validateEnteringProtectionWallCreationSession(EnterProtectionWallCreationRequest request) {
@@ -405,16 +417,23 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
         boolean towerExists = towerOpt.isPresent();
 
-        boolean ProtectionWallExists = towerExists && towerOpt.get().hasProtectionWallWithId(protectionWallId);
-
         boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() &&
                 towerOpt.get().getOwnerId().get() == request.getPlayerData().getPlayerId();
+
+        boolean isTowerUnderCaptureLock = towerExists && towerOpt.get().isUnderCaptureLock();
+
+        boolean protectionWallExists = towerExists && towerOpt.get().hasProtectionWallWithId(protectionWallId);
+
+        boolean protectionWallIsEnchanted = protectionWallExists &&
+                    towerOpt.get().getProtectionWallById(protectionWallId).get().isEnchanted();
 
         boolean hasLastProtectionWallModificationTimestamp =
                 towerExists && towerOpt.get().getLastProtectionWallModificationTimestamp().isPresent();
 
         boolean cooldownTimeExceeded = hasLastProtectionWallModificationTimestamp &&
                 cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
+
+        boolean protectionWallModificationAllowed = !hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded;
 
         ServerError.Builder errorBuilder = ServerError.newBuilder();
         boolean errorOccurred = false;
@@ -425,12 +444,6 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                     ServerError.ErrorType.TOWER_NOT_FOUND,
                     "Tower with id " + towerId + " not found");
         }
-        else if (!ProtectionWallExists) {
-            errorOccurred = true;
-            ProtoModelsUtils.buildServerError(errorBuilder,
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Protection wall with id " + protectionWallId + " of tower with id " + towerId + " not found");
-        }
         else if (!isPlayerOwner) {
             errorOccurred = true;
             ProtoModelsUtils.buildServerError(errorBuilder,
@@ -438,15 +451,28 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                     "Player with id " + request.getPlayerData().getPlayerId() +
                             " is not an owner of tower with id " + towerId);
         }
-        else if (hasLastProtectionWallModificationTimestamp && !cooldownTimeExceeded) {
-            // cooldown not exceeded
+        else if (!protectionWallExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Protection wall with id " + protectionWallId + " of tower with id " + towerId + " not found");
+        }
+        else if (protectionWallIsEnchanted) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Protection wall with id " + protectionWallId + " of tower with id " + towerId + " already enchanted");
+        }
+        else if (!protectionWallModificationAllowed && !isTowerUnderCaptureLock) {
+            // modification not allowed because cooldown not exceeded AND tower is not under capture lock
             errorOccurred = true;
             var timestamp = towerOpt.get().getLastProtectionWallModificationTimestamp().get();
             long remain = SESSION_CREATION_COOLDOWN_MS - Duration.between(timestamp, Instant.now()).toSeconds();
 
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
-                    "Cooldown after last protection wall installation not exceeded. Wait for: " + remain + "s");
+                    "Cooldown after last protection wall installation not exceeded: " + remain +
+                            "s remains, and tower is not under capture lock");
         }
 
         if (errorOccurred) {
@@ -455,11 +481,6 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         else {
             return Optional.empty();
         }
-
-        /*
-        // either cooldown exceeded or modification timestamp was reset after capturing
-        towerExists && (!hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded)
-         */
     }
 
 
@@ -474,6 +495,11 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
         }
         ProtectionWallSession session = sessionOpt.get();
+
+        // unsetting protection creation state
+        Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
+        // unblock players from attacking the tower
+        tower.setUnderProtectionWallsInstallation(false);
 
         // sending response with session expiration and closing connection
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();

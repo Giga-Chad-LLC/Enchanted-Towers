@@ -4,20 +4,28 @@ import java.util.Optional;
 
 public class ProtectionWall {
     private static class WallState {
-        private final boolean broken;
-        private final boolean enchanted;
+        private boolean broken;
+        private boolean enchanted;
 
-        WallState(boolean broken, boolean enchanted) {
+        public WallState(boolean broken, boolean enchanted) {
             this.broken = broken;
             this.enchanted = enchanted;
         }
 
-        boolean isBroken() {
+        public boolean isBroken() {
             return broken;
         }
 
-        boolean isEnchanted() {
+        public boolean isEnchanted() {
             return enchanted;
+        }
+
+        public void setBroken(boolean value) {
+            this.broken = value;
+        }
+
+        public void setEnchanted(boolean value) {
+            this.enchanted = value;
         }
     }
 
@@ -49,5 +57,7 @@ public class ProtectionWall {
 
     public void setEnchantment(Enchantment enchantment) {
         this.enchantment = Optional.of(enchantment);
+        this.state.setBroken(false);
+        this.state.setEnchanted(true);
     }
 }
