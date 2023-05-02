@@ -18,6 +18,7 @@ public class AttackSession {
     private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
+    private final int protectionWallId;
     private final StreamObserver<SessionInfoResponse> attackerResponseObserver;
     private final IntConsumer onSessionExpiredCallback;
     private final CanvasState canvasState = new CanvasState();
@@ -31,11 +32,13 @@ public class AttackSession {
     AttackSession(int id,
                   int attackingPlayerId,
                   int attackedTowerId,
+                  int protectionWallId,
                   StreamObserver<SessionInfoResponse> attackerResponseObserver,
                   IntConsumer onSessionExpiredCallback) {
         this.id = id;
         this.attackingPlayerId = attackingPlayerId;
         this.attackedTowerId = attackedTowerId;
+        this.protectionWallId = protectionWallId;
         this.attackerResponseObserver = attackerResponseObserver;
         // TODO: create timeout event that fires `onSessionExpiredCallback`
         this.onSessionExpiredCallback = onSessionExpiredCallback;
@@ -78,21 +81,19 @@ public class AttackSession {
     }
 
     public int getId() {
-        synchronized (lock) {
-            return id;
-        }
+        return id;
+    }
+
+    public int getProtectionWallId() {
+        return protectionWallId;
     }
 
     public int getAttackingPlayerId() {
-        synchronized (lock) {
-            return attackingPlayerId;
-        }
+        return attackingPlayerId;
     }
 
     public int getAttackedTowerId() {
-        synchronized (lock) {
-            return attackedTowerId;
-        }
+        return attackedTowerId;
     }
 
     public StreamObserver<SessionInfoResponse> getAttackerResponseObserver() {

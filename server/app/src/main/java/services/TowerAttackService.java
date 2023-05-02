@@ -1,14 +1,5 @@
 package services;
 
-import components.session.AttackSession.Spectator;
-import components.utils.ProtoModelsUtils;
-import enchantedtowers.common.utils.proto.common.SpellType;
-import enchantedtowers.common.utils.proto.requests.*;
-import enchantedtowers.common.utils.proto.responses.*;
-import enchantedtowers.game_models.TemplateDescription;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -16,19 +7,35 @@ import java.util.Optional;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
-// components
 import components.session.AttackSession;
+import components.session.AttackSession.Spectator;
 import components.session.AttackSessionManager;
-// requests
+import components.utils.ProtoModelsUtils;
+import enchantedtowers.common.utils.proto.common.SpellType;
+import enchantedtowers.common.utils.proto.requests.LeaveAttackRequest;
+import enchantedtowers.common.utils.proto.requests.LeaveSpectatingRequest;
+import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
+import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.SpellRequest.RequestType;
-// responses
+import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
+import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
+import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
-// services
+import enchantedtowers.common.utils.proto.responses.SpellDescriptionResponse;
+import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
-// game-logic
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
-// game-models
+import enchantedtowers.game_models.ProtectionWall;
+import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.Tower;
+import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
+import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
 
 
 
@@ -44,36 +51,23 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      */
     @Override
     public void tryAttackTowerById(TowerIdRequest request, StreamObserver<ActionResultResponse> responseObserver) {
-        int playerId = request.getPlayerData().getPlayerId();
-        int towerId = request.getTowerId();
-
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+        {
+            int playerId = request.getPlayerData().getPlayerId();
+            int towerId = request.getTowerId();
+            logger.info("tryAttackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
+        }
 
-        // TODO: check that tower is not under protection wall installation
-        // TODO: mark tower as being attacked
+        Optional<ServerError> serverError = validateAttackingTowerById(request);
 
-        logger.info("tryAttackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
-
-        if (!isAttacking && !isSpectating) {
+        if (serverError.isEmpty()) {
             // establishment of attack session is allowed
             responseBuilder.setSuccess(true);
         }
-        else if (isAttacking) {
-            // if player is already in attack session
-            logger.info("Player with id " + playerId + " is already in attack session");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player with id " + playerId + " is already in attack session");
-        }
         else {
-            // if player is already spectating
-            logger.info("Player with id " + playerId + " is already spectating someone's attack session");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player with id " + playerId + " is already spectating someone's attack session");
+            logger.info("Attack session cannot be created, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         responseObserver.onNext(responseBuilder.build());
@@ -85,21 +79,36 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      */
     @Override
     public void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
-        int playerId = request.getPlayerData().getPlayerId();
-        int towerId = request.getTowerId();
+        // TODO: add lock inside Tower that locks any modifications of the tower:
+        // TODO: tower.lock(); [do work]; tower.unlock(); use: try { tower.lock(); ...  } finally { tower.unlock(); };
 
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+        {
+            int playerId = request.getPlayerData().getPlayerId();
+            int towerId = request.getTowerId();
+            logger.info("attackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
+        }
 
-        logger.info("attackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
+        Optional<ServerError> serverError = validateAttackingTowerById(request);
 
-        if (!isAttacking && !isSpectating) {
+        if (serverError.isEmpty()) {
+            int playerId = request.getPlayerData().getPlayerId();
+            int towerId = request.getTowerId();
+
+            // mark tower as being under attack and retrieve enchanted protection wall
+            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+            // mark tower as being under attack
+            tower.setUnderAttack(true);
+
+            // retrieve any enchanted protection wall
+            ProtectionWall wall = tower.getEnchantedProtectionWall();
+
             // creating new attack session associated with player and registering onSessionExpiredCallback
             logger.info("Creating attack session for player with id " + playerId);
+
             AttackSession session = sessionManager.createAttackSession(
-                    playerId, towerId, streamObserver, onSessionExpiredCallback);
+                    playerId, towerId, wall.getId(), streamObserver, onSessionExpiredCallback);
 
             final int sessionId = session.getId();
 
@@ -109,6 +118,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> {
                 logger.info("Attacker with id " + playerId + " cancelled stream. Destroying the corresponding attack session...");
+
+                // mark tower to not be under attack
+                tower.setUnderAttack(false);
 
                 // disconnecting spectators
                 for (var spectator : session.getSpectators()) {
@@ -127,23 +139,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             streamObserver.onNext(responseBuilder.build());
         }
-        else if (isAttacking) {
-            // if player is already in attack session
-            logger.info("Player with id " + playerId + " is already in attack session");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player with id " + playerId + " is already in attack session");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-        }
         else {
-            // if player is already spectating
-            logger.info("Player with id " + playerId + " is already spectating someone's attack session");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player with id " + playerId + " is already spectating someone's attack session");
+            logger.info("Attack session cannot be created, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
 
+            // send error
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
         }
@@ -752,6 +752,106 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     // helper methods
+
+    /**
+     * <p>Validates that player can start attack session of the tower.</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Tower exists</li>
+     *     <li>Player is not an owner of the tower</li>
+     *     <li>Tower is protected by at least one protection wall</li>
+     *     <li>Player is not attacking another tower</li>
+     *     <li>Player is not in the spectating mode</li>
+     *     <li>Tower is not under capture lock</li>
+     *     <li>Tower is not under protection wall modification</li>
+     * </ol>
+     */
+    private Optional<ServerError> validateAttackingTowerById(TowerIdRequest request) {
+        int playerId = request.getPlayerData().getPlayerId();
+        int towerId = request.getTowerId();
+
+        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+
+        boolean isPlayerAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+
+        boolean isPlayerSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+
+        boolean towerExists = towerOpt.isPresent();
+
+        boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() && towerOpt.get().getOwnerId().get() == playerId;
+
+        boolean isTowerProtected = towerExists && towerOpt.get().isProtected();
+
+        boolean isTowerUnderCaptureLock = towerExists && towerOpt.get().isUnderCaptureLock();
+
+        boolean isTowerUnderProtectionWallsInstallation = towerExists && towerOpt.get().isUnderProtectionWallsInstallation();
+
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (isPlayerAttacking) {
+            errorOccurred = true;
+            // if player is already in attack session
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is already in attack session");
+        }
+        else if (isPlayerSpectating) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + playerId + " is already spectating someone's attack session");
+        }
+        if (!towerExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.TOWER_NOT_FOUND,
+                    "Tower with id " + towerId + " not found");
+        }
+        else if (isPlayerOwner) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + request.getPlayerData().getPlayerId() +
+                            " is an owner of tower with id " + towerId);
+        }
+        else if (!isTowerProtected) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " has no enchanted protection walls");
+        }
+        else if (isTowerUnderCaptureLock) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is under capture lock");
+        }
+        else if (isTowerUnderProtectionWallsInstallation) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is under protection wall installation");
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+
+    /**
+     * <p>The callback is intended to be fired once the session expires.</p>
+     * <p><b>The callback does all the following actions:</b></p>
+     * <ol>
+     *     <li>Marks the tower as not being under attack any more</li>
+     *     <li>Disconnects all spectators</li>
+     *     <li>Sends response with session expired state to the attacker and disconnects him</li>
+     * </ol>
+     */
     private void onSessionExpired(int sessionId) {
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
         // TODO: better to ignore callback rather than throw
@@ -759,6 +859,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
         }
         AttackSession session = sessionOpt.get();
+
+        Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
+        // mark tower to not be under attack
+        tower.setUnderAttack(false);
 
         // TODO: appears in attackTowerById, move to separate method?
         // closing connection with spectators

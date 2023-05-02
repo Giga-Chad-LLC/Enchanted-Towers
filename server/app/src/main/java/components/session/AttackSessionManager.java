@@ -13,6 +13,7 @@ public class AttackSessionManager {
 
    public AttackSession createAttackSession(int playerId,
                                   int towerId,
+                                  int protectionWallId,
                                   StreamObserver<SessionInfoResponse> attackerResponseObserver,
                                   IntConsumer onSessionExpiredCallback) {
       synchronized (sessions) {
@@ -22,7 +23,7 @@ public class AttackSessionManager {
 
          int sessionId = CURRENT_SESSION_ID++;
 
-         AttackSession session = new AttackSession(sessionId, playerId, towerId, attackerResponseObserver, onSessionExpiredCallback);
+         AttackSession session = new AttackSession(sessionId, playerId, towerId, protectionWallId, attackerResponseObserver, onSessionExpiredCallback);
          sessions.get(towerId).add(session);
 
          return session;
