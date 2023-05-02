@@ -39,26 +39,15 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     private final ProtectionWallSessionManager sessionManager = new ProtectionWallSessionManager();
     private final Map<Integer, Timeout> timeouts = new HashMap<>();
 
-    // TODO: add isBeingAttacked inside Tower and check that tower is not being attacked in tryEnterProtectionWallCreateionSession
+    // TODO: check distance between player and tower
 
+    /**
+     * <p>Starts timeout before the trigger of which creation of new protection walls is allowed, and tower is set to be under capture lock during which no players are allowed to attack the tower.</p>
+     * <p>Once the timeout triggers capture lock is removed and tower can be attacked, and protection walls can be installed only once in {@link ProtectionWallSetupService#SESSION_CREATION_COOLDOWN_MS} time period.</p>
+     */
     @Override
     public void captureTower(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
-        /**
-         * Запустить таймер, связанный с playerId, который будет определять, что сессию формирования стены можно создать.
-         * Пока данный таймер не закончился, сессию можно создавать.
-         * Если таймер закончился, то нужно сделать состояние башни "доступна для захвата для других игроков" +
-         * нельзя больше давать игроку возможность устанавливать заклинания на стену (сутки);
-         * сделать это через timestamp в базе данных.
-
-         tower = towerRegistry.getTowerById(id);
-         tower.ownerId = playerId;
-         tower.setModificationTimestamp(-1);
-         timer.setup(30min, () -> {
-            tower.updateModificationTimestamp(now);
-         });
-         */
         // TODO: add lock on the whole captureTower method
-
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         int towerId = request.getTowerId();
@@ -403,7 +392,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      *     <li>Player is an owner of the tower</li>
      *     <li>Tower is not being attacked</li>
      *     <li>Protection wall with provided id exists inside tower</li>
-     *     <li>Protection wall is not already enchanted (must destroy enchantment before creating new one)</li>
+     *     <li>Protection wall is not enchanted (player must destroy enchantment before creating new one)</li>
      *     <li><b>One of the following is true:</b></li>
      *     <ol>
      *         <li>Tower is under capture lock</li>
