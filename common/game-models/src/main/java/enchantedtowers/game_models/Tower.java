@@ -15,6 +15,8 @@ public class Tower {
     private boolean isUnderProtectionWallsInstallation;
     // defines whether the tower has been captured recently and whether owner can install enchantments on unprotected walls
     private boolean isUnderCaptureLock;
+    private boolean isUnderAttack;
+
 
     // lock variable is used to synchronization
     private final Object lock;
@@ -32,6 +34,7 @@ public class Tower {
         lastProtectionWallModificationTimestamp = Optional.empty();
         isUnderProtectionWallsInstallation = false;
         isUnderCaptureLock = false;
+        isUnderAttack = false;
         lock = new Object();
     }
 
@@ -139,6 +142,18 @@ public class Tower {
         synchronized (lock) {
             isUnderCaptureLock = underCaptureLock;
 
+        }
+    }
+
+    public boolean isUnderAttack() {
+        synchronized (lock) {
+            return isUnderAttack;
+        }
+    }
+
+    public void setUnderAttack(boolean underAttack) {
+        synchronized (lock) {
+            isUnderAttack = underAttack;
         }
     }
 }

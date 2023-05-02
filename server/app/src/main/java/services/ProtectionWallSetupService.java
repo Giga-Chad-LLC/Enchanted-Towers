@@ -401,6 +401,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      * <ol>
      *     <li>Tower with provided id exists</li>
      *     <li>Player is an owner of the tower</li>
+     *     <li>Tower is not being attacked</li>
      *     <li>Protection wall with provided id exists inside tower</li>
      *     <li>Protection wall is not already enchanted (must destroy enchantment before creating new one)</li>
      *     <li><b>One of the following is true:</b></li>
@@ -419,6 +420,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
         boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() &&
                 towerOpt.get().getOwnerId().get() == request.getPlayerData().getPlayerId();
+
+        boolean isTowerUnderAttack = towerExists && towerOpt.get().isUnderAttack();
 
         boolean isTowerUnderCaptureLock = towerExists && towerOpt.get().isUnderCaptureLock();
 
@@ -450,6 +453,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Player with id " + request.getPlayerData().getPlayerId() +
                             " is not an owner of tower with id " + towerId);
+        }
+        else if (isTowerUnderAttack) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is being attacked");
         }
         else if (!protectionWallExists) {
             errorOccurred = true;
