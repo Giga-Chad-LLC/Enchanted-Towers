@@ -1,14 +1,19 @@
 package enchantedtowers.client.interactors.canvas;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -353,11 +358,14 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
         // make async call here
         asyncStub.enterProtectionWallCreationSession(requestBuilder.build(), new StreamObserver<>() {
+
+
             @Override
             public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
                     // TODO: leave protect session
                     logger.warning("enterProtectionWallCreationSession::onNext: error='" + response.getError().getMessage() + "'");
+                    AndroidUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
                 }
                 else {
                     logger.info("enterProtectionWallCreationSession::onNext: type=" + response.getType());
@@ -389,9 +397,17 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
             public void onCompleted() {
                 // TODO: leave attack session
                 logger.warning("onCompleted: finished");
+
+                AndroidUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        AttackTowerMenuActivity.class,
+                        "Protection wall was set successfully!"
+                );
             }
         });
     }
+
+
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
         path.moveTo(x, y);

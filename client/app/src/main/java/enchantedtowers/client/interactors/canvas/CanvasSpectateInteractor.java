@@ -1,6 +1,7 @@
 package enchantedtowers.client.interactors.canvas;
 
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -17,6 +18,7 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.AndroidUtils;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
@@ -87,8 +89,12 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         canvasWidget.postInvalidate();
                     }
                     else {
-                        // TODO: figure out if required to call redirectToBaseActivity() here
-                        // redirectToBaseActivity(Optional.of(response.getError().getMessage()));
+                        // TODO: figure out if required to redirect to base activity here
+                        /*AndroidUtils.redirectToActivityAndPopHistory(
+                                (Activity) canvasWidget.getContext(),
+                                AttackTowerMenuActivity.class,
+                                response.getError().getMessage()
+                        );*/
                     }
                     return;
                 }
@@ -122,13 +128,21 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 logger.warning("spectateTowerBySessionId::onError: " + t.getMessage());
                 // TODO: figure out how to prevent double redirect (when clicked "back" button we redirect,
                 //  but also server generates onError event, so double redirecting occurs, which we don't want
-                // redirectToBaseActivity(Optional.ofNullable(t.getMessage()));
+                /*AndroidUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        AttackTowerMenuActivity.class,
+                        t.getMessage()
+                );*/
             }
 
             @Override
             public void onCompleted() {
                 logger.info("spectateTowerBySessionId::onCompleted");
-                redirectToBaseActivity(Optional.empty());
+                AndroidUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        AttackTowerMenuActivity.class,
+                        null
+                );
             }
         });
     }
@@ -197,22 +211,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Goes back in activity history and removes all activities that do not match the {@code AttackTowerMenuActivity} class.
-     */
-    private void redirectToBaseActivity(Optional<String> message) {
-        Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        if (message.isPresent()) {
-            intent.putExtra("showToastOnStart", true);
-            intent.putExtra("toastMessage", message.get());
-        }
-
-        logger.info("redirectToBaseActivity(): from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
-        canvasWidget.getContext().startActivity(intent);
     }
 
     private void onCurrentCanvasStateReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {

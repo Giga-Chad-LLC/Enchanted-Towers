@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.AndroidUtils;
 import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -18,6 +19,7 @@ import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_models.utils.Utils;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
@@ -111,16 +113,12 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         System.out.println("AttackTowerMenuActivity onStart extras: " + extras);
 
         if (extras != null && extras.getBoolean("showToastOnStart", false)) {
-            showToastOnUIThread(extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
+            AndroidUtils.showToastOnUIThread(this, extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
         }
 
         super.onStart();
     }
 
-
-    private void showToastOnUIThread(String message, int type) {
-        this.runOnUiThread(() -> Toast.makeText(this, message, type).show());
-    }
 
     @Override
     protected void onDestroy() {
@@ -152,7 +150,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                     serverErrorReceived = true;
                     String message = "attackTowerById::Received error: " + response.getError().getMessage();
                     System.err.println(message);
-                    showToastOnUIThread(message, Toast.LENGTH_LONG);
+                    AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, message, Toast.LENGTH_LONG);
                 }
                 else {
                     // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
@@ -166,7 +164,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             public void onError(Throwable t) {
                 // Handle the error
                 System.err.println("attackTowerById::Error: " + t.getMessage());
-                showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
+                AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT);
             }
 
             @Override
@@ -204,7 +202,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                     serverErrorReceived = true;
                     String message = "trySpectateTowerById::Received error: " + response.getError().getMessage();
                     System.err.println(message);
-                    showToastOnUIThread(message, Toast.LENGTH_LONG);
+                    AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, message, Toast.LENGTH_LONG);
                 }
                 else {
                     int sessionId = response.getSessionId();
@@ -219,7 +217,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
             public void onError(Throwable t) {
                 // Handle the error
                 System.err.println("trySpectateTowerById::Error: " + t.getMessage());
-                showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
+                AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT);
             }
 
             @Override
@@ -254,14 +252,14 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                         if (response.hasError()) {
                             String message = "captureTowerById::Received error: " + response.getError().getMessage();
                             System.err.println(message);
-                            showToastOnUIThread(message, Toast.LENGTH_LONG);
+                            AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, message, Toast.LENGTH_LONG);
                         }
                         else {
                             System.out.println("captureTowerById::Received response: success=" + response.getSuccess());
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                             ClientStorage.getInstance().setPlayerId(playerId);
                             ClientStorage.getInstance().setTowerId(towerId);
-                            showToastOnUIThread("Captured tower with id " + towerId, Toast.LENGTH_LONG);
+                            AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, "Captured tower with id " + towerId, Toast.LENGTH_LONG);
                         }
                     }
 
@@ -269,7 +267,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                     public void onError(Throwable t) {
                         // Handle the error
                         System.err.println("captureTowerById::Error: " + t.getMessage());
-                        showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
+                        AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT);
                     }
 
                     @Override
@@ -298,7 +296,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                             serverErrorReceived = true;
                             String message = "tryProtectTowerById::Received error: " + response.getError().getMessage();
                             System.err.println(message);
-                            showToastOnUIThread(message, Toast.LENGTH_LONG);
+                            AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, message, Toast.LENGTH_LONG);
                         }
                         else {
                             // TODO: remove sessionId, it will be retrieved later in corresponding interactor
@@ -308,7 +306,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                             ClientStorage.getInstance().setTowerId(towerId);
                             ClientStorage.getInstance().setProtectionWallId(wallId);
 
-                            showToastOnUIThread("Can setup protection wall", Toast.LENGTH_LONG);
+                            AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, "Can setup protection wall", Toast.LENGTH_LONG);
                         }
                     }
 
@@ -316,7 +314,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                     public void onError(Throwable t) {
                         // Handle the error
                         System.err.println("tryProtectTowerById::Error: " + t.getMessage());
-                        showToastOnUIThread(t.getMessage(), Toast.LENGTH_SHORT);
+                        AndroidUtils.showToastOnUIThread(AttackTowerMenuActivity.this, t.getMessage(), Toast.LENGTH_SHORT);
                     }
 
                     @Override
