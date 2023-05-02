@@ -1,9 +1,6 @@
 package services;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
@@ -22,6 +19,7 @@ import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
+import enchantedtowers.game_logic.EnchantmentMatchingAlgorithm;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
@@ -190,6 +188,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
     }
+
+    // TODO: move validation of selectSpellType, drawSpell, finishSpell, clearCanvas, and compareDrawnSpells into separate method
 
     /**
      * Sets new spell type in {@link AttackSession} instance and sends the updated type of current spell to all spectators.
@@ -530,10 +530,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
             ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
 
-            List<TemplateDescription> wallEnchantmentSpells = wall.getEnchantment().get().getSpells();
-            List<TemplateDescription> drawnSpells = session.getDrawnSpellsDescriptions();
-
             // TODO: call compareEnchantments(wallEnchantmentSpells, drawnSpells);
+            Enchantment guess = new Enchantment(session.getDrawnSpellsDescriptions());
+            Enchantment actual = wall.getEnchantment().get();
+
+            logger.info("Call MatchStatsWithHausdorffMetric");
+
+            Map<SpellType, Double> matches = EnchantmentMatchingAlgorithm.getEnchantmentMatchStatsWithHausdorffMetric(guess, actual);
+
+            logger.info("Got matches: " + matches);
         }
         else if (!isRequestValid) {
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
