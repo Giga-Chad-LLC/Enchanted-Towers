@@ -749,6 +749,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * <ol>
      *     <li>Tower exists</li>
      *     <li>Player is not an owner of the tower</li>
+     *     <li>Tower is protected by at least one protection wall</li>
      *     <li>Player is not attacking another tower</li>
      *     <li>Player is not in the spectating mode</li>
      *     <li>Tower is not under capture lock</li>
@@ -768,6 +769,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         boolean towerExists = towerOpt.isPresent();
 
         boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() && towerOpt.get().getOwnerId().get() == playerId;
+
+        boolean isTowerProtected = towerExists && towerOpt.get().isProtected();
 
         boolean isTowerUnderCaptureLock = towerExists && towerOpt.get().isUnderCaptureLock();
 
@@ -801,6 +804,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Player with id " + request.getPlayerData().getPlayerId() +
                             " is an owner of tower with id " + towerId);
+        }
+        else if (!isTowerProtected) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " has no enchanted protection wall");
         }
         else if (isTowerUnderCaptureLock) {
             errorOccurred = true;
