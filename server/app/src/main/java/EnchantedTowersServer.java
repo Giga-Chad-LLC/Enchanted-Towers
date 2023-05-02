@@ -2,7 +2,6 @@ import components.fs.FileReader;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.SpellTemplate;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
@@ -69,7 +68,7 @@ public class EnchantedTowersServer {
     private static void loadSpellTemplatesFromFile(URL resourceUrl) {
         if (!SpellBook.isInstantiated()) {
             try {
-                List<SpellTemplate> data = EnchantmetTemplatesProvider.parseJson(
+                List<EnchantmetTemplatesProvider.SpellTemplateData> data = EnchantmetTemplatesProvider.parseJson(
                     FileReader.readRawFile(resourceUrl)
                 );
                 SpellBook.instantiate(data);

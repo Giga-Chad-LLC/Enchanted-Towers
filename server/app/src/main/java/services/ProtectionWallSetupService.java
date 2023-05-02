@@ -13,7 +13,7 @@ import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
-import enchantedtowers.game_logic.TemplateDescription;
+import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Tower;
@@ -229,7 +229,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                     spellPoints,
                     offset,
-                    request.getSpell().getColorId()
+                    request.getSpell().getSpellType()
             );
 
             // add match spell into canvas state
@@ -243,7 +243,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 {
                     responseBuilder.getSpellDescriptionBuilder()
                             .setSpellTemplateId(template.id())
-                            .setColorId(template.colorId());
+                            .setSpellType(template.spellType());
 
                     responseBuilder.getSpellDescriptionBuilder()
                             .getSpellTemplateOffsetBuilder()

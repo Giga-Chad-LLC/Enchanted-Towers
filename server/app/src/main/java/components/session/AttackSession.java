@@ -1,9 +1,10 @@
 package components.session;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.CanvasState;
-import enchantedtowers.game_logic.TemplateDescription;
+import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_logic.SpellDrawingDescription;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
@@ -121,10 +122,10 @@ public class AttackSession {
         }
     }
 
-    public int getCurrentSpellColorId() {
+    public SpellType getCurrentSpellType() {
         synchronized (lock) {
             // asserting that this method will not be used before the value assigned to the field
-            return currentSpellDescription.getColorId();
+            return currentSpellDescription.getSpellType();
         }
     }
 
@@ -141,9 +142,9 @@ public class AttackSession {
         }
     }
 
-    public void setCurrentSpellColorId(int currentSpellColorId) {
+    public void setCurrentSpellType(SpellType currentSpellType) {
         synchronized (lock) {
-            currentSpellDescription.setColorId(currentSpellColorId);
+            currentSpellDescription.setSpellType(currentSpellType);
         }
     }
 

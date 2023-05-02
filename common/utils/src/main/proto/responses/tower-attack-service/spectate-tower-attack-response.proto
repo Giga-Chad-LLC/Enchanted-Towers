@@ -7,6 +7,7 @@ package response_models;
 
 // common
 import "common/vector2.proto";
+import "common/spell-type.proto";
 // responses
 import "responses/common/spell-description-response.proto";
 import "responses/common/server-error.proto";
@@ -14,13 +15,13 @@ import "responses/common/current-canvas-state-response.proto";
 
 
 message SpectateTowerAttackResponse {
-  message SelectSpellColor {
-    int32 colorId = 1;
-  }
+//  message SelectSpellType {
+//    common.SpellType spellType = 1;
+//  }
 
   enum ResponseType {
     CURRENT_CANVAS_STATE = 0;
-    SELECT_SPELL_COLOR = 1;
+    SELECT_SPELL_TYPE = 1;
     DRAW_SPELL = 2;
     FINISH_SPELL = 3;
     CLEAR_CANVAS = 4; // does not require any additional data in response (serves as marker to clean canvas)
@@ -32,9 +33,9 @@ message SpectateTowerAttackResponse {
   // CURRENT_CANVAS_STATE
   response_models.CurrentCanvasStateResponse canvasState = 3;
   // SELECT_SPELL_COLOR
-  SelectSpellColor spellColor = 4;
+  common.SpellType spellType = 4;
   // DRAW_SPELL
   common.Vector2 spellPoint = 5;
   // FINISH_SPELL
-   response_models.SpellDescriptionResponse spellDescription = 6;
+  response_models.SpellDescriptionResponse spellDescription = 6;
 };

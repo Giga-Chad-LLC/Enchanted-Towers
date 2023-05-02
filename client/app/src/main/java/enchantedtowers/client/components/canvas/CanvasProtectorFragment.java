@@ -11,15 +11,18 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.util.Arrays;
+import java.util.List;
 
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.canvas.CanvasAttackInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasProtectionInteractor;
+import enchantedtowers.common.utils.proto.common.SpellType;
 
 public class CanvasProtectorFragment extends CanvasFragment {
     private int currentCanvasBrushColor = 0;
-    private final int[] brushColors = {Color.RED, Color.BLUE, Color.GREEN, Color.MAGENTA};
+    private final List<SpellType> spellTypes = ClientUtils.getSpellTypesList();
 
     public static CanvasFragment newInstance() {
         return new CanvasProtectorFragment();
@@ -40,12 +43,12 @@ public class CanvasProtectorFragment extends CanvasFragment {
 
     private void nextColor() {
         currentCanvasBrushColor++;
-        if (currentCanvasBrushColor >= brushColors.length) {
+        if (currentCanvasBrushColor >= spellTypes.size()) {
             currentCanvasBrushColor = 0;
         }
 
         if (canvasWidget != null) {
-            canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
+            canvasWidget.setSpellType(spellTypes.get(currentCanvasBrushColor));
         }
     }
 
@@ -67,7 +70,7 @@ public class CanvasProtectorFragment extends CanvasFragment {
                 new CanvasDrawStateInteractor(),
                 new CanvasProtectionInteractor(canvasWidget.getState(), canvasWidget)
         ));
-        canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
+        canvasWidget.setSpellType(spellTypes.get(currentCanvasBrushColor));
 
         if (rootView.findViewById(R.id.changeColorButton) != null) {
             registerOnClickActionOnView(rootView, R.id.changeColorButton, this::nextColor);

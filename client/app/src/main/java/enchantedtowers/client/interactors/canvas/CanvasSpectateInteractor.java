@@ -2,14 +2,10 @@ package enchantedtowers.client.interactors.canvas;
 
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import com.google.android.gms.common.api.Api;
-
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -18,7 +14,7 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.client.components.utils.AndroidUtils;
+import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
@@ -29,7 +25,6 @@ import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
-import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
@@ -43,7 +38,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
-    private final CanvasWidget canvasWidget;
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
 
     // TODO: watch for the race conditions in this class
@@ -52,7 +46,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     public CanvasSpectateInteractor(CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
         this.brush = state.getBrushCopy();
-        this.canvasWidget = canvasWidget;
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
@@ -104,9 +97,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         logger.info("Received CURRENT_CANVAS_STATE");
                         onCurrentCanvasStateReceived(response, state, canvasWidget);
                     }
-                    case SELECT_SPELL_COLOR -> {
-                        logger.info("Received SELECT_SPELL_COLOR");
-                        onSelectSpellColorReceived(response);
+                    case SELECT_SPELL_TYPE -> {
+                        logger.info("Received SELECT_SPELL_TYPE");
+                        onSelectSpellTypeReceived(response);
                     }
                     case DRAW_SPELL -> {
                         logger.info("Received DRAW_SPELL");
@@ -138,7 +131,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             @Override
             public void onCompleted() {
                 logger.info("spectateTowerBySessionId::onCompleted");
-                AndroidUtils.redirectToActivityAndPopHistory(
+                ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
                         AttackTowerMenuActivity.class,
                         null
@@ -226,7 +219,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             var currentSpellState = canvasHistory.getCurrentSpellState();
             // extract data
 
-            var currentSpellColor = currentSpellState.getColorId();
+            var currentSpellType = currentSpellState.getSpellType();
             var currentSpellPoints = currentSpellState.getPointsList();
 
             Path newSpellPath = new Path();
@@ -239,7 +232,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
             // TODO: add mutex (in order to prevent data race with onDraw method)
             // set class members values
-            brush.setColor(currentSpellColor);
+            brush.setColor(
+                ClientUtils.getColorIdBySpellType(currentSpellType)
+            );
             currentPath.set(newSpellPath);
         }
 
@@ -247,29 +242,37 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // add already drawn spells
         var spellDescriptions = canvasHistory.getSpellDescriptionsList();
         for (var description : spellDescriptions) {
-            int templateColor = description.getColorId();
+            var templateType = description.getSpellType();
             Vector2 templateOffset = new Vector2(
                     description.getSpellTemplateOffset().getX(),
                     description.getSpellTemplateOffset().getY()
             );
             Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
-            templateSpell.setOffset(templateOffset);
 
-            state.addItem(new CanvasSpellDecorator(
-                    templateColor,
-                    templateSpell
-            ));
+            if (templateSpell != null) {
+                templateSpell.setOffset(templateOffset);
+
+                state.addItem(new CanvasSpellDecorator(
+                        templateType,
+                        templateSpell
+                ));
+            }
+            else {
+                logger.warning("onCurrentCanvasStateReceived(): template spell not found, matched spell id is " + description.getSpellTemplateId());
+            }
         }
 
         // trigger the rendering
         canvasWidget.postInvalidate();
     }
 
-    private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
+    private void onSelectSpellTypeReceived(SpectateTowerAttackResponse value) {
         // TODO: add mutex (in order to prevent data race with onDraw method)
         currentPath.reset();
-        brush.setColor(value.getSpellColor().getColorId());
-        logger.info("onSelectSpellColorReceived: newSpellColor=" + brush.getColor());
+        brush.setColor(
+            ClientUtils.getColorIdBySpellType(value.getSpellType())
+        );
+        logger.info("onSelectSpellTypeReceived: newSpellType=" + value.getSpellType() + ", newSpellColor=" + brush.getColor());
     }
 
     private void onDrawSpellReceived(SpectateTowerAttackResponse value, CanvasWidget canvasWidget) {
@@ -293,7 +296,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
         var description = value.getSpellDescription();
         var templateOffset = description.getSpellTemplateOffset();
-        int templateColor = description.getColorId();
+        var templateType = description.getSpellType();
         Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
         templateSpell.setOffset(new Vector2(
                 templateOffset.getX(),
@@ -301,7 +304,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         ));
 
         state.addItem(new CanvasSpellDecorator(
-                templateColor,
+                templateType,
                 templateSpell
         ));
 

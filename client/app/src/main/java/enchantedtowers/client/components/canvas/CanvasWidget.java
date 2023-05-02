@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import enchantedtowers.client.interactors.canvas.CanvasInteractor;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 
@@ -105,11 +106,7 @@ public class CanvasWidget extends View {
         }
     }
 
-    public void setBrushColor(int newColor) {
-        state.setBrushColor(newColor);
-    }
-
-    public void setBrushColor(Color newColor) {
-        state.setBrushColor(newColor.toArgb());
+    public void setSpellType(SpellType newSpellType) {
+        state.setSpellType(newSpellType);
     }
 }

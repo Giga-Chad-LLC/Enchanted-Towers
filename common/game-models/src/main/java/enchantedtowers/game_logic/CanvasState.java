@@ -1,5 +1,6 @@
 package enchantedtowers.game_logic;
 
+import enchantedtowers.game_models.TemplateDescription;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

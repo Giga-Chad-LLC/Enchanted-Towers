@@ -6,8 +6,8 @@ option java_multiple_files = true;
 package request_models;
 
 // common
-import "common/player-data.proto";
+import "common/spell-type.proto";
 
-message SelectSpellColorRequest {
-  int32 colorId = 2;
+message SelectSpellTypeRequest {
+  common.SpellType spellType = 1;
 };

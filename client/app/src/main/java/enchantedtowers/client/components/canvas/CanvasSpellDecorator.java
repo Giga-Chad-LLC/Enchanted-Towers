@@ -6,17 +6,19 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class CanvasSpellDecorator implements CanvasDrawable {
     private final Path path;
-    private final int color;
+    private final SpellType spellType;
     private final Spell spell;
 
-    public CanvasSpellDecorator(int color, Spell spell) {
+    public CanvasSpellDecorator(SpellType spellType, Spell spell) {
         this.path = getPathBySpell(spell);
-        this.color = color;
+        this.spellType = spellType;
         this.spell = spell;
     }
 
@@ -52,13 +54,8 @@ public class CanvasSpellDecorator implements CanvasDrawable {
     @Override
     public void draw(Canvas canvas, Paint brush) {
         int previousColor = brush.getColor();
-        brush.setColor(color);
+        brush.setColor(ClientUtils.getColorIdBySpellType(spellType));
         canvas.drawPath(path, brush);
         brush.setColor(previousColor);
-    }
-
-    @Override
-    public int getColor() {
-        return color;
     }
 }

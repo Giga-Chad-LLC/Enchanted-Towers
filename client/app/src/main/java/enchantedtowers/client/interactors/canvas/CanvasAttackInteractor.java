@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
 import android.view.MotionEvent;
 
 import java.util.concurrent.BlockingQueue;
@@ -18,7 +17,8 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.client.components.utils.AndroidUtils;
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -58,10 +58,10 @@ class AttackEventWorker extends Thread {
             return request;
         }
 
-        public static Event createEventWithSpellColorRequest(int colorId) {
+        public static Event createEventWithSpellTypeRequest(SpellType spellType) {
             SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
             // set request type
-            requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_COLOR);
+            requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_TYPE);
 
             var storage = ClientStorage.getInstance();
             assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
@@ -74,12 +74,12 @@ class AttackEventWorker extends Thread {
                     .setPlayerId(storage.getPlayerId().get())
                     .build();
 
-            // creating spell color request
-            var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
-            spellColorRequestBuilder.setColorId(colorId);
+            // creating spell type request
+            var spellTypeRequestBuilder = requestBuilder.getSpellTypeBuilder();
+            spellTypeRequestBuilder.setSpellType(spellType);
 
-            // building spell color request
-            spellColorRequestBuilder.build();
+            // building spell type request
+            spellTypeRequestBuilder.build();
 
             return new Event(requestBuilder.build());
         }
@@ -179,13 +179,13 @@ class AttackEventWorker extends Thread {
                 if (event != null) {
                     logger.info("Sending request of type: " + event.requestType().toString());
                     switch (event.requestType()) {
-                        case SELECT_SPELL_COLOR -> {
+                        case SELECT_SPELL_TYPE -> {
                             ActionResultResponse response = blockingStub
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                                    .selectSpellColor(event.getRequest());
+                                    .selectSpellType(event.getRequest());
 
                             logger.info(
-                                    "Got response from selectSpellColor: success=" + response.getSuccess() +
+                                    "Got response from selectSpellType: success=" + response.getSuccess() +
                                         "\nmessage='" + response.getError().getMessage() + "'");
 
                         }
@@ -210,13 +210,13 @@ class AttackEventWorker extends Thread {
                             else {
                                 var description = response.getSpellDescription();
                                 var offset = description.getSpellTemplateOffset();
-                                var colorId = description.getColorId();
+                                var templateType = description.getSpellType();
                                 var templateId = description.getSpellTemplateId();
 
                                 logger.info(
                                         "Got response from finishSpell: matchedSpellTemplateId='" + templateId + "'\n" +
                                                 "matchedTemplateOffset='[" + offset.getX() + ", " + offset.getY() + "]'\n" +
-                                                "matchedTemplateColor='" + colorId + "'");
+                                                "matchedTemplateType='" + templateType + "'");
 
 
                                 // substitute current spell with template
@@ -225,7 +225,7 @@ class AttackEventWorker extends Thread {
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
                                     CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                            colorId,
+                                            templateType,
                                             template
                                     );
 
@@ -401,8 +401,8 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         // update color only when started the new shape
         brush.setColor(state.getBrushColor());
 
-        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithSpellColorRequest(brush.getColor()))) {
-            logger.warning("'Change color' event lost");
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithSpellTypeRequest(state.getSelectedSpellType()))) {
+            logger.warning("'Change spell type' event lost");
         }
 
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
@@ -431,7 +431,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             logger.warning("'Line to' event lost");
         }
 
-        Vector2 pathOffset = AndroidUtils.getPathOffset(path);
+        Vector2 pathOffset = ClientUtils.getPathOffset(path);
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithFinishSpellRequest(pathOffset))) {
             logger.warning("'Offset' event lost");
         }

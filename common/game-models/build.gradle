@@ -18,7 +18,11 @@ tasks.jar.enabled = true
 def jtsVersion = '1.19.0'
 
 dependencies {
+    implementation('enchantedtowers.product.common:utils')
+
     // jts (2d geometry)
     implementation(group: "org.locationtech.jts", name: "jts-core", version: "${jtsVersion}")
+
+    // json
     implementation 'org.json:json:20220320'
 }

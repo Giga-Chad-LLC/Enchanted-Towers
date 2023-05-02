@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class SpellBook {
@@ -16,7 +17,7 @@ public class SpellBook {
         return isInstantiated;
     }
 
-    static public void instantiate(List<SpellTemplate> data) throws RuntimeException {
+    static public void instantiate(List<EnchantmetTemplatesProvider.SpellTemplateData> data) throws RuntimeException {
         if (isInstantiated) {
             throw new RuntimeException("EnchantmentBook singleton is already instantiated");
         }

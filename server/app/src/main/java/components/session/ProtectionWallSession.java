@@ -2,10 +2,9 @@ package components.session;
 
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.game_logic.CanvasState;
-import enchantedtowers.game_logic.TemplateDescription;
+import enchantedtowers.game_models.TemplateDescription;
 import io.grpc.stub.StreamObserver;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.IntConsumer;
 

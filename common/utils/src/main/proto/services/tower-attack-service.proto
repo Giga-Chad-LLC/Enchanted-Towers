@@ -27,7 +27,7 @@ service TowerAttackService {
   rpc LeaveAttack(request_models.LeaveAttackRequest) returns (response_models.ActionResultResponse) {}
 
   // drawing related methods
-  rpc SelectSpellColor(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
+  rpc SelectSpellType(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc DrawSpell(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}
   rpc FinishSpell(request_models.SpellRequest) returns (response_models.SpellFinishResponse) {}
   rpc ClearCanvas(request_models.SpellRequest) returns (response_models.ActionResultResponse) {}

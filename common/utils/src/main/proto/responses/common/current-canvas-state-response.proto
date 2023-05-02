@@ -7,12 +7,13 @@ package response_models;
 
 // common
 import "common/vector2.proto";
+import "common/spell-type.proto";
 // responses
 import "responses/common/spell-description-response.proto";
 
 message CurrentCanvasStateResponse {
   message CurrentSpellState {
-    int32 colorId = 1;
+    common.SpellType spellType = 1;
     repeated common.Vector2 points = 2;
   }
 

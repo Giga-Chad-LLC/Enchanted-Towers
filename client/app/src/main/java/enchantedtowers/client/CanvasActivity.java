@@ -17,7 +17,6 @@ import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
 import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.SpellTemplate;
 
 public class CanvasActivity extends AppCompatActivity {
     @Override
@@ -27,7 +26,7 @@ public class CanvasActivity extends AppCompatActivity {
 
         if (!SpellBook.isInstantiated()) {
             try {
-                List<SpellTemplate> data = EnchantmetTemplatesProvider.parseJson(
+                List<EnchantmetTemplatesProvider.SpellTemplateData> data = EnchantmetTemplatesProvider.parseJson(
                         AndroidFileReader.readRawFile(getBaseContext(), R.raw.canvas_templates_config)
                 );
                 SpellBook.instantiate(data);

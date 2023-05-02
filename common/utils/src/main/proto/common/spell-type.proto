@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.common";
+option java_multiple_files = true;
+
+package common;
+
+enum SpellType {
+  FIRE_SPELL = 0;
+  WATER_SPELL = 1;
+  WIND_SPELL = 2;
+  EARTH_SPELL = 3;
+};

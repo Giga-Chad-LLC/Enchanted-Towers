@@ -1,17 +1,18 @@
 package enchantedtowers.game_logic;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SpellDrawingDescription {
    private List<Vector2> points = new ArrayList<>();
-   private int colorId = 0;
+   private SpellType spellType = SpellType.UNRECOGNIZED;
    private Vector2 offset = null;
 
    public void reset() {
       points.clear();
-      colorId = 0;
+      spellType = SpellType.UNRECOGNIZED;
       offset = null;
    }
 
@@ -27,12 +28,12 @@ public class SpellDrawingDescription {
       points.add(point);
    }
 
-   public void setColorId(int colorId) {
-      this.colorId = colorId;
+   public void setSpellType(SpellType spellType) {
+      this.spellType = spellType;
    }
 
-   public int getColorId() {
-      return colorId;
+   public SpellType getSpellType() {
+      return spellType;
    }
 
    public void setOffset(Vector2 offset) {

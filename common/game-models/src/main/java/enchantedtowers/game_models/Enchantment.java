@@ -1,7 +1,5 @@
 package enchantedtowers.game_models;
 
-import enchantedtowers.game_logic.TemplateDescription;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,4 +13,8 @@ public class Enchantment {
     public Enchantment(List<TemplateDescription> spells) {
         this.spells = spells;
     }
+
+//    public List<TemplateDescription> getSpellsByColorId(int colorId) {
+//
+//    }
 }

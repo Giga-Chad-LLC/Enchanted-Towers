@@ -7,9 +7,10 @@ package response_models;
 
 // responses
 import "common/vector2.proto";
+import "common/spell-type.proto";
 
 message SpellDescriptionResponse {
-  int32 colorId = 1;
+  common.SpellType spellType = 1;
   int32 spellTemplateId = 2;
   common.Vector2 spellTemplateOffset = 3;
 };

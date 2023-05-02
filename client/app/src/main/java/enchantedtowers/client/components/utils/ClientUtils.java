@@ -2,18 +2,17 @@ package enchantedtowers.client.components.utils;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import java.util.List;
 
-import java.util.Optional;
-
-import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;
 
-public class AndroidUtils {
+public class ClientUtils {
     public static Vector2 getPathOffset(Path path) {
         // calculate bounding box for the path
         RectF bounds = new RectF();
@@ -40,5 +39,22 @@ public class AndroidUtils {
 
         System.out.println("redirectToBaseActivity(): from=" + from + ", to=" + to + ", intent=" + intent);
         from.startActivity(intent);
+    }
+
+    /**
+     * Retrieves actual color by SpellType
+     */
+    public static int getColorIdBySpellType(SpellType spellType) {
+        return switch (spellType) {
+            case FIRE_SPELL -> Color.rgb(255, 96, 0);
+            case WATER_SPELL -> Color.rgb(4, 135, 217);
+            case WIND_SPELL -> Color.rgb(102, 140, 43);
+            case EARTH_SPELL -> Color.rgb(64, 37, 14);
+            case UNRECOGNIZED -> Color.BLACK;
+        };
+    }
+
+    public static List<SpellType> getSpellTypesList() {
+        return List.of(SpellType.FIRE_SPELL, SpellType.WATER_SPELL, SpellType.WIND_SPELL, SpellType.EARTH_SPELL);
     }
 }

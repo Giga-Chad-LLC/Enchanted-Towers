@@ -1,15 +1,16 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_models;
 
 import enchantedtowers.game_models.utils.Vector2;
+import enchantedtowers.common.utils.proto.common.SpellType;
 
 public class TemplateDescription {
    private final int id;
-   private final int colorId;
+   SpellType spellType;
    private final Vector2 offset;
 
-   TemplateDescription(int id, int colorId, Vector2 offset) {
+   public TemplateDescription(int id, SpellType spellType, Vector2 offset) {
       this.id = id;
-      this.colorId = colorId;
+      this.spellType = spellType;
       this.offset = offset;
    }
 
@@ -17,8 +18,8 @@ public class TemplateDescription {
       return id;
    }
 
-   public int colorId() {
-      return colorId;
+   public SpellType spellType() {
+      return spellType;
    }
 
    public Vector2 offset() {

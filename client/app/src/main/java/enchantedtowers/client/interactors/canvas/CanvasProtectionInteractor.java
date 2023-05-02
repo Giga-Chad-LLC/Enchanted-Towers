@@ -21,7 +21,8 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.client.components.utils.AndroidUtils;
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -61,7 +62,7 @@ class ProtectionEventWorker extends Thread {
             return request;
         }
 
-        public static Event createEventWithSpellRequest(List<Vector2> points, Vector2 offset, int colorId) {
+        public static Event createEventWithSpellRequest(List<Vector2> points, Vector2 offset, SpellType spellType) {
             ProtectionWallRequest.Builder requestBuilder = ProtectionWallRequest.newBuilder();
             // set request type
             requestBuilder.setRequestType(ProtectionWallRequest.RequestType.ADD_SPELL);
@@ -91,7 +92,7 @@ class ProtectionEventWorker extends Thread {
             requestBuilder.getSpellBuilder()
                     .addAllPoints(protoPoints)
                     .setOffset(protoOffset)
-                    .setColorId(colorId)
+                    .setSpellType(spellType)
                     .build();
 
             return new Event(requestBuilder.build());
@@ -166,13 +167,13 @@ class ProtectionEventWorker extends Thread {
                             else {
                                 var description = response.getSpellDescription();
                                 var offset = description.getSpellTemplateOffset();
-                                var colorId = description.getColorId();
+                                var templateType = description.getSpellType();
                                 var templateId = description.getSpellTemplateId();
 
                                 logger.info(
                                 "Got response from finishSpell: matchedSpellTemplateId='" + templateId + "'\n" +
                                         "matchedTemplateOffset='[" + offset.getX() + ", " + offset.getY() + "]'\n" +
-                                        "matchedTemplateColor='" + colorId + "'"
+                                        "matchedTemplateColor='" + templateType + "'"
                                 );
 
 
@@ -182,7 +183,7 @@ class ProtectionEventWorker extends Thread {
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
                                     CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                            colorId,
+                                            templateType,
                                             template
                                     );
 
@@ -312,7 +313,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
-            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(x, y);
+            case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(state, x, y);
             case MotionEvent.ACTION_MOVE -> onActionMoveContinuePath(x, y);
             default -> false;
         };
@@ -357,7 +358,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
                 if (response.hasError()) {
                     // TODO: leave protect session
                     logger.warning("enterProtectionWallCreationSession::onNext: error='" + response.getError().getMessage() + "'");
-                    AndroidUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
+                    ClientUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
                 }
                 else {
                     logger.info("enterProtectionWallCreationSession::onNext: type=" + response.getType());
@@ -390,7 +391,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
                 // TODO: leave attack session
                 logger.warning("onCompleted: finished");
 
-                AndroidUtils.redirectToActivityAndPopHistory(
+                ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
                         AttackTowerMenuActivity.class,
                         "Protection wall was set successfully!"
@@ -415,11 +416,11 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         return true;
     }
 
-    private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
+    private boolean onActionUpFinishPathAndSubstitute(CanvasState state, float x, float y) {
         path.lineTo(x, y);
         pathPoints.add(new Vector2(x, y));
 
-        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(pathPoints, AndroidUtils.getPathOffset(path), brush.getColor()))) {
+        if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithSpellRequest(pathPoints, ClientUtils.getPathOffset(path), state.getSelectedSpellType()))) {
             logger.warning("'Add spell' event lost");
         }
 

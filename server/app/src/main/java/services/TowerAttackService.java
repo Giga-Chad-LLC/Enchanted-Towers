@@ -2,9 +2,10 @@ package services;
 
 import components.session.AttackSession.Spectator;
 import components.utils.ProtoModelsUtils;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.*;
 import enchantedtowers.common.utils.proto.responses.*;
-import enchantedtowers.game_logic.TemplateDescription;
+import enchantedtowers.game_models.TemplateDescription;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
@@ -196,39 +197,38 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     /**
-     * Sets new spell color in {@link AttackSession} instance and sends the updated color of current spell to all spectators.
+     * Sets new spell type in {@link AttackSession} instance and sends the updated type of current spell to all spectators.
      */
     @Override
-    public void selectSpellColor(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public void selectSpellType(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         final int sessionId = request.getSessionId();
         final int playerId  = request.getPlayerData().getPlayerId();
 
-        boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_COLOR && request.hasSpellColor());
+        boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_TYPE && request.hasSpellType());
         boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
         boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
 
         if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
-            final int colorId = request.getSpellColor().getColorId();
+            final SpellType spellType = request.getSpellType().getSpellType();
 
             // session must exist
             assert(sessionManager.getSessionById(sessionId).isPresent());
             AttackSession session = sessionManager.getSessionById(sessionId).get();
 
             logger.info("Session found: " + session.hashCode());
-            // set current color id
-            session.setCurrentSpellColorId(colorId);
-            logger.info("Setting color id of '" + session.getCurrentSpellColorId() + "'");
+            // set current spell type
+            session.setCurrentSpellType(spellType);
+            logger.info("Setting type of '" + session.getCurrentSpellType() + "'");
 
-            // send current color id to all spectators
+            // send current spell type to all spectators
             for (var spectator : session.getSpectators()) {
-                // create response with type of `SELECT_SPELL_COLOR`
+                // create response with type of `SELECT_SPELL_TYPE`
                 SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
                 spectatorResponseBuilder
-                        .setResponseType(ResponseType.SELECT_SPELL_COLOR)
-                        .getSpellColorBuilder()
-                        .setColorId(session.getCurrentSpellColorId())
+                        .setResponseType(ResponseType.SELECT_SPELL_TYPE)
+                        .setSpellType(session.getCurrentSpellType())
                         .build();
 
                 spectator.streamObserver().onNext(spectatorResponseBuilder.build());
@@ -239,7 +239,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else if (!isRequestValid) {
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                 ServerError.ErrorType.INVALID_REQUEST,
-                "Invalid request: request type must be 'SELECT_SPELL_COLOR' and spell color must be provided");
+                "Invalid request: request type must be 'SELECT_SPELL_TYPE' and spell type must be provided");
         }
         else if (!sessionExists) {
             // session does not exist
@@ -365,7 +365,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                 session.getCurrentSpellPoints(),
                 offset,
-                session.getCurrentSpellColorId()
+                session.getCurrentSpellType()
             );
 
             // no matching template found
@@ -403,7 +403,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
                 // Build template description
                 responseBuilder.getSpellDescriptionBuilder()
-                    .setColorId(session.getCurrentSpellColorId())
+                    .setSpellType(session.getCurrentSpellType())
                     .setSpellTemplateId(templateId)
                     .build();
 
@@ -411,7 +411,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 session.addTemplateToCanvasState(templateDescription);
 
                 // send data to all spectators
-                final int colorId = session.getCurrentSpellColorId();
+                final SpellType spellType = session.getCurrentSpellType();
                 for (var spectator : session.getSpectators()) {
                     // create response with type of `FINISH_SPELL`
                     SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
@@ -420,7 +420,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     // build spell description
                     var spellDescriptionBuilder = spectatorResponseBuilder.getSpellDescriptionBuilder();
                     spellDescriptionBuilder
-                        .setColorId(colorId)
+                        .setSpellType(spellType)
                         .setSpellTemplateId(templateId)
                         .getSpellTemplateOffsetBuilder()
                             .setX(x)
@@ -798,7 +798,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // build current spell (aka spell that is being drawn right now)
             var canvasBuilder = responseBuilder.getCanvasStateBuilder();
             canvasBuilder.getCurrentSpellStateBuilder()
-                .setColorId(session.getCurrentSpellColorId())
+                .setSpellType(session.getCurrentSpellType())
                 .addAllPoints(points)
                 .build();
         }
@@ -823,9 +823,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             // add the other fields
             int spellTemplateId = spellDescription.id();
-            int colorId = spellDescription.colorId();
+            SpellType spellType = spellDescription.spellType();
             spellDescriptionResponseBuilder
-                .setColorId(colorId)
+                .setSpellType(spellType)
                 .setSpellTemplateId(spellTemplateId);
 
             spellDescriptionResponses.add(spellDescriptionResponseBuilder.build());

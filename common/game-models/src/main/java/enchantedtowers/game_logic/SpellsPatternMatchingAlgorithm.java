@@ -1,6 +1,8 @@
 package enchantedtowers.game_logic;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.utils.Utils;
 import java.util.List;
 import org.locationtech.jts.geom.Envelope;
@@ -13,10 +15,10 @@ import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class SpellsPatternMatchingAlgorithm {
-    private static final float SIMILARITY_THRESHOLD = 0.80f;
+    private static final float SPELL_SIMILARITY_THRESHOLD = 0.80f;
 
     static public Optional<TemplateDescription> getMatchedTemplateWithHausdorffMetric(
-        List<Vector2> spellPoints, Vector2 offset, int spellColor) {
+        List<Vector2> spellPoints, Vector2 offset, SpellType spellType) {
         if (Utils.isValidPath(spellPoints)) {
             Spell pattern = new Spell(
                 Utils.getNormalizedPoints(spellPoints, offset),
@@ -26,7 +28,7 @@ public class SpellsPatternMatchingAlgorithm {
             return getMatchedTemplate(
                 SpellBook.getTemplates(),
                 pattern,
-                spellColor,
+                spellType,
                 new HausdorffMetric()
             );
         }
@@ -36,7 +38,7 @@ public class SpellsPatternMatchingAlgorithm {
 
     static private <Metric extends CurvesMatchingMetric>
     Optional<TemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
-                                                     Spell pattern, int patternColor, Metric metric) {
+                                                     Spell pattern, SpellType patternSpellType, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();
@@ -68,7 +70,7 @@ public class SpellsPatternMatchingAlgorithm {
             }
         }
 
-        if (maxSimilarity < SIMILARITY_THRESHOLD) {
+        if (maxSimilarity < SPELL_SIMILARITY_THRESHOLD) {
             System.out.println("Matched template: none");
             return Optional.empty();
         }
@@ -81,14 +83,6 @@ public class SpellsPatternMatchingAlgorithm {
                 patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
         );
 
-//        Spell matchedTemplate = new Spell(templates.get(matchedTemplateId));
-//        matchedTemplate.setOffset(
-//                new Vector2(
-//                        patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,
-//                        patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
-//                )
-//        );
-
-        return Optional.of(new TemplateDescription(matchedTemplateId, patternColor, matchedTemplateOffset));
+        return Optional.of(new TemplateDescription(matchedTemplateId, patternSpellType, matchedTemplateOffset));
     }
 }
