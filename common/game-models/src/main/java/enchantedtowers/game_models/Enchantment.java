@@ -1,6 +1,7 @@
 package enchantedtowers.game_models;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Enchantment {
@@ -14,7 +15,7 @@ public class Enchantment {
         this.spells = spells;
     }
 
-    public List<TemplateDescription> getSpells() {
-        return spells;
+    public List<TemplateDescription> getTemplateDescriptions() {
+        return Collections.unmodifiableList(spells);
     }
 }
