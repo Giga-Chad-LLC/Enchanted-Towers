@@ -511,8 +511,54 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onCompleted();
     }
 
-    // spectating related methods
 
+    @Override
+    public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStats> streamObserver) {
+        MatchedSpellStats.Builder responseBuilder = MatchedSpellStats.newBuilder();
+
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+
+        boolean isRequestValid = (request.getRequestType() == RequestType.COMPARE_DRAWN_SPELLS);
+        boolean sessionExists  = isRequestValid && sessionOpt.isPresent();
+        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionOpt.get().getAttackingPlayerId();
+
+        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
+            AttackSession session = sessionOpt.get();
+            Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
+            ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
+
+            List<TemplateDescription> wallEnchantmentSpells = wall.getEnchantment().get().getSpells();
+            List<TemplateDescription> drawnSpells = session.getDrawnSpellsDescriptions();
+
+            // TODO: call compareEnchantments(wallEnchantmentSpells, drawnSpells);
+        }
+        else if (!isRequestValid) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Invalid request: request type must be 'COMPARE_DRAWN_SPELLS', got '" + request.getRequestType() + "'");
+        }
+        else if (!sessionExists) {
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+                    "Attack session with id " + sessionId + " not found");
+        }
+        else {
+            // attacker id stored inside session does not match player id
+            int attackerId = sessionOpt.get().getAttackingPlayerId();
+            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Attacker id " + attackerId + " does not match player id " + playerId);
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
+
+    // spectating related methods
     /**
      * Retrieves any session associated with provided tower id and sends its id (i.e. session id) to the client.
      * If session not found, sends error.
