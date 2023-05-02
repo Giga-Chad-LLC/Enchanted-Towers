@@ -13,7 +13,7 @@ import enchantedtowers.game_models.utils.Vector2;
 
 
 public class Spell {
-    // must be relative to the bounded box of path
+    // must be relative to the bounded box of path (meaning when drawn offset must be applied)
     private Geometry curve;
     // specifies offset for drawing path
     private final Vector2 offset = new Vector2(0, 0);
@@ -49,7 +49,7 @@ public class Spell {
         return offset;
     }
 
-    public Geometry getCurve() {
+    public Geometry getCurveCopy() {
         return curve.copy();
     }
 

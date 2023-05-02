@@ -1,6 +1,8 @@
 package enchantedtowers.game_models;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Enchantment {
@@ -14,7 +16,7 @@ public class Enchantment {
         this.spells = spells;
     }
 
-//    public List<TemplateDescription> getSpellsByColorId(int colorId) {
-//
-//    }
+    public List<TemplateDescription> getTemplateDescriptions() {
+        return Collections.unmodifiableList(spells);
+    }
 }

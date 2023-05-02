@@ -61,7 +61,7 @@ public class SpellsPatternMatchingAlgorithm {
                     0
             );
 
-            float similarity = metric.calculate(template.getCurve(), scaledPatternCurve);
+            float similarity = metric.calculate(template.getCurveCopy(), scaledPatternCurve);
             System.out.println("Template " + templateId + " similarity: " + similarity);
 
             if (maxSimilarity < similarity) {
