@@ -69,6 +69,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             tower.setOwnerId(playerId);
             tower.setUnderCaptureLock(true);
 
+            // TODO: what if player is already in creation session?
             // setting timeout of protection walls installation
             timeouts.put(towerId, new Timeout(SESSION_CREATION_TIMEOUT_MS, () -> {
                 logger.info("Remove capture lock for tower with id " + tower.getId() + " of owner with id " + playerId);
