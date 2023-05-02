@@ -1,21 +1,19 @@
 package services;
 
-import components.session.AttackSession;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
-import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
-import enchantedtowers.game_logic.TemplateDescription;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_logic.TemplateDescription;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Tower;
@@ -67,12 +65,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
 
         boolean towerExists    = towerOpt.isPresent();
-        boolean towerProtected = towerExists && towerOpt.get().isProtected();
         boolean towerAlreadyOwnedByPlayer = towerExists &&
                                             towerOpt.get().getOwnerId().isPresent() &&
                                             towerOpt.get().getOwnerId().get() == playerId;
+        boolean towerProtected = towerExists && towerOpt.get().isProtected();
 
-        if (towerExists && !towerProtected && !towerAlreadyOwnedByPlayer) {
+        if (towerExists && !towerAlreadyOwnedByPlayer && !towerProtected) {
             // tower may be captured
             Tower tower = towerOpt.get();
 
@@ -91,20 +89,28 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 timeouts.remove(towerId);
             }));
 
+            logger.info("Successful capture of tower with id " + towerId + " by player with id " + playerId);
+
             responseBuilder.setSuccess(true);
         }
         else if (!towerExists) {
+            logger.info("Tower with id " + towerId + " not found");
+
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.TOWER_NOT_FOUND,
                     "Tower with id " + towerId + " not found");
         }
         else if (towerAlreadyOwnedByPlayer) {
+            logger.info("Tower with id " + towerId + " is already owned by player with id " + playerId);
+
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Tower with id " + towerId + " is already owned by player with id " + playerId);
         }
         else {
             // tower is protected
+            logger.info("Tower with id " + towerId + " is being protected by protection walls, capturing failed");
+
             assert(towerOpt.get().getOwnerId().isPresent());
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
                     ServerError.ErrorType.INVALID_REQUEST,
@@ -123,9 +129,16 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
 
         if (serverError.isEmpty()) {
+            int towerId = request.getTowerId();
+            int protectionWallId = request.getProtectionWallId();
+            int playerId = request.getPlayerData().getPlayerId();
+            logger.info("Player with id " + playerId + " can enter creation session of protection wall with id " +
+                            protectionWallId + " of tower with id " + towerId);
+
             responseBuilder.setSuccess(true);
         }
         else {
+            logger.info("Creation session cannot be entered, reason: '" + serverError.get().getMessage() + "'");
             responseBuilder.setError(serverError.get());
         }
 
@@ -144,6 +157,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             int playerId = request.getPlayerData().getPlayerId();
             int towerId = request.getTowerId();
             int protectionWallId = request.getProtectionWallId();
+
+            logger.info("Player with id " + playerId + " successfully entered creation session of protection wall with id " +
+                    protectionWallId + " of tower with id " + towerId);
 
             ProtectionWallSession session = sessionManager.createSession(
                     playerId, towerId, protectionWallId, streamObserver, onSessionExpiredCallback);
@@ -169,6 +185,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         }
         else {
             // error
+            logger.info("Creation session cannot be entered, reason: '" + serverError.get().getMessage() + "'");
+
             responseBuilder.setError(serverError.get());
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
@@ -278,6 +296,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             // clearing canvas
             session.clearDrawnSpellsDescriptions();
             responseBuilder.setSuccess(true);
+
+            logger.info("Canvas of session with id " + sessionId + " cleared successfully by player with id " + playerId);
         }
         else if (!isRequestValid) {
             ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
@@ -315,6 +335,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
 
         if (isRequestValid && sessionExists && isPlayerIdValid) {
+            logger.info("Completing enchantment for session with id " + sessionId + " of player with id " + playerId);
+
             // complete enchantment and save it into protection wall of the tower
             ProtectionWallSession session = sessionOpt.get();
             Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
@@ -329,6 +351,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             tower.setUnderProtectionWallsInstallation(false);
 
             // TODO: call TowerRegistry.save() to save the updated tower state in DB
+
+            logger.info("New enchantment of protection wall with id " + wall.getId() +
+                             " of tower with id " + tower.getId() + " installed");
 
             responseBuilder.setSuccess(true);
             // closing connection with client
