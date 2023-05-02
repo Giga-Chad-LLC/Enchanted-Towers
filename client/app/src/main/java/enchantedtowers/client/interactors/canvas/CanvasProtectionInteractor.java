@@ -5,15 +5,11 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -28,8 +24,6 @@ import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.AndroidUtils;
 import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
-import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
-import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
@@ -358,8 +352,6 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
         // make async call here
         asyncStub.enterProtectionWallCreationSession(requestBuilder.build(), new StreamObserver<>() {
-
-
             @Override
             public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
