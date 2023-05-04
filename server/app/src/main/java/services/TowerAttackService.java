@@ -500,36 +500,19 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      */
     @Override
     public void trySpectateTowerById(TowerIdRequest request, StreamObserver<SessionIdResponse> streamObserver) {
-        int towerId = request.getTowerId();
-        int playerId = request.getPlayerData().getPlayerId();
         SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
+        Optional<AttackSession> session = sessionManager.getAnyAttackSessionByTowerId(request.getTowerId());
 
-        Optional<AttackSession> session = sessionManager.getAnyAttackSessionByTowerId(towerId);
+        Optional<ServerError> serverError = validateSpectatingAction(
+                session, request.getPlayerData().getPlayerId(), SpectatingRequirement.SPECTATING_PROHIBITED);
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
-        boolean sessionExists = session.isPresent();
-
-        if (!isAttacking && !isSpectating && sessionExists) {
+        if (serverError.isEmpty()) {
             responseBuilder.setSessionId(session.get().getId());
         }
-        else if (!sessionExists) {
-            logger.info("trySpectateTowerById: session associated with tower id " + towerId + " not found");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session associated with tower id of " + towerId + " not found");
-        }
-        else if (isAttacking) {
-            logger.info("trySpectateTowerById: player with id " + playerId + " is already in attack");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "player with id " + playerId + " is already in attack");
-        }
         else {
-            logger.info("trySpectateTowerById: player with id " + playerId + " is already in spectating mode");
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "player with id " + playerId + " is already in spectating mode");
+            // error occurred
+            logger.info("trySpectateTowerById: Cannot enter tower spectating, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -548,18 +531,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      */
     @Override
     public void spectateTowerBySessionId(SessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
-        final int sessionId = request.getSessionId();
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
+        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(request.getSessionId());
 
-        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        Optional<ServerError> serverError = validateSpectatingAction(
+                sessionOpt, spectatingPlayerId, SpectatingRequirement.SPECTATING_PROHIBITED);
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
-        boolean sessionExists = sessionOpt.isPresent();
-
-        if (!isAttacking && !isSpectating && sessionExists) {
+        if (serverError.isEmpty()) {
             AttackSession session = sessionOpt.get();
             // create response with canvas state
             responseBuilder.setResponseType(ResponseType.CURRENT_CANVAS_STATE);
@@ -582,29 +562,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // send canvas state to spectator
             streamObserver.onNext(responseBuilder.build());
         }
-        else if (!sessionExists) {
-            // session not found
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session with id " + sessionId + " not found");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-        }
-        else if (isAttacking) {
-            // player is already attacking
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "player with id " + spectatingPlayerId + " is already in attack");
-
-            streamObserver.onNext(responseBuilder.build());
-            streamObserver.onCompleted();
-        }
         else {
-            // player is already spectating
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "player with id " + spectatingPlayerId + " is already in spectating mode");
+            // error occurred
+            logger.info("spectateTowerBySessionId: cannot enter tower spectating, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
 
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
@@ -880,6 +841,62 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             return  Optional.empty();
+        }
+    }
+
+
+    private enum SpectatingRequirement {
+        SPECTATING_REQUIRED,
+        SPECTATING_PROHIBITED,
+    }
+    /**
+     * <p>Validates requests that are dealing with spectating functionalities</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Player must not be in attacking mode</li>
+     *     <li>Attack session must exist</li>
+     *     <li>Player must either be or not be in spectating mode depending on <code>requirement</code> param</li>
+     * </ol>
+     */
+    private Optional<ServerError> validateSpectatingAction(Optional<AttackSession> session, int playerId, SpectatingRequirement requirement) {
+        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(playerId);
+        boolean sessionExists = session.isPresent();
+        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(playerId);
+
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (isAttacking) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "player with id " + playerId + " is in attacking mode");
+        }
+        else if (!sessionExists) {
+            errorOccurred = true;
+            // session not found
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+            "Attack session not found");
+        }
+        else if (requirement == SpectatingRequirement.SPECTATING_REQUIRED && !isSpectating) {
+            // player is not spectating
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "player with id " + playerId + " is not spectating");
+        }
+        else if (requirement == SpectatingRequirement.SPECTATING_PROHIBITED && isSpectating) {
+            // player is spectating
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "player with id " + playerId + " is spectating");
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
         }
     }
 
