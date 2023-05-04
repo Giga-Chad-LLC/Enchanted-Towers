@@ -191,7 +191,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: move validation of selectSpellType, drawSpell, finishSpell, clearCanvas, and compareDrawnSpells into separate method
 
     /**
      * Sets new spell type in {@link AttackSession} instance and sends the updated type of current spell to all spectators.
@@ -399,7 +398,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
 
-
     /**
      * Removes drawn spells descriptions from {@link AttackSession} instance associated with player, and notifies spectators of the clearing canvas event.
      */
@@ -433,7 +431,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
     }
-
 
 
     /**
@@ -481,6 +478,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             responseBuilder.addAllStats(spellStats);
+
+            // notifying spectators to clear the canvas
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
+            for (var spectator : session.getSpectators()) {
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
         }
         else {
             // error occurred
