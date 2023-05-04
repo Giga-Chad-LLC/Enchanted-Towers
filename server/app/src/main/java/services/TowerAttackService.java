@@ -841,12 +841,14 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             "Attack session not found");
         }
         else if (requirement == SpectatingRequirement.SPECTATING_REQUIRED && !isSpectating) {
+            errorOccurred = true;
             // player is not spectating
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
             "player with id " + playerId + " is not spectating");
         }
         else if (requirement == SpectatingRequirement.SPECTATING_PROHIBITED && isSpectating) {
+            errorOccurred = true;
             // player is spectating
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
