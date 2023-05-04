@@ -71,16 +71,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      */
     @Override
     public synchronized void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
-        // TODO: add lock inside Tower that locks any modifications of the tower:
-        // TODO: tower.lock(); [do work]; tower.unlock(); use: try { tower.lock(); ...  } finally { tower.unlock(); };
-
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
 
-        {
-            int playerId = request.getPlayerData().getPlayerId();
-            int towerId = request.getTowerId();
-            logger.info("attackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
-        }
+        logger.info("attackTowerById: got playerId=" + request.getPlayerData().getPlayerId() +
+                ", towerId=" + request.getTowerId());
 
         Optional<ServerError> serverError = validateAttackingTowerById(request);
 
@@ -103,29 +97,16 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             AttackSession session = sessionManager.createAttackSession(
                     playerId, towerId, wall.getId(), streamObserver, onSessionExpiredCallback);
 
-            final int sessionId = session.getId();
-
             // create cancel handler to hook the event of client closing the connection
             // in this case spectators must be disconnected and attack session must be removed
             var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
-            callObserver.setOnCancelHandler(() -> {
-                logger.info("Attacker with id " + playerId + " cancelled stream. Destroying the corresponding attack session...");
-
-                // TODO: move into interactor
-                // mark tower to not be under attack
-                tower.setUnderAttack(false);
-
-                // disconnecting spectators
-                disconnectSpectators(session);
-
-                sessionManager.remove(session);
-            });
+            callObserver.setOnCancelHandler(() -> onAttackerStreamCancellation(session));
 
             // setting session id into response
             responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
             responseBuilder.getSessionBuilder()
-                    .setSessionId(sessionId)
+                    .setSessionId(session.getId())
                     .build();
 
             streamObserver.onNext(responseBuilder.build());
@@ -880,6 +861,29 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         else {
             return Optional.empty();
         }
+    }
+
+
+    /**
+     * <p>Method removes the under-attack state of the underlying {@link Tower} of the provided {@link AttackSession}, disconnects all spectators, and removes the {@link AttackSession} from {@link AttackSessionManager}.</p>
+     * <p>Callback should be called in the case if client closes the connection, i.e. {@link ServerCallStreamObserver#setOnCancelHandler} method of attacker's {@link StreamObserver} should fire this callback.</p>
+     */
+    private void onAttackerStreamCancellation(AttackSession session) {
+        final int playerId = session.getAttackingPlayerId();
+        final int towerId = session.getAttackedTowerId();
+
+        logger.info("Attacker with id " + playerId + " registered in attack session with id " +
+                session.getId() + " cancelled stream. Destroying the corresponding attack session...");
+
+        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+        // TODO: move into interactor
+        // mark tower to not be under attack
+        tower.setUnderAttack(false);
+
+        // disconnecting spectators
+        disconnectSpectators(session);
+
+        sessionManager.remove(session);
     }
 
     /**
