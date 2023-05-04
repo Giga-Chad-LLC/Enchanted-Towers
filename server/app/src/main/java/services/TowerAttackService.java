@@ -582,26 +582,21 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      */
     @Override
     public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<SessionIdResponse> streamObserver) {
-        final int sessionId = request.getSessionId();
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
+        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(request.getSessionId());
 
-        boolean isAttacking = sessionManager.hasSessionAssociatedWithPlayerId(spectatingPlayerId);
-        boolean isSpectating = sessionManager.isPlayerInSpectatingMode(spectatingPlayerId);
-        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        Optional<ServerError> serverError = validateSpectatingAction(
+                sessionOpt, spectatingPlayerId, SpectatingRequirement.SPECTATING_REQUIRED);
 
-        if (!isAttacking && isSpectating && sessionOpt.isPresent()) {
+        if (serverError.isEmpty()) {
             AttackSession session = sessionOpt.get();
-
             // changing the under spectating player
-            Optional<Spectator> spectatorOpt = session.pollSpectatorById(spectatingPlayerId); // checking for isPresent is done in calculation of `isSpectating` flag
-            // TODO: refactor this assertion later
-            assert(spectatorOpt.isPresent());
-
-            Spectator spectator = spectatorOpt.get();
+            Spectator spectator = session.pollSpectatorById(spectatingPlayerId).get();
 
             AttackSession newSession;
+
             System.out.println("Getting getKthNeighbourOfSession of current sessionId=" + session.getId() + ", for towerId=" + session.getAttackedTowerId());
 
             if (request.getRequestType() == ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER) {
@@ -625,23 +620,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // send canvas state to spectator
             spectator.streamObserver().onNext(canvasStateResponseBuilder.build());
         }
-        else if (sessionOpt.isEmpty()) {
-            // session not found
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                ServerError.ErrorType.SESSION_NOT_FOUND,
-                "Attack session with id " + sessionId + " not found");
-        }
-        else if (!isSpectating) {
-            // player is not spectating
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                ServerError.ErrorType.INVALID_REQUEST,
-                "player with id " + spectatingPlayerId + " is not spectating");
-        }
         else {
-            // player is in attacking mode
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                ServerError.ErrorType.INVALID_REQUEST,
-                "player with id " + spectatingPlayerId + " is in attacking mode");
+            // error occurred
+            logger.info("Cannot toggle attack session, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
