@@ -118,7 +118,8 @@ public class AttackSession {
             }
 
             if (!invalidated) {
-                throw new NoSuchElementException("Invalidation failed: spectator with id " + spectatorId + " not found");
+                // Note: spectator might have changed the attack session
+                logger.info("Invalidation failed: spectator with id " + spectatorId + " not found (spectator might have changed the attack session)");
             }
         }
     }
