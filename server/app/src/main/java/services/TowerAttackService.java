@@ -187,17 +187,18 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             session.setCurrentSpellType(spellType);
             logger.info("Setting type of '" + session.getCurrentSpellType() + "'");
 
+            // create response with type of `SELECT_SPELL_TYPE`
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            spectatorResponseBuilder
+                    .setResponseType(ResponseType.SELECT_SPELL_TYPE)
+                    .setSpellType(session.getCurrentSpellType())
+                    .build();
+
             // send current spell type to all spectators
             for (var spectator : session.getSpectators()) {
-                // create response with type of `SELECT_SPELL_TYPE`
-                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-                spectatorResponseBuilder
-                        .setResponseType(ResponseType.SELECT_SPELL_TYPE)
-                        .setSpellType(session.getCurrentSpellType())
-                        .build();
-
                 spectator.streamObserver().onNext(spectatorResponseBuilder.build());
             }
+
             // request processed successfully
             responseBuilder.setSuccess(true);
         }
