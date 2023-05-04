@@ -91,6 +91,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             int playerId = request.getPlayerData().getPlayerId();
             int towerId = request.getTowerId();
 
+            // TODO: move into interactor
             // mark tower as being under attack and retrieve enchanted protection wall
             Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
             // mark tower as being under attack
@@ -114,14 +115,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             callObserver.setOnCancelHandler(() -> {
                 logger.info("Attacker with id " + playerId + " cancelled stream. Destroying the corresponding attack session...");
 
+                // TODO: move into interactor
                 // mark tower to not be under attack
                 tower.setUnderAttack(false);
 
                 // disconnecting spectators
-                for (var spectator : session.getSpectators()) {
-                    // TODO: send 'attackerDisconnected' response to spectators
-                    spectator.streamObserver().onCompleted();
-                }
+                disconnectSpectators(session);
 
                 sessionManager.remove(session);
             });
@@ -907,12 +906,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         // mark tower to not be under attack
         tower.setUnderAttack(false);
 
-        // TODO: appears in attackTowerById, move to separate method?
         // closing connection with spectators
-        for (var spectator : session.getSpectators()) {
-            // TODO: send 'AttackSessionExpired' to spectators
-            spectator.streamObserver().onCompleted();
-        }
+        disconnectSpectators(session);
 
         // sending response with session expiration to attacker and closing connection
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
@@ -924,6 +919,17 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         attackerResponseObserver.onCompleted();
 
         sessionManager.remove(session);
+    }
+
+    /**
+     * Calls {@link StreamObserver#onCompleted} on all spectators stored inside provided {@link AttackSession}.
+     */
+    private void disconnectSpectators(AttackSession session) {
+        logger.info("Disconnecting spectators of session with id " + session.getId());
+        for (var spectator : session.getSpectators()) {
+            // TODO: send 'AttackSessionExpired' to spectators
+            spectator.streamObserver().onCompleted();
+        }
     }
 
     /**
