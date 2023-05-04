@@ -67,6 +67,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
+    // TODO: interactors must modify game models, not request handlers
+
     /**
      * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
      */
@@ -512,6 +514,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
 
+    // TODO: write description
     @Override
     public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
         MatchedSpellStatsResponse.Builder responseBuilder = MatchedSpellStatsResponse.newBuilder();
@@ -788,6 +791,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         boolean sessionExists = sessionManager.getSessionById(sessionId).isPresent();
+
         if (sessionExists) {
             AttackSession session = sessionManager.getSessionById(sessionId).get();
             Optional<AttackSession.Spectator> spectator = session.pollSpectatorById(spectatingPlayerId);
@@ -910,6 +914,64 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
     }
 
+
+    /**
+     * <p>Validates requests that are related to modifying canvas or changing canvas related state.</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Request type is valid</li>
+     *     <li>Attack session with provided id exists</li>
+     *     <li>Player's id matches with the attacked id store inside the attack session</li>
+     * </ol>
+     */
+    private Optional<ServerError> validateCanvasAction(SpellRequest request, RequestType requiredRequestType) {
+        int playerId = request.getPlayerData().getPlayerId();
+        Optional<AttackSession> session = sessionManager.getSessionById(request.getSessionId());
+
+        boolean additionalRequestCheck = switch(requiredRequestType) {
+            case SELECT_SPELL_TYPE -> request.hasSpellType();
+            case DRAW_SPELL -> request.hasDrawSpell();
+            case FINISH_SPELL -> request.hasFinishSpell();
+            case CLEAR_CANVAS, COMPARE_DRAWN_SPELLS -> true;
+            case UNRECOGNIZED -> false;
+        };
+
+        boolean isRequestValid = (request.getRequestType() == requiredRequestType) && additionalRequestCheck;
+        boolean sessionExists = session.isPresent();
+        boolean attackerIdMatchesPlayerId = sessionExists && playerId == session.get().getAttackingPlayerId();
+
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (!isRequestValid) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "Invalid request: request type must be '" +
+                    requiredRequestType + "'" +
+                    (additionalRequestCheck ? ", additional request check failed" : ""));
+        }
+        else if (!sessionExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+            "Attack session with id " + request.getSessionId() + " not found");
+        }
+        else if (!attackerIdMatchesPlayerId) {
+            errorOccurred = true;
+            int attackerId = session.get().getAttackingPlayerId();
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+            "Attacker id " + attackerId + " does not match player id " + playerId);
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return  Optional.empty();
+        }
+    }
 
     /**
      * <p>The callback is intended to be fired once the session expires.</p>
