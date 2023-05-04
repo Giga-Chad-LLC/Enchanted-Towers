@@ -200,22 +200,14 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     public void selectSpellType(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, RequestType.SELECT_SPELL_TYPE);
 
-        boolean isRequestValid = (request.getRequestType() == RequestType.SELECT_SPELL_TYPE && request.hasSpellType());
-        boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
-        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-
-        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
-            final SpellType spellType = request.getSpellType().getSpellType();
-
-            // session must exist
-            assert(sessionManager.getSessionById(sessionId).isPresent());
-            AttackSession session = sessionManager.getSessionById(sessionId).get();
+        if (serverError.isEmpty()) {
+            AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
             logger.info("Session found: " + session.hashCode());
             // set current spell type
+            final SpellType spellType = request.getSpellType().getSpellType();
             session.setCurrentSpellType(spellType);
             logger.info("Setting type of '" + session.getCurrentSpellType() + "'");
 
@@ -233,23 +225,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // request processed successfully
             responseBuilder.setSuccess(true);
         }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                ServerError.ErrorType.INVALID_REQUEST,
-                "Invalid request: request type must be 'SELECT_SPELL_TYPE' and spell type must be provided");
-        }
-        else if (!sessionExists) {
-            // session does not exist
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session with id " + sessionId + " not found");
-        }
         else {
-            // attacker id does not match player id
-            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Attacker id " + attackerId + " does not match player id " + playerId);
+            // error occurred
+            logger.info("Cannot select spell type, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         // sending response
