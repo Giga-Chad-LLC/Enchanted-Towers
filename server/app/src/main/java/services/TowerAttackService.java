@@ -265,61 +265,44 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     public void drawSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, RequestType.DRAW_SPELL);
 
-        boolean isRequestValid = (request.getRequestType() == RequestType.DRAW_SPELL) && (request.hasDrawSpell());
-        boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
-        boolean attackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-
-        if (isRequestValid && sessionExists && attackerIdMatchesPlayerId) {
-            AttackSession session = sessionManager.getSessionById(sessionId).get();
+        if (serverError.isEmpty()) {
+            AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
             logger.info("Session found: " + session.hashCode());
 
-            // adding new point to the current spell
-            double x = request.getDrawSpell().getPosition().getX();
-            double y = request.getDrawSpell().getPosition().getY();
-            logger.info("Adding new spell point: " + new Vector2(x, y));
-            session.addPointToCurrentSpell(new Vector2(x, y));
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            // adding data into response
+            {
+                // adding new point to the current spell
+                double x = request.getDrawSpell().getPosition().getX();
+                double y = request.getDrawSpell().getPosition().getY();
+                logger.info("Adding new spell point: " + new Vector2(x, y));
+                session.addPointToCurrentSpell(new Vector2(x, y));
 
-            // send new point to all spectators
-            logger.info("drawSpell: number of spectators: " + session.getSpectators().size());
-
-            for (var spectator : session.getSpectators()) {
                 // create response with type of `DRAW_SPELL`
-                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-
                 spectatorResponseBuilder
                         .setResponseType(ResponseType.DRAW_SPELL)
                         .getSpellPointBuilder()
                         .setX(x)
                         .setY(y)
                         .build();
+            }
 
+            // send new point to all spectators
+            logger.info("drawSpell: number of spectators: " + session.getSpectators().size());
+            for (var spectator : session.getSpectators()) {
                 spectator.streamObserver().onNext(spectatorResponseBuilder.build());
             }
 
             // sending response
             responseBuilder.setSuccess(true);
         }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Invalid request: request type must be 'DRAW_SPELL' and DrawSpell must be provided");
-        }
-        else if (!sessionExists) {
-            // session does not exist
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session with id " + sessionId + " not found");
-        }
         else {
-            // attacker id does not match player id
-            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Attacker id " + attackerId + " does not match player id " + playerId);
+            // error occurred
+            logger.info("Cannot draw spell, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -515,6 +498,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     // TODO: write description
+    // TODO: set clearCanvas event to all spectators
     @Override
     public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
         MatchedSpellStatsResponse.Builder responseBuilder = MatchedSpellStatsResponse.newBuilder();
