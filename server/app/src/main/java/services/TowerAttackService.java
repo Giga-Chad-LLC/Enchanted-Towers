@@ -459,9 +459,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             logger.info("Got matches: " + matches);
 
-            // TODO: clear drawn spells inside attack session
-            // TODO: set clearCanvas event to all spectators
-
             // add spell matching stats into response
             List<MatchedSpellStatsResponse.SpellStat> spellStats = new ArrayList<>();
 
@@ -478,6 +475,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             responseBuilder.addAllStats(spellStats);
+
+            // clearing drawn spells
+            session.clearDrawnSpellsDescriptions();
 
             // notifying spectators to clear the canvas
             SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
