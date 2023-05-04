@@ -14,6 +14,10 @@ import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
 
+/**
+ * <p>Represents tower attack session by storing the player's {@link StreamObserver} and spectators' {@link StreamObserver}.</p>
+ * <p>Caller must provide thread-safe execution of the methods.</p>
+ */
 public class AttackSession {
     private final int id;
     private final int attackingPlayerId;
@@ -24,8 +28,6 @@ public class AttackSession {
     private final CanvasState canvasState = new CanvasState();
     private final SpellDrawingDescription currentSpellDescription = new SpellDrawingDescription();
     private final List<Spectator> spectators = new ArrayList<>();
-    // this lock object is used as mutual exclusion lock
-    private final Object lock = new Object();
 
     private static final Logger logger = Logger.getLogger(AttackSession.class.getName());
 
@@ -97,9 +99,7 @@ public class AttackSession {
     }
 
     public StreamObserver<SessionInfoResponse> getAttackerResponseObserver() {
-        synchronized (lock) {
-            return attackerResponseObserver;
-        }
+        return attackerResponseObserver;
     }
 
     /**
@@ -108,94 +108,70 @@ public class AttackSession {
      * Thus, the removal of spectator is being held lazily since it simplifies the workflow of {@link AttackSession}.
      */
     public void invalidateSpectator(int spectatorId) {
-        synchronized (lock) {
-            boolean invalidated = false;
-            for (var spectator : spectators) {
-                if (spectatorId == spectator.playerId()) {
-                    spectator.invalidate();
-                    invalidated = true;
-                }
+        boolean invalidated = false;
+        for (var spectator : spectators) {
+            if (spectatorId == spectator.playerId()) {
+                spectator.invalidate();
+                invalidated = true;
             }
+        }
 
-            if (!invalidated) {
-                // Note: spectator might have changed the attack session
-                logger.info("Invalidation failed: spectator with id " + spectatorId + " not found (spectator might have changed the attack session)");
-            }
+        if (!invalidated) {
+            // Note: spectator might have changed the attack session
+            logger.info("Invalidation failed: spectator with id " + spectatorId +
+                    " not found (spectator might have changed the attack session)");
         }
     }
 
     public SpellType getCurrentSpellType() {
-        synchronized (lock) {
-            // asserting that this method will not be used before the value assigned to the field
-            return currentSpellDescription.getSpellType();
-        }
+        // asserting that this method will not be used before the value assigned to the field
+        return currentSpellDescription.getSpellType();
     }
 
     public List<Vector2> getCurrentSpellPoints() {
-        synchronized (lock) {
-            return currentSpellDescription.getPoints();
-        }
+        return currentSpellDescription.getPoints();
     }
 
     public boolean hasCurrentSpell() {
-        synchronized (lock) {
-            // TODO: explicitly set flag of the variable existence
-            return !currentSpellDescription.getPoints().isEmpty();
-        }
+        return !currentSpellDescription.getPoints().isEmpty();
     }
 
     public void setCurrentSpellType(SpellType currentSpellType) {
-        synchronized (lock) {
-            currentSpellDescription.setSpellType(currentSpellType);
-        }
+        currentSpellDescription.setSpellType(currentSpellType);
     }
 
     public void addPointToCurrentSpell(Vector2 point) {
-        synchronized (lock) {
-            currentSpellDescription.addPoint(point);
-        }
+        currentSpellDescription.addPoint(point);
     }
 
     public void addTemplateToCanvasState(TemplateDescription template) {
-        synchronized (lock) {
-            canvasState.addTemplate(template);
-        }
+        canvasState.addTemplate(template);
     }
 
     public void clearCurrentDrawing() {
-        synchronized (lock) {
-            // clear out the current spell
-            currentSpellDescription.reset();
-        }
+        // clear out the current spell
+        currentSpellDescription.reset();
     }
 
     public List<TemplateDescription> getDrawnSpellsDescriptions() {
-        synchronized (lock) {
-            return canvasState.getTemplates();
-        }
+        return canvasState.getTemplates();
     }
 
     public void clearDrawnSpellsDescriptions() {
-        synchronized (lock) {
-            canvasState.clear();
-        }
+        canvasState.clear();
     }
 
     /**
      * Removes invalid spectators before returning the unmodifiable spectator list.
      */
     public List<Spectator> getSpectators() {
-        synchronized (lock) {
-            // remove invalidated spectators
-            spectators.removeIf(spectator -> !spectator.isValid());
-            return Collections.unmodifiableList(spectators);
-        }
+        // remove invalidated spectators
+        spectators.removeIf(spectator -> !spectator.isValid());
+        return Collections.unmodifiableList(spectators);
     }
 
     public void addSpectator(int playerId, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
-        synchronized (lock) {
-            spectators.add(new Spectator(playerId, streamObserver));
-        }
+        spectators.add(new Spectator(playerId, streamObserver));
     }
 
     /**
@@ -204,21 +180,19 @@ public class AttackSession {
      * @return either <code>Optional.empty()</code> or <code>Optional.of(removedSpectator)</code>
      */
     public Optional<Spectator> pollSpectatorById(int playerId) {
-        synchronized (lock) {
-            var iterator = spectators.iterator();
-            Optional<Spectator> removedSpectator = Optional.empty();
+        var iterator = spectators.iterator();
+        Optional<Spectator> removedSpectator = Optional.empty();
 
-            while (iterator.hasNext()) {
-                Spectator spectator = iterator.next();
-                if (spectator.playerId == playerId) {
-                    logger.info("Spectator with id '" + playerId + "' removed from session");
-                    removedSpectator = Optional.of(spectator);
-                    iterator.remove();
-                    break;
-                }
+        while (iterator.hasNext()) {
+            Spectator spectator = iterator.next();
+            if (spectator.playerId == playerId) {
+                logger.info("Spectator with id '" + playerId + "' removed from session");
+                removedSpectator = Optional.of(spectator);
+                iterator.remove();
+                break;
             }
-
-            return removedSpectator;
         }
+
+        return removedSpectator;
     }
 }
