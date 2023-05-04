@@ -43,14 +43,11 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * <p>This method serves as a convenient check that attack session can be entered on the client side. Although, the {@link TowerAttackService#attackTowerById} method is still required to make the appropriate validations.</p>
      */
     @Override
-    public void tryAttackTowerById(TowerIdRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+    public synchronized void tryAttackTowerById(TowerIdRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        {
-            int playerId = request.getPlayerData().getPlayerId();
-            int towerId = request.getTowerId();
-            logger.info("tryAttackTowerById: got playerId=" + playerId + ", towerId=" + towerId);
-        }
+        logger.info("tryAttackTowerById: got playerId=" + request.getPlayerData().getPlayerId() +
+                    ", towerId=" + request.getTowerId());
 
         Optional<ServerError> serverError = validateAttackingTowerById(request);
 
@@ -73,7 +70,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
      */
     @Override
-    public void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
+    public synchronized void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         // TODO: add lock inside Tower that locks any modifications of the tower:
         // TODO: tower.lock(); [do work]; tower.unlock(); use: try { tower.lock(); ...  } finally { tower.unlock(); };
 
@@ -148,7 +145,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Otherwise, sends error to the player.
      */
     @Override
-    public void leaveAttack(LeaveAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+    public synchronized void leaveAttack(LeaveAttackRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         logger.info("leaveAttack: playerId=" + request.getPlayerData().getPlayerId() + ", sessionId=" + request.getSessionId());
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -195,7 +192,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Sets new spell type in {@link AttackSession} instance and sends the updated type of current spell to all spectators.
      */
     @Override
-    public void selectSpellType(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void selectSpellType(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, RequestType.SELECT_SPELL_TYPE);
@@ -239,7 +236,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Adds new canvas point of currently being drawn spell and sends this point to all spectators.
      */
     @Override
-    public void drawSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void drawSpell(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, RequestType.DRAW_SPELL);
@@ -293,7 +290,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Otherwise, sends error (template not found) to the attacker and all spectators about.
      */
     @Override
-    public void finishSpell(SpellRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
+    public synchronized void finishSpell(SpellRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, RequestType.FINISH_SPELL);
@@ -401,7 +398,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Removes drawn spells descriptions from {@link AttackSession} instance associated with player, and notifies spectators of the clearing canvas event.
      */
     @Override
-    public void clearCanvas(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void clearCanvas(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, RequestType.CLEAR_CANVAS);
@@ -436,7 +433,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Compares player's drawn enchantment (which is the list of {@link TemplateDescription}) with the actual enchantment stored inside {@link ProtectionWall} of {@link Tower} that is being under attack. Comparison is being made by calling {@link EnchantmentMatchingAlgorithm#getEnchantmentMatchStatsWithHausdorffMetric} method.
      */
     @Override
-    public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
+    public synchronized void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
         MatchedSpellStatsResponse.Builder responseBuilder = MatchedSpellStatsResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, RequestType.COMPARE_DRAWN_SPELLS);
@@ -502,7 +499,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * If session not found, sends error.
      */
     @Override
-    public void trySpectateTowerById(TowerIdRequest request, StreamObserver<SessionIdResponse> streamObserver) {
+    public synchronized void trySpectateTowerById(TowerIdRequest request, StreamObserver<SessionIdResponse> streamObserver) {
         SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
         Optional<AttackSession> session = sessionManager.getAnyAttackSessionByTowerId(request.getTowerId());
 
@@ -533,7 +530,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * and is opaque to the caller. In particular, the removal of an invalid spectator is done inside {@link AttackSession#getSpectators} method, thus making the removal lazy. The caller must not rely on this implementation.
      */
     @Override
-    public void spectateTowerBySessionId(SessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
+    public synchronized void spectateTowerBySessionId(SessionIdRequest request, StreamObserver<SpectateTowerAttackResponse> streamObserver) {
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         SpectateTowerAttackResponse.Builder responseBuilder = SpectateTowerAttackResponse.newBuilder();
@@ -584,7 +581,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * here we only return <code>ActionResultResponse</code>: success or failure.
      */
     @Override
-    public void toggleAttacker(ToggleAttackerRequest request, StreamObserver<SessionIdResponse> streamObserver) {
+    public synchronized void toggleAttacker(ToggleAttackerRequest request, StreamObserver<SessionIdResponse> streamObserver) {
         final int spectatingPlayerId = request.getPlayerData().getPlayerId();
 
         SessionIdResponse.Builder responseBuilder = SessionIdResponse.newBuilder();
@@ -638,7 +635,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * Then closes the connection with the spectator and removes it from session spectators list.
      */
     @Override
-    public void leaveSpectating(LeaveSpectatingRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void leaveSpectating(LeaveSpectatingRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         logger.info("leaveSpectating: playerId=" + request.getPlayerData().getPlayerId() + ", sessionId=" + request.getSessionId());
 
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -895,6 +892,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * </ol>
      */
     private void onSessionExpired(int sessionId) {
+        // TODO: maybe it should be marked as `synchronized`
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
         // TODO: better to ignore callback rather than throw
         if (sessionOpt.isEmpty()) {
@@ -914,6 +912,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
         responseBuilder.getExpirationBuilder().build();
 
+        // closing connection with attacker
         var attackerResponseObserver = session.getAttackerResponseObserver();
         attackerResponseObserver.onNext(responseBuilder.build());
         attackerResponseObserver.onCompleted();
