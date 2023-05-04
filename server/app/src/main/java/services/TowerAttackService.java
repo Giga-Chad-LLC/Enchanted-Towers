@@ -536,10 +536,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // create cancel handler to hook the event of client closing the connection (deleting spectator in this case)
             var callObserver = (ServerCallStreamObserver<SpectateTowerAttackResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
-            callObserver.setOnCancelHandler(() -> {
-                logger.info("Spectator with id " + spectatingPlayerId + " cancelled stream. Invalidating the spectator...");
-                session.invalidateSpectator(spectatingPlayerId);
-            });
+            callObserver.setOnCancelHandler(() -> onSpectatorStreamCancellation(session, spectatingPlayerId));
 
             // send canvas state to spectator
             streamObserver.onNext(responseBuilder.build());
@@ -866,7 +863,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     /**
-     * <p>Method removes the under-attack state of the underlying {@link Tower} of the provided {@link AttackSession}, disconnects all spectators, and removes the {@link AttackSession} from {@link AttackSessionManager}.</p>
+     * <p>Removes the under-attack state of the underlying {@link Tower} of the provided {@link AttackSession}, disconnects all spectators, and removes the {@link AttackSession} from {@link AttackSessionManager}.</p>
      * <p>Callback should be called in the case if client closes the connection, i.e. {@link ServerCallStreamObserver#setOnCancelHandler} method of attacker's {@link StreamObserver} should fire this callback.</p>
      */
     private void onAttackerStreamCancellation(AttackSession session) {
@@ -885,6 +882,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         disconnectSpectators(session);
 
         sessionManager.remove(session);
+    }
+
+    /**
+     * <p>Invalidates spectator in {@link AttackSession} for the future removal.</p>
+     * <p>Callback should be called in the case if client closes the connection, i.e. {@link ServerCallStreamObserver#setOnCancelHandler} method of spectator's {@link StreamObserver} should fire this callback.</p>
+     */
+    private void onSpectatorStreamCancellation(AttackSession session, int spectatingPlayerId) {
+        logger.info("Spectator with id " + spectatingPlayerId + " cancelled stream. Invalidating the spectator...");
+        session.invalidateSpectator(spectatingPlayerId);
     }
 
     /**
