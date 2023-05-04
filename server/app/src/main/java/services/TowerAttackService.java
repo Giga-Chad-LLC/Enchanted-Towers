@@ -298,33 +298,23 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     public void finishSpell(SpellRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, RequestType.FINISH_SPELL);
 
-        boolean isRequestValid = (request.getRequestType() == RequestType.FINISH_SPELL && request.hasFinishSpell());
-        boolean sessionExists = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
-        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-
-        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
-            Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
-            assert(sessionOpt.isPresent());
-            AttackSession session = sessionOpt.get();
-
+        if (serverError.isEmpty()) {
+            AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
             logger.info("Session found: " + session.hashCode());
 
-            Vector2 offset;
-            {
-                double x = request.getFinishSpell().getPosition().getX();
-                double y = request.getFinishSpell().getPosition().getY();
-                offset = new Vector2(x, y);
-            }
+            Vector2 offset = new Vector2(
+                request.getFinishSpell().getPosition().getX(),
+                request.getFinishSpell().getPosition().getY()
+            );
 
             logger.info("finishSpell: run hausdorff and return id of matched template and offset");
 
             Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
-                session.getCurrentSpellPoints(),
-                offset,
-                session.getCurrentSpellType()
+                    session.getCurrentSpellPoints(),
+                    offset,
+                    session.getCurrentSpellType()
             );
 
             // no matching template found
@@ -334,15 +324,16 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                         ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
                         "No template found to match provided spell");
 
+                // create response with type of `FINISH_SPELL`
+                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+
+                spectatorResponseBuilder.setResponseType(ResponseType.FINISH_SPELL);
+                ProtoModelsUtils.buildServerError(spectatorResponseBuilder.getErrorBuilder(),
+                        ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
+                        "Attacking player drawing did not match any spells");
+
                 // send error to all spectators
                 for (var spectator : session.getSpectators()) {
-                    // create response with type of `FINISH_SPELL`
-                    SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-                    spectatorResponseBuilder.setResponseType(ResponseType.FINISH_SPELL);
-                    ProtoModelsUtils.buildServerError(spectatorResponseBuilder.getErrorBuilder(),
-                            ServerError.ErrorType.SPELL_TEMPLATE_NOT_FOUND,
-                            "Attacking player drawing did not match any spells");
-
                     spectator.streamObserver().onNext(spectatorResponseBuilder.build());
                 }
             }
@@ -356,65 +347,51 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
                 // Build template offset
                 responseBuilder.getSpellDescriptionBuilder().getSpellTemplateOffsetBuilder()
-                    .setX(x)
-                    .setY(y)
-                    .build();
+                        .setX(x)
+                        .setY(y)
+                        .build();
 
                 // Build template description
                 responseBuilder.getSpellDescriptionBuilder()
-                    .setSpellType(session.getCurrentSpellType())
-                    .setSpellTemplateId(templateId)
-                    .build();
+                        .setSpellType(session.getCurrentSpellType())
+                        .setSpellTemplateId(templateId)
+                        .build();
 
                 // save the template to the canvas state
                 session.addTemplateToCanvasState(templateDescription);
 
                 // send data to all spectators
                 final SpellType spellType = session.getCurrentSpellType();
-                for (var spectator : session.getSpectators()) {
-                    // create response with type of `FINISH_SPELL`
-                    SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+
+                // create spectators' response with type of `FINISH_SPELL`
+                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+                {
                     spectatorResponseBuilder.setResponseType(ResponseType.FINISH_SPELL);
 
                     // build spell description
                     var spellDescriptionBuilder = spectatorResponseBuilder.getSpellDescriptionBuilder();
                     spellDescriptionBuilder
-                        .setSpellType(spellType)
-                        .setSpellTemplateId(templateId)
-                        .getSpellTemplateOffsetBuilder()
+                            .setSpellType(spellType)
+                            .setSpellTemplateId(templateId)
+                            .getSpellTemplateOffsetBuilder()
                             .setX(x)
                             .setY(y)
                             .build();
                     spellDescriptionBuilder.build();
+                }
 
+                for (var spectator : session.getSpectators()) {
                     spectator.streamObserver().onNext(spectatorResponseBuilder.build());
                 }
             }
-        }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Invalid request: request type must be 'FINISH_SPELL' and FinishSpell must be provided");
-        }
-        else if (!sessionExists) {
-            // session does not exist
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session with id " + sessionId + " not found");
+
+            // clear the session state for the new spell drawing
+            session.clearCurrentDrawing();
         }
         else {
-            // attacker id does not match player id
-            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Attacker id " + attackerId + " does not match player id " + playerId);
-        }
-
-        if (sessionExists) {
-            // clear the session state for the new spell drawing
-            var session = sessionManager.getSessionById(sessionId);
-            assert(session.isPresent());
-            session.get().clearCurrentDrawing();
+            // error occurred
+            logger.info("Cannot draw spell, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());

@@ -31,8 +31,8 @@ import java.util.logging.Logger;
 
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
     // TODO: test that logic that involves these constants works correctly
-    private static final long SESSION_CREATION_TIMEOUT_MS = 15 * 1000; // 15s   /* 30 * 60 * 1000; // 30min */
-    private static final long SESSION_CREATION_COOLDOWN_MS = 30 * 1000; // 30s   /* 24 * 60 * 60 * 1000; // 24h */
+    private static final long SESSION_CREATION_TIMEOUT_MS = 5 * 1000; // 5s   /* 30 * 60 * 1000; // 30min */
+    private static final long SESSION_CREATION_COOLDOWN_MS = 5 * 1000; // 5s   /* 24 * 60 * 60 * 1000; // 24h */
 
     private final Logger logger = Logger.getLogger(ProtectionWallSetupService.class.getName());
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
