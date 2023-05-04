@@ -390,7 +390,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         else {
             // error occurred
-            logger.info("Cannot draw spell, reason: '" + serverError.get().getMessage() + "'");
+            logger.info("Cannot finish spell, reason: '" + serverError.get().getMessage() + "'");
             responseBuilder.setError(serverError.get());
         }
 
@@ -399,53 +399,35 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
 
-    // TODO: write description
+
+    /**
+     * Removes drawn spells descriptions from {@link AttackSession} instance associated with player, and notifies spectators of the clearing canvas event.
+     */
     @Override
     public void clearCanvas(SpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, RequestType.CLEAR_CANVAS);
 
-        // TODO: store sessionManager.getSessionById(sessionId) into sessionOpt variable and use it where needed (same applies to other methods)
-        boolean isRequestValid = (request.getRequestType() == RequestType.CLEAR_CANVAS);
-        boolean sessionExists  = isRequestValid && sessionManager.getSessionById(sessionId).isPresent();
-        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-
-        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
-            assert(sessionManager.getSessionById(sessionId).isPresent());
-            AttackSession session = sessionManager.getSessionById(sessionId).get();
+        if (serverError.isEmpty()) {
+            AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
             // clearing drawn spells
             session.clearDrawnSpellsDescriptions();
 
             // notifying spectators to clear the canvas
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
             for (var spectator : session.getSpectators()) {
-                SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-                spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
-
                 spectator.streamObserver().onNext(spectatorResponseBuilder.build());
             }
 
             responseBuilder.setSuccess(true);
         }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Invalid request: request type must be 'CLEAN_CANVAS', got '" + request.getRequestType() + "'");
-        }
-        else if (!sessionExists) {
-            // session does not exist
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session with id " + sessionId + " not found");
-        }
         else {
-            // attacker id does not match player id
-            int attackerId = sessionManager.getSessionById(sessionId).get().getAttackingPlayerId();
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Attacker id " + attackerId + " does not match player id " + playerId);
+            // error occurred
+            logger.info("Cannot clear canvas, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
