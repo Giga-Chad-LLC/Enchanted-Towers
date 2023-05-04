@@ -435,23 +435,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
 
-    // TODO: write description
-    // TODO: set clearCanvas event to all spectators
+
+    /**
+     * Compares player's drawn enchantment (which is the list of {@link TemplateDescription}) with the actual enchantment stored inside {@link ProtectionWall} of {@link Tower} that is being under attack. Comparison is being made by calling {@link EnchantmentMatchingAlgorithm#getEnchantmentMatchStatsWithHausdorffMetric} method.
+     */
     @Override
     public void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
         MatchedSpellStatsResponse.Builder responseBuilder = MatchedSpellStatsResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, RequestType.COMPARE_DRAWN_SPELLS);
 
-        Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        if (serverError.isEmpty()) {
+            AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
-        boolean isRequestValid = (request.getRequestType() == RequestType.COMPARE_DRAWN_SPELLS);
-        boolean sessionExists  = isRequestValid && sessionOpt.isPresent();
-        boolean AttackerIdMatchesPlayerId = sessionExists && playerId == sessionOpt.get().getAttackingPlayerId();
-
-        if (isRequestValid && sessionExists && AttackerIdMatchesPlayerId) {
-            AttackSession session = sessionOpt.get();
+            // TODO: create interactor that modifies game models
             Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
             ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
 
@@ -464,6 +461,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             Map<SpellType, Double> matches = EnchantmentMatchingAlgorithm.getEnchantmentMatchStatsWithHausdorffMetric(guess, actual);
 
             logger.info("Got matches: " + matches);
+
+            // TODO: clear drawn spells inside attack session
+            // TODO: set clearCanvas event to all spectators
 
             // add spell matching stats into response
             List<MatchedSpellStatsResponse.SpellStat> spellStats = new ArrayList<>();
@@ -482,22 +482,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             responseBuilder.addAllStats(spellStats);
         }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Invalid request: request type must be 'COMPARE_DRAWN_SPELLS', got '" + request.getRequestType() + "'");
-        }
-        else if (!sessionExists) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "Attack session with id " + sessionId + " not found");
-        }
         else {
-            // attacker id stored inside session does not match player id
-            int attackerId = sessionOpt.get().getAttackingPlayerId();
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Attacker id " + attackerId + " does not match player id " + playerId);
+            // error occurred
+            logger.info("Cannot compare drawn spells, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
