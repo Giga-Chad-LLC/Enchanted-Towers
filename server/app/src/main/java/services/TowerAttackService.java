@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import components.session.AttackSession;
 import components.session.AttackSession.Spectator;
 import components.session.AttackSessionManager;
+import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.LeaveAttackRequest;
@@ -892,7 +893,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     /**
      * <p>The callback is intended to be fired once the session expires.</p>
-     * <p>Callback is <code>synchronized</code> because {@link AttackSession} fires it in another thread.</p>
+     * <p>Callback is <code>synchronized</code> because {@link AttackSession} fires it in another thread using {@link Timeout} utility.</p>
      * <p><b>The callback does all the following actions:</b></p>
      * <ol>
      *     <li>Marks the tower as not being under attack any more</li>

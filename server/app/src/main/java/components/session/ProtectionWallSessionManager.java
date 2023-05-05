@@ -35,12 +35,15 @@ public class ProtectionWallSessionManager {
         }
     }
 
-    // TODO: before removing session, cancel timeout of SessionExpiredCallback
     public void remove(ProtectionWallSession session) {
         synchronized (lock) {
             boolean removed = sessions.remove(session.getTowerId(), session);
             if (!removed) {
                 throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
+            }
+            else {
+                // cancel timeout of SessionExpiredCallback
+                session.cancelExpirationTimeout();
             }
         }
     }

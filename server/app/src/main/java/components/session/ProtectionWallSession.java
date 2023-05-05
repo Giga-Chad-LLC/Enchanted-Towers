@@ -1,5 +1,6 @@
 package components.session;
 
+import components.time.Timeout;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.game_logic.CanvasState;
 import enchantedtowers.game_models.TemplateDescription;
@@ -7,8 +8,11 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.logging.Logger;
 
 public class ProtectionWallSession {
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 10 * 1000; // 10s
+
     private final int id;
     private final int playerId;
     private final int towerId;
@@ -16,9 +20,13 @@ public class ProtectionWallSession {
     private final StreamObserver<SessionInfoResponse> playerResponseObserver;
     // TODO: keep track of canvas state
     private final CanvasState canvasState = new CanvasState();
-    private final IntConsumer onSessionExpiredCallback;
+    private final Timeout sessionExpirationTimeout;
+    private static final Logger logger = Logger.getLogger(ProtectionWallSession.class.getName());
+
     // this lock object is used as mutual exclusion lock
+    // TODO: remove lock since all rpc calls of ProtectionWallSetupService are sync
     private final Object lock = new Object();
+
 
     ProtectionWallSession(int id,
                           int playerId,
@@ -31,8 +39,17 @@ public class ProtectionWallSession {
         this.towerId = towerId;
         this.protectionWallId = protectionWallId;
         this.playerResponseObserver = playerResponseObserver;
-        // TODO: create Timeout which fires onSessionExpiredCallback
-        this.onSessionExpiredCallback = onSessionExpiredCallback;
+
+        // timeout event that fires onSessionExpiredCallback
+        logger.info("starting session expiration timeout (session id " + id + ")");
+        this.sessionExpirationTimeout = new Timeout(
+                SESSION_EXPIRATION_TIMEOUT_MS,
+                () -> onSessionExpiredCallback.accept(this.id)
+        );
+    }
+
+    public void cancelExpirationTimeout() {
+        this.sessionExpirationTimeout.cancel();
     }
 
     public int getId() {

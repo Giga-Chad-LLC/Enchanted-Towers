@@ -1,5 +1,6 @@
 package services;
 
+import components.session.AttackSession;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
@@ -671,30 +672,41 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
 
-    private void onSessionExpired(int sessionId) {
-        // TODO: maybe it should be marked as `synchronized`
+    /**
+     * <p>The callback is intended to be fired once the session expires.</p>
+     * <p>Callback is <code>synchronized</code> because {@link ProtectionWallSession} fires it in another thread using {@link Timeout} utility.</p>
+     * <p><b>The callback does all the following actions:</b></p>
+     * <ol>
+     *     <li>Marks the tower as not being under protection wall creation any more</li>
+     *     <li>Sends response with session expired state to the creator and disconnects him</li>
+     * </ol>
+     */
+    private synchronized void onSessionExpired(int sessionId) {
         Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
-        // TODO: better to ignore callback rather than throw
-        if (sessionOpt.isEmpty()) {
-            throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
+
+        if (sessionOpt.isPresent()) {
+            ProtectionWallSession session = sessionOpt.get();
+            logger.info("onSessionExpired: session with id " + sessionId + " expired");
+
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
+            // unblock players from attacking the tower
+            interactor.unsetProtectionWallInstallation();
+
+            // sending response with session expiration and closing connection
+            SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+            responseBuilder.getExpirationBuilder().build();
+
+            var responseObserver = session.getPlayerResponseObserver();
+            responseObserver.onNext(responseBuilder.build());
+            responseObserver.onCompleted();
+
+            // removing session
+            sessionManager.remove(session);
         }
-        ProtectionWallSession session = sessionOpt.get();
-
-        // unsetting protection creation state
-        ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
-        // unblock players from attacking the tower
-        interactor.unsetProtectionWallInstallation();
-
-        // sending response with session expiration and closing connection
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
-        responseBuilder.getExpirationBuilder().build();
-
-        var responseObserver = session.getPlayerResponseObserver();
-        responseObserver.onNext(responseBuilder.build());
-        responseObserver.onCompleted();
-
-        // removing session
-        sessionManager.remove(session);
+        else {
+            // session not found
+            logger.info("SessionExpiredCallback: session with id " + sessionId + " not found");
+        }
     }
 }
