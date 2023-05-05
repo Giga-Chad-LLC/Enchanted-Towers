@@ -580,9 +580,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         ProtectionWallSession session = sessionOpt.get();
 
         // unsetting protection creation state
-        Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
+        ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
         // unblock players from attacking the tower
-        tower.setUnderProtectionWallsInstallation(false);
+        interactor.unsetProtectionWallInstallation();
 
         // sending response with session expiration and closing connection
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
