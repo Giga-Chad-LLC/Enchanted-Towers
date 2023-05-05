@@ -279,20 +279,16 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             logger.info("Completing enchantment for session with id " + session.getId() +
                     " of player with id " + session.getPlayerId());
 
-            // TODO: move into interactor
-            // complete enchantment and save it into protection wall of the tower
-            Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
             // create enchantment from spell templates
-            Enchantment enchantment = new Enchantment(session.getTemplateDescriptions());
-            ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
-            wall.setEnchantment(enchantment);
+            interactor.createNewEnchantmentForProtectionWall(session.getTemplateDescriptions(), session.getProtectionWallId());
             // tower is no longer under protection wall installation
-            tower.setUnderProtectionWallsInstallation(false);
+            interactor.unsetProtectionWallInstallation();
 
             // TODO: save the updated tower state in database
 
-            logger.info("New enchantment of protection wall with id " + wall.getId() +
-                    " of tower with id " + tower.getId() + " installed");
+            logger.info("New enchantment of protection wall with id " + session.getProtectionWallId() +
+                    " of tower with id " + session.getTowerId() + " installed");
 
             responseBuilder.setSuccess(true);
 
