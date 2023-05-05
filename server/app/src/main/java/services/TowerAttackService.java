@@ -27,6 +27,7 @@ import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
+import interactors.TowerAttackServiceInteractor;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
@@ -64,8 +65,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         responseObserver.onCompleted();
     }
 
-    // TODO: interactors must modify game models, not request handlers
-
     /**
      * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
      */
@@ -82,20 +81,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             int playerId = request.getPlayerData().getPlayerId();
             int towerId = request.getTowerId();
 
-            // TODO: move into interactor
-            // mark tower as being under attack and retrieve enchanted protection wall
-            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(towerId);
             // mark tower as being under attack
-            tower.setUnderAttack(true);
+            interactor.setTowerUnderAttackState();
 
-            // retrieve any enchanted protection wall
-            ProtectionWall wall = tower.getEnchantedProtectionWall();
-
-            // creating new attack session associated with player and registering onSessionExpiredCallback
             logger.info("Creating attack session for player with id " + playerId);
 
+            // creating new attack session associated with player and registering onSessionExpiredCallback
             AttackSession session = sessionManager.createAttackSession(
-                    playerId, towerId, wall.getId(), streamObserver, onSessionExpiredCallback);
+                    playerId, towerId, interactor.getEnchantedProtectionWallId(), streamObserver, onSessionExpiredCallback);
 
             // create cancel handler to hook the event of client closing the connection
             // in this case spectators must be disconnected and attack session must be removed
@@ -140,6 +134,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         if (sessionExists && isPlayerAssociatedWithFoundSession) {
             AttackSession session = sessionManager.getSessionById(sessionId).get();
+
+            // TODO: mark tower to not be under attack
 
             // send onCompleted() to all spectators
             for (var spectator : session.getSpectators()) {
@@ -875,8 +871,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         logger.info("Attacker with id " + playerId + " registered in attack session with id " +
                 session.getId() + " cancelled stream. Destroying the corresponding attack session...");
 
-        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         // TODO: move into interactor
+        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         // mark tower to not be under attack
         tower.setUnderAttack(false);
 
@@ -913,6 +909,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         AttackSession session = sessionOpt.get();
 
+        // TODO: move into interactor
         Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
         // mark tower to not be under attack
         tower.setUnderAttack(false);
