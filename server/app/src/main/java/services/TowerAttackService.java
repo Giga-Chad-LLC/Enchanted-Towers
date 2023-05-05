@@ -135,7 +135,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         if (sessionExists && isPlayerAssociatedWithFoundSession) {
             AttackSession session = sessionManager.getSessionById(sessionId).get();
 
-            // TODO: mark tower to not be under attack
+            // mark tower to not be under attack
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+            interactor.unsetTowerUnderAttackState();
 
             // send onCompleted() to all spectators
             for (var spectator : session.getSpectators()) {
@@ -419,12 +421,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         if (serverError.isEmpty()) {
             AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
-            // TODO: create interactor that modifies game models
-            Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
-            ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
-
-            Enchantment guess = new Enchantment(session.getDrawnSpellsDescriptions());
-            Enchantment actual = wall.getEnchantment().get();
+            // retrieve actual and guess enchantments
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+            Enchantment guess  = interactor.enchantmentOf(session.getDrawnSpellsDescriptions());
+            Enchantment actual = interactor.getWallEnchantment(session.getProtectionWallId());
 
             logger.info("Comparing player's guess enchantment with actual enchantment of protection wall...");
 
