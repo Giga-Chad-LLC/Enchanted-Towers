@@ -29,10 +29,12 @@ import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
 
+// TODO: add rpc methods descriptions
+
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
     // TODO: test that logic that involves these constants works correctly
-    private static final long SESSION_CREATION_TIMEOUT_MS = 5 * 1000; // 5s   /* 30 * 60 * 1000; // 30min */
-    private static final long SESSION_CREATION_COOLDOWN_MS = 5 * 1000; // 5s   /* 24 * 60 * 60 * 1000; // 24h */
+    private static final long CAPTURE_LOCK_TIMEOUT_MS = 5 * 1000; // 5s   /* 30 * 60 * 1000; // 30min */
+    private static final long SESSION_CREATION_COOLDOWN_MS = 10 * 1000; // 10s   /* 24 * 60 * 60 * 1000; // 24h */
 
     private final Logger logger = Logger.getLogger(ProtectionWallSetupService.class.getName());
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
@@ -50,20 +52,14 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         // TODO: add lock on the whole captureTower method
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        int towerId = request.getTowerId();
-        int playerId = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateTowerCapturingRequest(request);
 
-        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+        if (serverError.isEmpty()) {
+            int towerId = request.getTowerId();
+            int playerId = request.getPlayerData().getPlayerId();
 
-        boolean towerExists    = towerOpt.isPresent();
-        boolean towerAlreadyOwnedByPlayer = towerExists &&
-                                            towerOpt.get().getOwnerId().isPresent() &&
-                                            towerOpt.get().getOwnerId().get() == playerId;
-        boolean towerProtected = towerExists && towerOpt.get().isProtected();
-
-        if (towerExists && !towerAlreadyOwnedByPlayer && !towerProtected) {
             // tower may be captured
-            Tower tower = towerOpt.get();
+            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
 
             // make player an owner of tower and allow to set up protection walls
             tower.setOwnerId(playerId);
@@ -71,7 +67,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             // TODO: what if player is already in creation session?
             // setting timeout of protection walls installation
-            timeouts.put(towerId, new Timeout(SESSION_CREATION_TIMEOUT_MS, () -> {
+            timeouts.put(towerId, new Timeout(CAPTURE_LOCK_TIMEOUT_MS, () -> {
                 logger.info("Remove capture lock for tower with id " + tower.getId() + " of owner with id " + playerId);
                 tower.setLastProtectionWallModificationTimestamp(Instant.now());
                 tower.setUnderCaptureLock(false);
@@ -83,28 +79,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             responseBuilder.setSuccess(true);
         }
-        else if (!towerExists) {
-            logger.info("Tower with id " + towerId + " not found");
-
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.TOWER_NOT_FOUND,
-                    "Tower with id " + towerId + " not found");
-        }
-        else if (towerAlreadyOwnedByPlayer) {
-            logger.info("Tower with id " + towerId + " is already owned by player with id " + playerId);
-
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Tower with id " + towerId + " is already owned by player with id " + playerId);
-        }
         else {
-            // tower is protected
-            logger.info("Tower with id " + towerId + " is being protected by protection walls, capturing failed");
-
-            assert(towerOpt.get().getOwnerId().isPresent());
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Tower with id " + towerId + " protected by player with id " + towerOpt.get().getOwnerId().get());
+            // error occurred
+            logger.info("Tower cannot be captured, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
@@ -393,7 +371,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      *     <li>Player is an owner of the tower</li>
      *     <li>Tower is not being attacked</li>
      *     <li>Protection wall with provided id exists inside tower</li>
-     *     <li>Protection wall is not enchanted (player must destroy enchantment before creating new one)</li>
+     *     <li>Protection wall is not enchanted (<b>player must destroy enchantment before creating new one</b>)</li>
      *     <li><b>One of the following is true:</b></li>
      *     <ol>
      *         <li>Tower is under capture lock</li>
@@ -427,6 +405,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
 
         boolean protectionWallModificationAllowed = !hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded;
+
+        logger.info("hasLastProtectionWallModificationTimestamp=" + hasLastProtectionWallModificationTimestamp +
+                ", cooldownTimeExceeded=" + cooldownTimeExceeded);
+
+        logger.info("protectionWallModificationAllowed=" + protectionWallModificationAllowed +
+                ", isTowerUnderCaptureLock=" + isTowerUnderCaptureLock);
 
         ServerError.Builder errorBuilder = ServerError.newBuilder();
         boolean errorOccurred = false;
@@ -483,8 +467,75 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
 
+    /**
+     * <p>Validates that request of capturing tower may be fulfilled.</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Tower with provided id exists</li>
+     *     <li>Player <b>is not</b> an owner of the tower</li>
+     *     <li>Tower is not under capture lock of other player</li>
+     *     <li>Tower is not protected by any protection walls</li>
+     * </ol>
+     */
+    private Optional<ServerError> validateTowerCapturingRequest(TowerIdRequest request) {
+        int towerId = request.getTowerId();
+        int playerId = request.getPlayerData().getPlayerId();
+
+        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+
+        boolean towerExists = towerOpt.isPresent();
+
+        boolean towerAlreadyOwnedByPlayer =
+                towerExists && towerOpt.get().getOwnerId().isPresent() && towerOpt.get().getOwnerId().get() == playerId;
+
+        boolean towerUnderCaptureLockOfOtherPlayer =
+                towerExists && !towerAlreadyOwnedByPlayer && towerOpt.get().isUnderCaptureLock();
+
+        boolean towerProtected = towerExists && towerOpt.get().isProtected();
+
+
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (!towerExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.TOWER_NOT_FOUND,
+                    "Tower with id " + towerId + " not found");
+        }
+        else if (towerAlreadyOwnedByPlayer) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is already owned by player with id " + playerId);
+        }
+        else if (towerUnderCaptureLockOfOtherPlayer) {
+            errorOccurred = true;
+            int ownerId = towerOpt.get().getOwnerId().get();
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is already under capture lock of player with id " + ownerId);
+        }
+        else if (towerProtected) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " protected by player with id " + towerOpt.get().getOwnerId().get());
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+
     private boolean cooldownTimeBetweenSessionsCreationExceeded(Instant timestamp) {
-        return Duration.between(timestamp, Instant.now()).toMillis() >= SESSION_CREATION_COOLDOWN_MS;
+        long elapsedTime_ms = Duration.between(timestamp, Instant.now()).toMillis();
+        logger.info("Got timestamp: " + timestamp + ", elapsed time " + elapsedTime_ms + "ms");
+        return elapsedTime_ms >= SESSION_CREATION_COOLDOWN_MS;
     }
 
     private void onSessionExpired(int sessionId) {

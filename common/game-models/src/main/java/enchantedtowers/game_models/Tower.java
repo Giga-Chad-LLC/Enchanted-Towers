@@ -21,6 +21,7 @@ public class Tower {
 
     // lock variable is used for synchronization
     private final Object lock;
+    // TODO: remove lock, use synchronized methods
 
 
     public Tower(int towerId, Vector2 position) {
