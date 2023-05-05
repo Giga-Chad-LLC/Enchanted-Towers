@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
-    // TODO: test that logic that involves these constants works correctly
+    // TODO: test that logic that involves these constants works correctly (need to call destroy after enchantment is set)
     private static final long CAPTURE_LOCK_TIMEOUT_MS = 5 * 1000; // 5s   /* 30 * 60 * 1000; // 30min */
     private static final long SESSION_CREATION_COOLDOWN_MS = 10 * 1000; // 10s   /* 24 * 60 * 60 * 1000; // 24h */
 
