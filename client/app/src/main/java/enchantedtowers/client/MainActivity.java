@@ -28,7 +28,10 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, AttackTowerMenuActivity.class);
             startActivity(intent);
         }
-        else {
+        else if (view.getId() == R.id.signUp) {
+            Intent intent = new Intent(MainActivity.this, UserRegistrationActivity.class);
+            startActivity(intent);
+        } else {
             System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view);
         }
     }

@@ -31,6 +31,26 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
+        android:id="@+id/signUp"
+        android:layout_width="65dp"
+        android:layout_height="40dp"
+        android:text="Sign Up"
+        android:textSize="8sp"
+        android:onClick="changeActivity"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/logIn"
+        android:layout_width="65dp"
+        android:layout_height="40dp"
+        android:text="Log in"
+        android:textSize="8sp"
+        android:onClick="changeActivity"
+        app:layout_constraintEnd_toStartOf="@+id/signUp"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
         android:id="@+id/changeToMapActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
