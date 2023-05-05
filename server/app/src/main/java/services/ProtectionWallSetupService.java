@@ -45,13 +45,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
     // TODO: check distance between player and tower
 
-    // TODO: add synchronized on all rpc methods
     /**
      * <p>Starts timeout before the trigger of which creation of new protection walls is allowed, and tower is set to be under capture lock during which no players are allowed to attack the tower.</p>
      * <p>Once the timeout triggers capture lock is removed and tower can be attacked, and protection walls can be installed only once in {@link ProtectionWallSetupService#SESSION_CREATION_COOLDOWN_MS} time period.</p>
      */
     @Override
-    public void captureTower(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void captureTower(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateTowerCapturingRequest(request);
@@ -94,7 +93,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
 
     @Override
-    public void tryEnterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void tryEnterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
@@ -116,7 +115,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void enterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
+    public synchronized void enterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
 
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
@@ -162,7 +161,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void addSpell(ProtectionWallRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
+    public synchronized void addSpell(ProtectionWallRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, ProtectionWallRequest.RequestType.ADD_SPELL);
@@ -227,7 +226,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, ProtectionWallRequest.RequestType.CLEAR_CANVAS);
@@ -252,7 +251,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
     @Override
-    public void completeEnchantment(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void completeEnchantment(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateCanvasAction(request, ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT);
@@ -344,6 +343,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
         boolean protectionWallModificationAllowed = !hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded;
 
+        // TODO: remove logging after debugging
         logger.info("hasLastProtectionWallModificationTimestamp=" + hasLastProtectionWallModificationTimestamp +
                 ", cooldownTimeExceeded=" + cooldownTimeExceeded);
 
@@ -532,6 +532,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
     private boolean cooldownTimeBetweenSessionsCreationExceeded(Instant timestamp) {
         long elapsedTime_ms = Duration.between(timestamp, Instant.now()).toMillis();
+        // TODO: remove logging after debugging
         logger.info("Got timestamp: " + timestamp + ", elapsed time " + elapsedTime_ms + "ms");
         return elapsedTime_ms >= SESSION_CREATION_COOLDOWN_MS;
     }
