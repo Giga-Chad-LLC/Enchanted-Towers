@@ -1,7 +1,5 @@
 package services;
 
-import components.session.AttackSession;
-import components.session.AttackSessionManager;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
@@ -15,9 +13,9 @@ import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
-import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
+import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
@@ -30,8 +28,6 @@ import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
-
-// TODO: add rpc methods descriptions
 
 public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceImplBase {
     // TODO: test that logic that involves these constants works correctly
@@ -92,6 +88,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     }
 
 
+    /**
+     * <p>Validates request and sends either error if validation fails or success letting client enter protection wall creation session.</p>
+     * <p>This method serves as a convenient check of ability to enter the creation session for clients, thus {@link ProtectionWallSetupService#enterProtectionWallCreationSession} is still required to make the appropriate validations.</p>
+     */
     @Override
     public synchronized void tryEnterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -114,6 +114,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+
+    /**
+     * Creates {@link ProtectionWallSession} associated with provided tower id and player id if the validation of request succeeds.
+     */
     @Override
     public synchronized void enterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
@@ -160,6 +164,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         }
     }
 
+
+    /**
+     * Matches a drawn spell with templates and either sends error if no templates matched or stores the matched template in {@link ProtectionWallSession} and sends template id to the client.
+     */
     @Override
     public synchronized void addSpell(ProtectionWallRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
@@ -225,6 +233,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+
+    /**
+     * Removes stored spell templates from {@link ProtectionWallSession}.
+     */
     @Override
     public synchronized void clearCanvas(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -250,6 +262,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+
+    /**
+     * Creates {@link Enchantment} from spell templates stored in {@link ProtectionWallSession}, saves the enchantment in the corresponding {@link Tower}. After that closes the connection with client and removes the session from {@link ProtectionWallSessionManager}.
+     */
     @Override
     public synchronized void completeEnchantment(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
@@ -295,7 +311,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+
     // TODO: create destroyEnchantment method that destroys enchantment of protection wall
+
+
 
     // helper methods
     /**
@@ -465,6 +484,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         }
     }
 
+
     /**
      * <p>Validates that request of capturing tower may be fulfilled.</p>
      * <p><b>Required conditions:</b></p>
@@ -537,6 +557,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         return elapsedTime_ms >= SESSION_CREATION_COOLDOWN_MS;
     }
 
+
     /**
      * <p>Removes the under-protection-wall-installation state of the underlying {@link Tower} of the provided {@link ProtectionWallSession}, and removes the {@link ProtectionWallSession} from {@link ProtectionWallSessionManager}.</p>
      * <p>Callback should be called in the case if client closes the connection, i.e. {@link ServerCallStreamObserver#setOnCancelHandler} method of protection wall creator's {@link StreamObserver} should fire this callback.</p>
@@ -551,6 +572,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         tower.setUnderProtectionWallsInstallation(false);
         sessionManager.remove(session);
     }
+
 
     private void onSessionExpired(int sessionId) {
         Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);

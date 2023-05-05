@@ -38,6 +38,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     private final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
 
+    // TODO: check distance between player and tower
+
     // rpc calls
     /**
      * <p>If player is neither in an attack session nor in a spectating mode, then notifies client that creation of an attack session is allowed. Otherwise, sends error.</p>
