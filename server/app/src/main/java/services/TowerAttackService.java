@@ -749,7 +749,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * <ol>
      *     <li>Request type is valid</li>
      *     <li>Attack session with provided id exists</li>
-     *     <li>Player's id matches with the attacked id store inside the attack session</li>
+     *     <li>Player's id matches with the attacker id stored in the attack session</li>
      * </ol>
      */
     private Optional<ServerError> validateCanvasAction(SpellRequest request, RequestType requiredRequestType) {
@@ -777,7 +777,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     ServerError.ErrorType.INVALID_REQUEST,
             "Invalid request: request type must be '" +
                     requiredRequestType + "'" +
-                    (additionalRequestCheck ? ", additional request check failed" : ""));
+                    (!additionalRequestCheck ? ", additional request check failed" : ""));
         }
         else if (!sessionExists) {
             errorOccurred = true;
@@ -906,10 +906,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         }
         AttackSession session = sessionOpt.get();
 
-        // TODO: move into interactor
-        Tower tower = TowersRegistry.getInstance().getTowerById(session.getAttackedTowerId()).get();
         // mark tower to not be under attack
-        tower.setUnderAttack(false);
+        TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+        interactor.unsetTowerUnderAttackState();
 
         // closing connection with spectators
         disconnectSpectators(session);
