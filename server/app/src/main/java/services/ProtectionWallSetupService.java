@@ -255,59 +255,41 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     public void completeEnchantment(ProtectionWallRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT);
 
-        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
+        if (serverError.isEmpty()) {
+            ProtectionWallSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
-        boolean isRequestValid = (request.getRequestType() == ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT);
-        boolean sessionExists = sessionOpt.isPresent();
-        boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
+            logger.info("Completing enchantment for session with id " + session.getId() +
+                    " of player with id " + session.getPlayerId());
 
-        if (isRequestValid && sessionExists && isPlayerIdValid) {
-            logger.info("Completing enchantment for session with id " + sessionId + " of player with id " + playerId);
-
+            // TODO: move into interactor
             // complete enchantment and save it into protection wall of the tower
-            ProtectionWallSession session = sessionOpt.get();
             Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
-
             // create enchantment from spell templates
             Enchantment enchantment = new Enchantment(session.getTemplateDescriptions());
-
             ProtectionWall wall = tower.getProtectionWallById(session.getProtectionWallId()).get();
             wall.setEnchantment(enchantment);
-
             // tower is no longer under protection wall installation
-             tower.setUnderProtectionWallsInstallation(false);
+            tower.setUnderProtectionWallsInstallation(false);
 
-            // TODO: call TowerRegistry.save() to save the updated tower state in DB
+            // TODO: save the updated tower state in database
 
             logger.info("New enchantment of protection wall with id " + wall.getId() +
-                             " of tower with id " + tower.getId() + " installed");
+                    " of tower with id " + tower.getId() + " installed");
 
             responseBuilder.setSuccess(true);
+
             // closing connection with client
             session.getPlayerResponseObserver().onCompleted();
 
             // removing session
             sessionManager.remove(session);
         }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-            "Request type must be '" + ProtectionWallRequest.RequestType.COMPLETE_ENCHANTMENT + "'" +
-                    ", got '" + request.getRequestType() + "'");
-        }
-        else if (!sessionExists) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-            "ProtectionWallSession with id " + sessionId + " not found");
-        }
         else {
-            // player id is not the same as the player id stored inside session instance
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player id " + playerId + " does not match the required id " + sessionOpt.get().getPlayerId());
+            // error occurred
+            logger.info("Cannot complete enchantment, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
