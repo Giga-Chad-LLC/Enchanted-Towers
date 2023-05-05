@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/auth-service/registration-request.proto";
+import "requests/auth-service/login-request.proto";
+import "requests/auth-service/logout-request.proto";
+// responses
+import "responses/auth-service/login-response.proto";
+import "responses/common/action-result-response.proto";
+
+
+service AuthService {
+  rpc Register(request_models.RegistrationRequest) returns (response_models.ActionResultResponse) {}
+  rpc Login(request_models.LoginRequest) returns (response_models.LoginResponse) {}
+  rpc Logout(request_models.LogoutRequest) returns (response_models.ActionResultResponse) {}
+}
