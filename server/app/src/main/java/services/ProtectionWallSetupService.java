@@ -137,10 +137,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtectionWallSession session = sessionManager.createSession(
                     playerId, towerId, protectionWallId, streamObserver, onSessionExpiredCallback);
 
-            // TODO: move into interactor
-            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
-            // block other players from attacking the tower
-            tower.setUnderProtectionWallsInstallation(true);
+            // setting tower in protection wall installation mode
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(towerId);
+            interactor.setProtectionWallInstallation();
 
             int sessionId = session.getId();
 
