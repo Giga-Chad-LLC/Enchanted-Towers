@@ -33,12 +33,12 @@ public class ProtectionWallSessionManager {
 
     public void remove(ProtectionWallSession session) {
         boolean removed = sessions.remove(session.getTowerId(), session);
-        if (!removed) {
-            throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
-        }
-        else {
+        if (removed) {
             // cancel timeout of SessionExpiredCallback
             session.cancelExpirationTimeout();
+        }
+        else {
+            throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
         }
     }
 
