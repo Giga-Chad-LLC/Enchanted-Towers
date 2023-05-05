@@ -60,6 +60,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             int towerId = request.getTowerId();
             int playerId = request.getPlayerData().getPlayerId();
 
+            // TODO: move into interactor
             // tower may be captured
             Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
 
@@ -132,6 +133,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtectionWallSession session = sessionManager.createSession(
                     playerId, towerId, protectionWallId, streamObserver, onSessionExpiredCallback);
 
+            // TODO: move into interactor
             Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
             // block other players from attacking the tower
             tower.setUnderProtectionWallsInstallation(true);
@@ -458,6 +460,66 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         }
     }
 
+
+    /**
+     * isRequestValid && sessionExists && isPlayerIdValid
+     * <p>Validates requests that are related to modifying canvas or changing canvas related state.</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Request type is valid</li>
+     *     <li>{@link ProtectionWallSession} with provided id exists</li>
+     *     <li>Player's id matches with the creator's id stored in {@link ProtectionWallSession}</li>
+     * </ol>
+     */
+    private Optional<ServerError> validateCanvasAction(
+            ProtectionWallRequest request, ProtectionWallRequest.RequestType requestType) {
+        final int sessionId = request.getSessionId();
+        final int playerId  = request.getPlayerData().getPlayerId();
+
+        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
+
+        boolean additionalRequestCheck = switch (requestType) {
+            case ADD_SPELL -> request.hasSpell();
+            case CLEAR_CANVAS, COMPLETE_ENCHANTMENT -> true;
+            case UNRECOGNIZED -> false;
+        };
+
+        boolean isRequestValid = (request.getRequestType() == requestType) && additionalRequestCheck;
+        boolean sessionExists = isRequestValid && sessionOpt.isPresent();
+        boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
+
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (!isRequestValid) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Request type must be '" + requestType + "'" +
+                            ", got '" + request.getRequestType() + "'" +
+                            (!additionalRequestCheck ? ", additional request check failed" : ""));
+        }
+        else if (!sessionExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.SESSION_NOT_FOUND,
+                    "ProtectionWallSession with id " + sessionId + " not found");
+        }
+        else if (!isPlayerIdValid) {
+            errorOccurred = true;
+            // player id is not the same as the player id stored inside session instance
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player id " + playerId + " does not match the required id " + sessionOpt.get().getPlayerId());
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
 
     /**
      * <p>Validates that request of capturing tower may be fulfilled.</p>
