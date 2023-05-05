@@ -1,5 +1,7 @@
 package services;
 
+import components.session.AttackSession;
+import components.session.AttackSessionManager;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
@@ -43,13 +45,13 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
     // TODO: check distance between player and tower
 
+    // TODO: add synchronized on all rpc methods
     /**
      * <p>Starts timeout before the trigger of which creation of new protection walls is allowed, and tower is set to be under capture lock during which no players are allowed to attack the tower.</p>
      * <p>Once the timeout triggers capture lock is removed and tower can be attacked, and protection walls can be installed only once in {@link ProtectionWallSetupService#SESSION_CREATION_COOLDOWN_MS} time period.</p>
      */
     @Override
     public void captureTower(TowerIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
-        // TODO: add lock on the whole captureTower method
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateTowerCapturingRequest(request);
@@ -97,11 +99,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
 
         if (serverError.isEmpty()) {
-            int towerId = request.getTowerId();
-            int protectionWallId = request.getProtectionWallId();
-            int playerId = request.getPlayerData().getPlayerId();
-            logger.info("Player with id " + playerId + " can enter creation session of protection wall with id " +
-                            protectionWallId + " of tower with id " + towerId);
+            logger.info("Player with id " + request.getPlayerData().getPlayerId() +
+                    " can enter creation session of protection wall with id " +
+                    request.getProtectionWallId() + " of tower with id " + request.getTowerId());
 
             responseBuilder.setSuccess(true);
         }
@@ -132,24 +132,27 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtectionWallSession session = sessionManager.createSession(
                     playerId, towerId, protectionWallId, streamObserver, onSessionExpiredCallback);
 
-            int sessionId = session.getId();
-
             Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
             // block other players from attacking the tower
             tower.setUnderProtectionWallsInstallation(true);
 
+            int sessionId = session.getId();
+
             // create cancel handler to hook the event of client closing the connection
+            var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
+            // `setOnCancelHandler` must be called before any `onNext` calls
+            callObserver.setOnCancelHandler(() -> onProtectionWallCreatorStreamCancellation(session));
+
+            /*
             {
-                var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
-                // `setOnCancelHandler` must be called before any `onNext` calls
-                callObserver.setOnCancelHandler(() -> {
-                    logger.info("Player with id " + playerId +
-                            " cancelled stream. Destroying corresponding protection wall session with id " + sessionId + "...");
-                    // unblock other players from attacking the tower
-                    tower.setUnderProtectionWallsInstallation(false);
-                    sessionManager.remove(session);
-                });
+                logger.info("Player with id " + playerId +
+                        " cancelled stream. Destroying corresponding protection wall session with id " +
+                        sessionId + "...");
+                // unblock other players from attacking the tower
+                tower.setUnderProtectionWallsInstallation(false);
+                sessionManager.remove(session);
             }
+            */
 
             // send session id to client
             responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
@@ -536,6 +539,21 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         long elapsedTime_ms = Duration.between(timestamp, Instant.now()).toMillis();
         logger.info("Got timestamp: " + timestamp + ", elapsed time " + elapsedTime_ms + "ms");
         return elapsedTime_ms >= SESSION_CREATION_COOLDOWN_MS;
+    }
+
+    /**
+     * <p>Removes the under-protection-wall-installation state of the underlying {@link Tower} of the provided {@link ProtectionWallSession}, and removes the {@link ProtectionWallSession} from {@link ProtectionWallSessionManager}.</p>
+     * <p>Callback should be called in the case if client closes the connection, i.e. {@link ServerCallStreamObserver#setOnCancelHandler} method of protection wall creator's {@link StreamObserver} should fire this callback.</p>
+     */
+    private void onProtectionWallCreatorStreamCancellation(ProtectionWallSession session) {
+        logger.info("Player with id " + session.getPlayerId() +
+                " cancelled stream. Destroying corresponding protection wall session with id " +
+                session.getId() + "...");
+
+        Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
+        // unblock other players from attacking the tower
+        tower.setUnderProtectionWallsInstallation(false);
+        sessionManager.remove(session);
     }
 
     private void onSessionExpired(int sessionId) {
