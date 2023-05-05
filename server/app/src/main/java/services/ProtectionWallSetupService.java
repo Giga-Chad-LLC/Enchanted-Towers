@@ -577,9 +577,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 " cancelled stream. Destroying corresponding protection wall session with id " +
                 session.getId() + "...");
 
-        Tower tower = TowersRegistry.getInstance().getTowerById(session.getTowerId()).get();
+        ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
         // unblock other players from attacking the tower
-        tower.setUnderProtectionWallsInstallation(false);
+        interactor.unsetProtectionWallInstallation();
+
         sessionManager.remove(session);
     }
 
