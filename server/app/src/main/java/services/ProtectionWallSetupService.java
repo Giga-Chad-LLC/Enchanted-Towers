@@ -278,10 +278,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
             // create enchantment from spell templates
             interactor.createNewEnchantmentForProtectionWall(session.getTemplateDescriptions(), session.getProtectionWallId());
+            // updating modification timestamp
+            interactor.updateModificationTimestamp(Instant.now());
             // tower is no longer under protection wall installation
             interactor.unsetProtectionWallInstallation();
-
-            // TODO: save the updated tower state in database
 
             logger.info("New enchantment of protection wall with id " + session.getProtectionWallId() +
                     " of tower with id " + session.getTowerId() + " installed");
