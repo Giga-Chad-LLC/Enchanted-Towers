@@ -204,8 +204,7 @@ class AttackEventWorker extends Thread {
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
                                     .selectSpellType(event.getRequest());
 
-                            logger.info(
-                                    "Got response from selectSpellType: success=" + response.getSuccess() +
+                            logger.info("Got response from selectSpellType: success=" + response.getSuccess() +
                                         "\nmessage='" + response.getError().getMessage() + "'");
 
                         }

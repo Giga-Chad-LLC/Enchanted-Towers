@@ -19,7 +19,7 @@ public class Tower {
     private boolean isUnderAttack;
 
 
-    // lock variable is used to synchronization
+    // lock variable is used for synchronization
     private final Object lock;
 
 

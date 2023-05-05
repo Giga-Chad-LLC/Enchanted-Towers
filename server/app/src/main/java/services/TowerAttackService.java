@@ -865,16 +865,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * <p>Callback should be called in the case if client closes the connection, i.e. {@link ServerCallStreamObserver#setOnCancelHandler} method of attacker's {@link StreamObserver} should fire this callback.</p>
      */
     private void onAttackerStreamCancellation(AttackSession session) {
-        final int playerId = session.getAttackingPlayerId();
-        final int towerId = session.getAttackedTowerId();
+        logger.info("Attacker with id " + session.getAttackingPlayerId() +
+                    " registered in attack session with id " + session.getId() +
+                    " cancelled stream. Destroying the corresponding attack session...");
 
-        logger.info("Attacker with id " + playerId + " registered in attack session with id " +
-                session.getId() + " cancelled stream. Destroying the corresponding attack session...");
-
-        // TODO: move into interactor
-        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         // mark tower to not be under attack
-        tower.setUnderAttack(false);
+        TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+        interactor.unsetTowerUnderAttackState();
 
         // disconnecting spectators
         disconnectSpectators(session);
