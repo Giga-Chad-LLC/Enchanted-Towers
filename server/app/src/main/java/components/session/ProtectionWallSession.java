@@ -18,14 +18,9 @@ public class ProtectionWallSession {
     private final int towerId;
     private final int protectionWallId;
     private final StreamObserver<SessionInfoResponse> playerResponseObserver;
-    // TODO: keep track of canvas state
     private final CanvasState canvasState = new CanvasState();
     private final Timeout sessionExpirationTimeout;
     private static final Logger logger = Logger.getLogger(ProtectionWallSession.class.getName());
-
-    // this lock object is used as mutual exclusion lock
-    // TODO: remove lock since all rpc calls of ProtectionWallSetupService are sync
-    private final Object lock = new Object();
 
 
     ProtectionWallSession(int id,
@@ -73,20 +68,14 @@ public class ProtectionWallSession {
     }
 
     public void addTemplateToCanvasState(TemplateDescription template) {
-        synchronized (lock) {
-            canvasState.addTemplate(template);
-        }
+        canvasState.addTemplate(template);
     }
 
     public void clearDrawnSpellsDescriptions() {
-        synchronized (lock) {
-            canvasState.clear();
-        }
+        canvasState.clear();
     }
 
     public List<TemplateDescription> getTemplateDescriptions() {
-        synchronized (lock) {
-            return canvasState.getTemplates();
-        }
+        return canvasState.getTemplates();
     }
 }
