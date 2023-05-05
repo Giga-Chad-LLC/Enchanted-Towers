@@ -67,6 +67,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             timeouts.put(towerId, new Timeout(CAPTURE_LOCK_TIMEOUT_MS, () -> {
                 logger.info("Remove capture lock for tower with id " + towerId + " of owner with id " + playerId);
 
+                // TODO: need to use it?
                 interactor.updateModificationTimestamp(Instant.now());
                 interactor.unsetCaptureLock();
 
@@ -489,6 +490,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      *     <li>Tower with provided id exists</li>
      *     <li>Player <b>is not</b> an owner of the tower</li>
      *     <li>Tower is not under capture lock of other player</li>
+     *     <li>Tower is not under protection wall installation lock of other player</li>
      *     <li>Tower is not protected by any protection walls</li>
      * </ol>
      */
@@ -505,6 +507,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
         boolean towerUnderCaptureLockOfOtherPlayer =
                 towerExists && !towerAlreadyOwnedByPlayer && towerOpt.get().isUnderCaptureLock();
+
+        boolean towerUnderProtectionWallInstallationOfOtherPlayer =
+                towerExists && !towerAlreadyOwnedByPlayer && towerOpt.get().isUnderProtectionWallsInstallation();
 
         boolean towerProtected = towerExists && towerOpt.get().isProtected();
 
@@ -530,6 +535,14 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtoModelsUtils.buildServerError(errorBuilder,
                     ServerError.ErrorType.INVALID_REQUEST,
                     "Tower with id " + towerId + " is already under capture lock of player with id " + ownerId);
+        }
+        else if (towerUnderProtectionWallInstallationOfOtherPlayer) {
+            errorOccurred = true;
+            int ownerId = towerOpt.get().getOwnerId().get();
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId +
+                            " is under protection wall installation lock of player with id " + ownerId);
         }
         else if (towerProtected) {
             errorOccurred = true;
