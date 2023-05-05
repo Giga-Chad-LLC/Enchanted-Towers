@@ -19,6 +19,7 @@ import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
+import interactors.ProtectionWallSetupServiceInteractor;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
@@ -55,20 +56,20 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             int towerId = request.getTowerId();
             int playerId = request.getPlayerData().getPlayerId();
 
-            // TODO: move into interactor
             // tower may be captured
-            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
-
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(towerId);
             // make player an owner of tower and allow to set up protection walls
-            tower.setOwnerId(playerId);
-            tower.setUnderCaptureLock(true);
+            interactor.setTowerOwner(playerId);
+            interactor.setCaptureLock();
 
             // TODO: what if player is already in creation session?
             // setting timeout of protection walls installation
             timeouts.put(towerId, new Timeout(CAPTURE_LOCK_TIMEOUT_MS, () -> {
-                logger.info("Remove capture lock for tower with id " + tower.getId() + " of owner with id " + playerId);
-                tower.setLastProtectionWallModificationTimestamp(Instant.now());
-                tower.setUnderCaptureLock(false);
+                logger.info("Remove capture lock for tower with id " + towerId + " of owner with id " + playerId);
+
+                interactor.updateModificationTimestamp(Instant.now());
+                interactor.unsetCaptureLock();
+
                 // removing timeout from map
                 timeouts.remove(towerId);
             }));
@@ -187,11 +188,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             logger.info("addSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
-                    spellPoints,
-                    offset,
-                    request.getSpell().getSpellType()
-            );
+            Optional<TemplateDescription> matchedTemplateDescriptionOpt =
+                    SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+                        spellPoints,
+                        offset,
+                        request.getSpell().getSpellType()
+                    );
 
             // add match spell into canvas state
             if (matchedTemplateDescriptionOpt.isPresent()) {
