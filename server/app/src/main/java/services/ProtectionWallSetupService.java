@@ -165,17 +165,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
     public void addSpell(ProtectionWallRequest request, StreamObserver<SpellFinishResponse> streamObserver) {
         SpellFinishResponse.Builder responseBuilder = SpellFinishResponse.newBuilder();
 
-        final int sessionId = request.getSessionId();
-        final int playerId  = request.getPlayerData().getPlayerId();
+        Optional<ServerError> serverError = validateCanvasAction(request, ProtectionWallRequest.RequestType.ADD_SPELL);
 
-        Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
-
-        boolean isRequestValid = (request.getRequestType() == ProtectionWallRequest.RequestType.ADD_SPELL) &&
-                                 (request.hasSpell());
-        boolean sessionExists = isRequestValid && sessionOpt.isPresent();
-        boolean isPlayerIdValid = sessionExists && playerId == sessionOpt.get().getPlayerId();
-
-        if (isRequestValid && sessionExists && isPlayerIdValid) {
+        if (serverError.isEmpty()) {
             // find matching spell template
             List<Vector2> spellPoints = request.getSpell().getPointsList().stream()
                     .map(point -> new Vector2(point.getX(), point.getY()))
@@ -184,7 +176,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             Vector2 offset = new Vector2(
                     request.getSpell().getOffset().getX(),
                     request.getSpell().getOffset().getY()
-            );
+                );
 
             logger.info("addSpell: run hausdorff and return id of matched template and offset");
 
@@ -197,8 +189,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             // add match spell into canvas state
             if (matchedTemplateDescriptionOpt.isPresent()) {
                 TemplateDescription template = matchedTemplateDescriptionOpt.get();
-                ProtectionWallSession session = sessionOpt.get();
+                ProtectionWallSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
+                // adding matched template into session canvas state
                 session.addTemplateToCanvasState(template);
 
                 // setting template in response
@@ -223,23 +216,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                         "No template found to match provided spell");
             }
         }
-        else if (!isRequestValid) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-            "Request type must be '" + ProtectionWallRequest.RequestType.ADD_SPELL + "'" +
-                    ", got '" + request.getRequestType() + "'" +
-                    ", as well as Spell must be provided");
-        }
-        else if (!sessionExists) {
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.SESSION_NOT_FOUND,
-                    "ProtectionWallSession with id " + sessionId + " not found");
-        }
         else {
-            // player id is not the same as the player id stored inside session instance
-            ProtoModelsUtils.buildServerError(responseBuilder.getErrorBuilder(),
-                    ServerError.ErrorType.INVALID_REQUEST,
-                    "Player id " + playerId + " does not match the required id " + sessionOpt.get().getPlayerId());
+            // error occurred
+            logger.info("Cannot add spell, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
         streamObserver.onNext(responseBuilder.build());
