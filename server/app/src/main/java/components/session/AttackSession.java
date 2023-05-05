@@ -1,5 +1,6 @@
 package components.session;
 
+import components.time.Timeout;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
@@ -19,12 +20,14 @@ import java.util.logging.Logger;
  * <p>Caller must provide thread-safe execution of the methods.</p>
  */
 public class AttackSession {
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 10 * 1000; // 10s
+
     private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
     private final int protectionWallId;
     private final StreamObserver<SessionInfoResponse> attackerResponseObserver;
-    private final IntConsumer onSessionExpiredCallback;
+    private final Timeout sessionExpirationTimeout;
     private final CanvasState canvasState = new CanvasState();
     private final SpellDrawingDescription currentSpellDescription = new SpellDrawingDescription();
     private final List<Spectator> spectators = new ArrayList<>();
@@ -42,8 +45,17 @@ public class AttackSession {
         this.attackedTowerId = attackedTowerId;
         this.protectionWallId = protectionWallId;
         this.attackerResponseObserver = attackerResponseObserver;
-        // TODO: create timeout event that fires `onSessionExpiredCallback`
-        this.onSessionExpiredCallback = onSessionExpiredCallback;
+
+        // timeout event that fires onSessionExpiredCallback
+        logger.info("starting session expiration timeout (session id " + id + ")");
+        this.sessionExpirationTimeout = new Timeout(
+                SESSION_EXPIRATION_TIMEOUT_MS,
+                () -> onSessionExpiredCallback.accept(this.id)
+        );
+    }
+
+    public void cancelExpirationTimeout() {
+        this.sessionExpirationTimeout.cancel();
     }
 
     public static class Spectator {

@@ -892,6 +892,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
     /**
      * <p>The callback is intended to be fired once the session expires.</p>
+     * <p>Callback is <code>synchronized</code> because {@link AttackSession} fires it in another thread.</p>
      * <p><b>The callback does all the following actions:</b></p>
      * <ol>
      *     <li>Marks the tower as not being under attack any more</li>
@@ -899,33 +900,36 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      *     <li>Sends response with session expired state to the attacker and disconnects him</li>
      * </ol>
      */
-    private void onSessionExpired(int sessionId) {
-        // TODO: maybe it should be marked as `synchronized`
+    private synchronized void onSessionExpired(int sessionId) {
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
-        // TODO: better to ignore callback rather than throw
-        if (sessionOpt.isEmpty()) {
-            throw new NoSuchElementException("SessionExpiredCallback: session with id " + sessionId + " not found");
+
+        if (sessionOpt.isPresent()) {
+            AttackSession session = sessionOpt.get();
+            logger.info("onSessionExpired: session with id " + sessionId + " expired");
+
+            // mark tower to not be under attack
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+            interactor.unsetTowerUnderAttackState();
+
+            // closing connection with spectators
+            disconnectSpectators(session);
+
+            // sending response with session expiration to attacker and closing connection
+            SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+            responseBuilder.getExpirationBuilder().build();
+
+            // closing connection with attacker
+            var attackerResponseObserver = session.getAttackerResponseObserver();
+            attackerResponseObserver.onNext(responseBuilder.build());
+            attackerResponseObserver.onCompleted();
+
+            sessionManager.remove(session);
         }
-        AttackSession session = sessionOpt.get();
-
-        // mark tower to not be under attack
-        TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
-        interactor.unsetTowerUnderAttackState();
-
-        // closing connection with spectators
-        disconnectSpectators(session);
-
-        // sending response with session expiration to attacker and closing connection
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
-        responseBuilder.getExpirationBuilder().build();
-
-        // closing connection with attacker
-        var attackerResponseObserver = session.getAttackerResponseObserver();
-        attackerResponseObserver.onNext(responseBuilder.build());
-        attackerResponseObserver.onCompleted();
-
-        sessionManager.remove(session);
+        else {
+            // no session found
+            logger.info("onSessionExpired: session with id " + sessionId + " not found");
+        }
     }
 
     /**

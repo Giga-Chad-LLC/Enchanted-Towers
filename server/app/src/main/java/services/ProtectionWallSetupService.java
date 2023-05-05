@@ -304,6 +304,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+
     /**
      * Removes {@link Enchantment} from {@link ProtectionWall} of the tower with provided tower id.
      * TODO: test this method
@@ -671,6 +672,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
 
     private void onSessionExpired(int sessionId) {
+        // TODO: maybe it should be marked as `synchronized`
         Optional<ProtectionWallSession> sessionOpt = sessionManager.getSessionById(sessionId);
         // TODO: better to ignore callback rather than throw
         if (sessionOpt.isEmpty()) {

@@ -26,16 +26,19 @@ public class AttackSessionManager {
 
       int sessionId = CURRENT_SESSION_ID++;
 
-      AttackSession session = new AttackSession(sessionId, playerId, towerId, protectionWallId, attackerResponseObserver, onSessionExpiredCallback);
+      AttackSession session = new AttackSession(
+              sessionId, playerId, towerId, protectionWallId, attackerResponseObserver, onSessionExpiredCallback);
+
       sessions.get(towerId).add(session);
 
       return session;
    }
 
-   // TODO: before removing session, cancel timeout of SessionExpiredCallback
    public void remove(AttackSession session) {
       for (var sessionList : sessions.values()) {
          if (sessionList.contains(session)) {
+            // cancelling timeout callback
+            session.cancelExpirationTimeout();
             sessionList.remove(session);
             return;
          }
