@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+// TODO: make thread-safe?
 public class TowersRegistry {
     static private TowersRegistry instance = null;
 

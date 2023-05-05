@@ -62,15 +62,10 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             interactor.setTowerOwner(playerId);
             interactor.setCaptureLock();
 
-            // TODO: what if player is already in creation session?
             // setting timeout of protection walls installation
             timeouts.put(towerId, new Timeout(CAPTURE_LOCK_TIMEOUT_MS, () -> {
                 logger.info("Remove capture lock for tower with id " + towerId + " of owner with id " + playerId);
-
-                // TODO: need to use it?
-                interactor.updateModificationTimestamp(Instant.now());
                 interactor.unsetCaptureLock();
-
                 // removing timeout from map
                 timeouts.remove(towerId);
             }));
