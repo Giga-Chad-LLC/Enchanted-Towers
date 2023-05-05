@@ -11,14 +11,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" >
+        tools:layout_editor_absoluteY="16dp">
 
         <EditText
             android:id="@+id/playerIdTextInput"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="280dp"
             android:layout_marginLeft="50dp"
+            android:layout_marginTop="200dp"
             android:hint="PlayerId"
             android:inputType="text" />
 
@@ -26,27 +26,54 @@
             android:id="@+id/towerIdTextInput"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="350dp"
             android:layout_marginLeft="50dp"
+            android:layout_marginTop="270dp"
             android:hint="TowerId"
             android:inputType="text" />
 
-        <Button
-            android:id="@+id/attackButton"
-            android:layout_width="wrap_content"
+        <EditText
+            android:id="@+id/wallIdTextInput"
+            android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="80dp"
-            android:layout_marginTop="480dp"
-            android:text="Attack"
-            app:barrierAllowsGoneWidgets="false" />
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="340dp"
+            android:hint="WallId"
+            android:inputType="text" />
 
         <Button
             android:id="@+id/spectateButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="210dp"
-            android:layout_marginTop="480dp"
+            android:layout_marginTop="420dp"
             android:text="Spectate"
+            app:barrierAllowsGoneWidgets="false" />
+
+        <Button
+            android:id="@+id/attackButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="80dp"
+            android:layout_marginTop="420dp"
+            android:text="Attack"
+            app:barrierAllowsGoneWidgets="false" />
+
+        <Button
+            android:id="@+id/captureButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="80dp"
+            android:layout_marginTop="480dp"
+            android:text="Capture"
+            app:barrierAllowsGoneWidgets="false" />
+
+        <Button
+            android:id="@+id/protectButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="218dp"
+            android:layout_marginTop="480dp"
+            android:text="Protect"
             app:barrierAllowsGoneWidgets="false" />
 
     </FrameLayout>

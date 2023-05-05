@@ -9,10 +9,10 @@ package response_models;
 import "responses/common/server-error.proto";
 
 
-message AttackTowerByIdResponse {
+message SessionInfoResponse {
   enum ResponseType {
-    ATTACK_SESSION_ID = 0;
-    ATTACK_SESSION_EXPIRED = 1;
+    SESSION_ID = 0;
+    SESSION_EXPIRED = 1;
   };
 
   message SessionInfo {

@@ -5,21 +5,23 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.util.Arrays;
+import java.util.List;
 
 import enchantedtowers.client.R;
-import enchantedtowers.client.interactors.canvas.CanvasDrawSpellInteractor;
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.interactors.canvas.CanvasAttackInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
+import enchantedtowers.common.utils.proto.common.SpellType;
 
 public class CanvasAttackerFragment extends CanvasFragment {
     private int currentCanvasBrushColor = 0;
-    private final int[] brushColors = {Color.RED, Color.BLUE, Color.GREEN, Color.MAGENTA};
+    private final List<SpellType> spellTypes = ClientUtils.getSpellTypesList();
 
     public static CanvasFragment newInstance() {
         return new CanvasAttackerFragment();
@@ -38,20 +40,26 @@ public class CanvasAttackerFragment extends CanvasFragment {
         initAttackerFunctionality(rootView);
     }
 
-    public void nextColor() {
+    private void nextColor() {
         currentCanvasBrushColor++;
-        if (currentCanvasBrushColor >= brushColors.length) {
+        if (currentCanvasBrushColor >= spellTypes.size()) {
             currentCanvasBrushColor = 0;
         }
 
         if (canvasWidget != null) {
-            canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
+            canvasWidget.setSpellType(spellTypes.get(currentCanvasBrushColor));
         }
     }
 
-    public void clearCanvas() {
+    private void clearCanvas() {
         if (canvasWidget != null) {
             canvasWidget.onClearCanvas();
+        }
+    }
+
+    private void submitCanvas() {
+        if (canvasWidget != null) {
+            canvasWidget.onSubmitCanvas();
         }
     }
 
@@ -59,9 +67,9 @@ public class CanvasAttackerFragment extends CanvasFragment {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
         canvasWidget.setInteractors(Arrays.asList(
                 new CanvasDrawStateInteractor(),
-                new CanvasDrawSpellInteractor(canvasWidget.getState(), canvasWidget)
+                new CanvasAttackInteractor(canvasWidget.getState(), canvasWidget)
         ));
-        canvasWidget.setBrushColor(brushColors[currentCanvasBrushColor]);
+        canvasWidget.setSpellType(spellTypes.get(currentCanvasBrushColor));
 
         if (rootView.findViewById(R.id.changeColorButton) != null) {
             registerOnClickActionOnView(rootView, R.id.changeColorButton, this::nextColor);
@@ -69,12 +77,16 @@ public class CanvasAttackerFragment extends CanvasFragment {
         if (rootView.findViewById(R.id.clearCanvasButton) != null) {
             registerOnClickActionOnView(rootView, R.id.clearCanvasButton, this::clearCanvas);
         }
+        if (rootView.findViewById(R.id.submitCanvasButton) != null) {
+            registerOnClickActionOnView(rootView, R.id.submitCanvasButton, this::submitCanvas);
+        }
     }
 
     private void initAttackerLayout(View rootView) {
         ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
 
-        addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false);
-        addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true);
+        addButtonToConstraintLayout(cl, R.id.changeColorButton, "Next color", false, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.clearCanvasButton, "Clear", true, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.submitCanvasButton, "Submit", false, 470, 0);
     }
 }

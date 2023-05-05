@@ -1,5 +1,10 @@
 package enchantedtowers.game_logic;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
+import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.utils.Utils;
+import java.util.List;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
@@ -10,35 +15,30 @@ import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class SpellsPatternMatchingAlgorithm {
-    private static final float SIMILARITY_THRESHOLD = 0.80f;
+    private static final float SPELL_SIMILARITY_THRESHOLD = 0.80f;
 
-    static public class MatchedTemplateDescription {
-        private final int id;
-        private final int colorId;
-        private final Vector2 offset;
+    static public Optional<TemplateDescription> getMatchedTemplateWithHausdorffMetric(
+        List<Vector2> spellPoints, Vector2 offset, SpellType spellType) {
+        if (Utils.isValidPath(spellPoints)) {
+            Spell pattern = new Spell(
+                Utils.getNormalizedPoints(spellPoints, offset),
+                offset
+            );
 
-        MatchedTemplateDescription(int id, int colorId, Vector2 offset) {
-            this.id = id;
-            this.colorId = colorId;
-            this.offset = offset;
+            return getMatchedTemplate(
+                SpellBook.getTemplates(),
+                pattern,
+                spellType,
+                new HausdorffMetric()
+            );
         }
 
-        public int id() {
-            return id;
-        }
-
-        public int colorId() {
-            return colorId;
-        }
-
-        public Vector2 offset() {
-            return offset;
-        }
+        return Optional.empty();
     }
 
-    static public <Metric extends CurvesMatchingMetric>
-    Optional<MatchedTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
-                                                            Spell pattern, int patternColor, Metric metric) {
+    static private <Metric extends CurvesMatchingMetric>
+    Optional<TemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
+                                                     Spell pattern, SpellType patternSpellType, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();
@@ -61,7 +61,7 @@ public class SpellsPatternMatchingAlgorithm {
                     0
             );
 
-            float similarity = metric.calculate(template.getCurve(), scaledPatternCurve);
+            float similarity = metric.calculate(template.getCurveCopy(), scaledPatternCurve);
             System.out.println("Template " + templateId + " similarity: " + similarity);
 
             if (maxSimilarity < similarity) {
@@ -70,7 +70,7 @@ public class SpellsPatternMatchingAlgorithm {
             }
         }
 
-        if (maxSimilarity < SIMILARITY_THRESHOLD) {
+        if (maxSimilarity < SPELL_SIMILARITY_THRESHOLD) {
             System.out.println("Matched template: none");
             return Optional.empty();
         }
@@ -83,14 +83,6 @@ public class SpellsPatternMatchingAlgorithm {
                 patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
         );
 
-//        Spell matchedTemplate = new Spell(templates.get(matchedTemplateId));
-//        matchedTemplate.setOffset(
-//                new Vector2(
-//                        patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,
-//                        patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
-//                )
-//        );
-
-        return Optional.of(new MatchedTemplateDescription(matchedTemplateId, patternColor, matchedTemplateOffset));
+        return Optional.of(new TemplateDescription(matchedTemplateId, patternSpellType, matchedTemplateOffset));
     }
 }

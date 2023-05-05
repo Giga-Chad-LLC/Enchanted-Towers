@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/common/tower-id-request.proto";
+import "requests/protection-wall-setup-service/protection-wall-request.proto";
+import "requests/protection-wall-setup-service/protection-wall-id-request.proto";
+// responses
+import "responses/common/action-result-response.proto";
+import "responses/common/session-info-response.proto";
+import "responses/common/spell-finish-response.proto";
+
+
+service ProtectionWallSetupService {
+  rpc CaptureTower(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc TryEnterProtectionWallCreationSession(request_models.ProtectionWallIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc EnterProtectionWallCreationSession(request_models.ProtectionWallIdRequest) returns (stream response_models.SessionInfoResponse) {}
+  rpc DestroyEnchantment(request_models.ProtectionWallIdRequest) returns (response_models.ActionResultResponse) {}
+  rpc AddSpell(request_models.ProtectionWallRequest) returns (response_models.SpellFinishResponse) {}
+  rpc ClearCanvas(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
+  rpc CompleteEnchantment(request_models.ProtectionWallRequest) returns (response_models.ActionResultResponse) {}
+}

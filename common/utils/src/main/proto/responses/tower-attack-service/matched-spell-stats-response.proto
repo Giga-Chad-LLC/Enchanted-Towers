@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// common
+import "common/spell-type.proto";
+import "common/player-data.proto";
+// responses
+import "responses/common/server-error.proto";
+
+
+message MatchedSpellStatsResponse {
+  message SpellStat {
+    common.SpellType spellType = 1;
+    double match = 2; // value in range of [0, 1] which defines percentage of match of the specified spell type
+  }
+
+  response_models.ServerError error = 2;
+  repeated SpellStat stats = 3;
+};

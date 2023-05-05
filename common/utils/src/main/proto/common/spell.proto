@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.common";
+option java_multiple_files = true;
+
+package common;
+
+import "common/vector2.proto";
+import "common/spell-type.proto";
+
+message Spell {
+  common.Vector2 offset = 1;
+  common.SpellType spellType = 2;
+  repeated common.Vector2 points = 3;
+}

@@ -5,6 +5,4 @@ import android.graphics.Paint;
 
 public interface CanvasDrawable {
     void draw(Canvas canvas, Paint brush);
-
-    int getColor();
 }

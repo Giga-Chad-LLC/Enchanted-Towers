@@ -8,16 +8,17 @@ package request_models;
 // common
 import "common/player-data.proto";
 // requests
-import "requests/tower-attack-service/select-spell-color-request.proto";
+import "requests/tower-attack-service/select-spell-type-request.proto";
 import "requests/tower-attack-service/spell-curve-position-request.proto";
 
 
 message SpellRequest {
   enum RequestType {
-    SELECT_SPELL_COLOR = 0;
+    SELECT_SPELL_TYPE = 0;
     DRAW_SPELL = 1;
     FINISH_SPELL = 2;
     CLEAR_CANVAS = 3;
+    COMPARE_DRAWN_SPELLS = 4;
   };
 
   common.PlayerData playerData = 1;
@@ -26,7 +27,7 @@ message SpellRequest {
   // common for all 3 types of request
   RequestType requestType = 3;
   // SELECT_SPELL_COLOR
-  SelectSpellColorRequest spellColor = 4;
+  SelectSpellTypeRequest spellType = 4;
   // DRAW_SPELL
   SpellCurvePositionRequest drawSpell = 5;
   // FINISH_SPELL

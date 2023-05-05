@@ -1,14 +1,11 @@
 package enchantedtowers.client.interactors.canvas;
 
 
-import android.content.Intent;
+import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import com.google.android.gms.common.api.Api;
-
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -17,10 +14,10 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.common.utils.proto.requests.AttackSessionIdRequest;
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.AttackSessionIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -28,7 +25,6 @@ import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
-import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
@@ -42,7 +38,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
-    private final CanvasWidget canvasWidget;
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
 
     // TODO: watch for the race conditions in this class
@@ -51,7 +46,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     public CanvasSpectateInteractor(CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
         this.brush = state.getBrushCopy();
-        this.canvasWidget = canvasWidget;
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
@@ -70,7 +64,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             throw new RuntimeException("CanvasSpectateInteractor interactor constructor failure: playerId or sessionId is not present");
         }
 
-        AttackSessionIdRequest.Builder requestBuilder = AttackSessionIdRequest.newBuilder();
+        SessionIdRequest.Builder requestBuilder = SessionIdRequest.newBuilder();
         requestBuilder.setSessionId(sessionId.get());
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId.get())
@@ -88,8 +82,12 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         canvasWidget.postInvalidate();
                     }
                     else {
-                        // TODO: figure out if required to call redirectToBaseActivity() here
-                        // redirectToBaseActivity(Optional.of(response.getError().getMessage()));
+                        // TODO: figure out if required to redirect to base activity here
+                        /*AndroidUtils.redirectToActivityAndPopHistory(
+                                (Activity) canvasWidget.getContext(),
+                                AttackTowerMenuActivity.class,
+                                response.getError().getMessage()
+                        );*/
                     }
                     return;
                 }
@@ -99,9 +97,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         logger.info("Received CURRENT_CANVAS_STATE");
                         onCurrentCanvasStateReceived(response, state, canvasWidget);
                     }
-                    case SELECT_SPELL_COLOR -> {
-                        logger.info("Received SELECT_SPELL_COLOR");
-                        onSelectSpellColorReceived(response);
+                    case SELECT_SPELL_TYPE -> {
+                        logger.info("Received SELECT_SPELL_TYPE");
+                        onSelectSpellTypeReceived(response);
                     }
                     case DRAW_SPELL -> {
                         logger.info("Received DRAW_SPELL");
@@ -123,13 +121,21 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 logger.warning("spectateTowerBySessionId::onError: " + t.getMessage());
                 // TODO: figure out how to prevent double redirect (when clicked "back" button we redirect,
                 //  but also server generates onError event, so double redirecting occurs, which we don't want
-                // redirectToBaseActivity(Optional.ofNullable(t.getMessage()));
+                /*AndroidUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        AttackTowerMenuActivity.class,
+                        t.getMessage()
+                );*/
             }
 
             @Override
             public void onCompleted() {
                 logger.info("spectateTowerBySessionId::onCompleted");
-                redirectToBaseActivity(Optional.empty());
+                ClientUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        AttackTowerMenuActivity.class,
+                        null
+                );
             }
         });
     }
@@ -137,11 +143,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     @Override
     public void onDraw(CanvasState state, Canvas canvas) {
         canvas.drawPath(currentPath, brush);
-    }
-
-    @Override
-    public boolean onClearCanvas(CanvasState state) {
-        return false;
     }
 
     @Override
@@ -167,7 +168,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         asyncStub.toggleAttacker(requestBuilder.build(), new StreamObserver<>() {
             // TODO: think of meaningful handlers here
             @Override
-            public void onNext(AttackSessionIdResponse value) {
+            public void onNext(SessionIdResponse value) {
                 StringBuilder messageBuilder = new StringBuilder();
 
                 if (value.hasError()) {
@@ -195,11 +196,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     }
 
     @Override
-    public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
-        return false;
-    }
-
-    @Override
     public void onExecutionInterrupt() {
         logger.info("Shutting down grpc channel...");
         channel.shutdownNow();
@@ -208,22 +204,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Goes back in activity history and removes all activities that do not match the {@code AttackTowerMenuActivity} class.
-     */
-    private void redirectToBaseActivity(Optional<String> message) {
-        Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        if (message.isPresent()) {
-            intent.putExtra("showToastOnStart", true);
-            intent.putExtra("toastMessage", message.get());
-        }
-
-        logger.info("redirectToBaseActivity(): from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
-        canvasWidget.getContext().startActivity(intent);
     }
 
     private void onCurrentCanvasStateReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
@@ -239,7 +219,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             var currentSpellState = canvasHistory.getCurrentSpellState();
             // extract data
 
-            var currentSpellColor = currentSpellState.getColorId();
+            var currentSpellType = currentSpellState.getSpellType();
             var currentSpellPoints = currentSpellState.getPointsList();
 
             Path newSpellPath = new Path();
@@ -252,7 +232,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
             // TODO: add mutex (in order to prevent data race with onDraw method)
             // set class members values
-            brush.setColor(currentSpellColor);
+            brush.setColor(
+                ClientUtils.getColorIdBySpellType(currentSpellType)
+            );
             currentPath.set(newSpellPath);
         }
 
@@ -260,29 +242,37 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // add already drawn spells
         var spellDescriptions = canvasHistory.getSpellDescriptionsList();
         for (var description : spellDescriptions) {
-            int templateColor = description.getColorId();
+            var templateType = description.getSpellType();
             Vector2 templateOffset = new Vector2(
                     description.getSpellTemplateOffset().getX(),
                     description.getSpellTemplateOffset().getY()
             );
             Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
-            templateSpell.setOffset(templateOffset);
 
-            state.addItem(new CanvasSpellDecorator(
-                    templateColor,
-                    templateSpell
-            ));
+            if (templateSpell != null) {
+                templateSpell.setOffset(templateOffset);
+
+                state.addItem(new CanvasSpellDecorator(
+                        templateType,
+                        templateSpell
+                ));
+            }
+            else {
+                logger.warning("onCurrentCanvasStateReceived(): template spell not found, matched spell id is " + description.getSpellTemplateId());
+            }
         }
 
         // trigger the rendering
         canvasWidget.postInvalidate();
     }
 
-    private void onSelectSpellColorReceived(SpectateTowerAttackResponse value) {
+    private void onSelectSpellTypeReceived(SpectateTowerAttackResponse value) {
         // TODO: add mutex (in order to prevent data race with onDraw method)
         currentPath.reset();
-        brush.setColor(value.getSpellColor().getColorId());
-        logger.info("onSelectSpellColorReceived: newSpellColor=" + brush.getColor());
+        brush.setColor(
+            ClientUtils.getColorIdBySpellType(value.getSpellType())
+        );
+        logger.info("onSelectSpellTypeReceived: newSpellType=" + value.getSpellType() + ", newSpellColor=" + brush.getColor());
     }
 
     private void onDrawSpellReceived(SpectateTowerAttackResponse value, CanvasWidget canvasWidget) {
@@ -306,7 +296,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
         var description = value.getSpellDescription();
         var templateOffset = description.getSpellTemplateOffset();
-        int templateColor = description.getColorId();
+        var templateType = description.getSpellType();
         Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
         templateSpell.setOffset(new Vector2(
                 templateOffset.getX(),
@@ -314,7 +304,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         ));
 
         state.addItem(new CanvasSpellDecorator(
-                templateColor,
+                templateType,
                 templateSpell
         ));
 

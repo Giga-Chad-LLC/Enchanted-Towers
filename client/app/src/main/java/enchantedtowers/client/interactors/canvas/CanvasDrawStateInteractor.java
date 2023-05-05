@@ -9,6 +9,7 @@ import java.util.Map;
 import enchantedtowers.client.components.canvas.CanvasDrawable;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
@@ -32,28 +33,13 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         }
     }
 
-    @Override
-    public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
-        return false;
-    }
-
-    @Override
-    public boolean onClearCanvas(CanvasState state) {
-        return false;
-    }
-
-    @Override
-    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
-        return false;
-    }
-
     // For DEBUG purposes, will be removed later
     private void drawTemplates(CanvasState state, Canvas canvas) {
         Map<Integer, Spell> templates = SpellBook.getTemplates();
         Paint brush = state.getBrushCopy();
 
         for (Spell spell : templates.values()) {
-            new CanvasSpellDecorator(Color.BLACK, spell).draw(canvas, brush);
+            new CanvasSpellDecorator(SpellType.UNRECOGNIZED, spell).draw(canvas, brush);
         }
     }
 }

@@ -4,11 +4,8 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
 import android.view.MotionEvent;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -20,11 +17,13 @@ import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
-import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import enchantedtowers.common.utils.proto.responses.MatchedSpellStatsResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -42,7 +41,6 @@ class AttackEventWorker extends Thread {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final TowerAttackServiceGrpc.TowerAttackServiceBlockingStub blockingStub;
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
-    private final CanvasState state;
     private final CanvasWidget canvasWidget;
 
     // Event class
@@ -61,10 +59,10 @@ class AttackEventWorker extends Thread {
             return request;
         }
 
-        public static Event createEventWithSpellColorRequest(int colorId) {
+        public static Event createEventWithSpellTypeRequest(SpellType spellType) {
             SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
             // set request type
-            requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_COLOR);
+            requestBuilder.setRequestType(SpellRequest.RequestType.SELECT_SPELL_TYPE);
 
             var storage = ClientStorage.getInstance();
             assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
@@ -77,14 +75,12 @@ class AttackEventWorker extends Thread {
                     .setPlayerId(storage.getPlayerId().get())
                     .build();
 
-            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
+            // creating spell type request
+            var spellTypeRequestBuilder = requestBuilder.getSpellTypeBuilder();
+            spellTypeRequestBuilder.setSpellType(spellType);
 
-            // creating spell color request
-            var spellColorRequestBuilder = requestBuilder.getSpellColorBuilder();
-            spellColorRequestBuilder.setColorId(colorId);
-
-            // building spell color request
-            spellColorRequestBuilder.build();
+            // building spell type request
+            spellTypeRequestBuilder.build();
 
             return new Event(requestBuilder.build());
         }
@@ -103,8 +99,6 @@ class AttackEventWorker extends Thread {
             // set player id
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(storage.getPlayerId().get()).build();
-
-            System.out.println("PLAYER_ID: " + storage.getPlayerId().get() + ", SESSION_ID: " + storage.getSessionId().get());
 
             // creating draw spell request
             var drawSpellRequestBuilder = requestBuilder.getDrawSpellBuilder();
@@ -161,10 +155,28 @@ class AttackEventWorker extends Thread {
 
             return new Event(requestBuilder.build());
         }
-    };
 
-    public AttackEventWorker(CanvasState state, CanvasWidget canvasWidget) {
-        this.state = state;
+        public static Event createEventWithCompareDrawnSpellsRequest() {
+            SpellRequest.Builder requestBuilder = SpellRequest.newBuilder();
+            // set request type
+            requestBuilder.setRequestType(SpellRequest.RequestType.COMPARE_DRAWN_SPELLS);
+
+            var storage = ClientStorage.getInstance();
+            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+
+            // set session id
+            requestBuilder.setSessionId(storage.getSessionId().get());
+
+            // set player id
+            requestBuilder.getPlayerDataBuilder()
+                    .setPlayerId(storage.getPlayerId().get())
+                    .build();
+
+            return new Event(requestBuilder.build());
+        }
+    }
+
+    public AttackEventWorker(CanvasWidget canvasWidget) {
         this.canvasWidget = canvasWidget;
 
         String host = ServerApiStorage.getInstance().getClientHost();
@@ -187,13 +199,12 @@ class AttackEventWorker extends Thread {
                 if (event != null) {
                     logger.info("Sending request of type: " + event.requestType().toString());
                     switch (event.requestType()) {
-                        case SELECT_SPELL_COLOR -> {
+                        case SELECT_SPELL_TYPE -> {
                             ActionResultResponse response = blockingStub
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                                    .selectSpellColor(event.getRequest());
+                                    .selectSpellType(event.getRequest());
 
-                            logger.info(
-                                    "Got response from selectSpellColor: success=" + response.getSuccess() +
+                            logger.info("Got response from selectSpellType: success=" + response.getSuccess() +
                                         "\nmessage='" + response.getError().getMessage() + "'");
 
                         }
@@ -218,13 +229,13 @@ class AttackEventWorker extends Thread {
                             else {
                                 var description = response.getSpellDescription();
                                 var offset = description.getSpellTemplateOffset();
-                                var colorId = description.getColorId();
+                                var templateType = description.getSpellType();
                                 var templateId = description.getSpellTemplateId();
 
                                 logger.info(
                                         "Got response from finishSpell: matchedSpellTemplateId='" + templateId + "'\n" +
                                                 "matchedTemplateOffset='[" + offset.getX() + ", " + offset.getY() + "]'\n" +
-                                                "matchedTemplateColor='" + colorId + "'");
+                                                "matchedTemplateType='" + templateType + "'");
 
 
                                 // substitute current spell with template
@@ -233,11 +244,11 @@ class AttackEventWorker extends Thread {
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
                                     CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                            colorId,
+                                            templateType,
                                             template
                                     );
 
-                                    state.addItem(canvasMatchedEnchantment);
+                                    canvasWidget.getState().addItem(canvasMatchedEnchantment);
                                     canvasWidget.postInvalidate();
                                 }
                             }
@@ -249,13 +260,20 @@ class AttackEventWorker extends Thread {
                             logger.info("Got response from clearCanvas: success=" + response.getSuccess() +
                                     "\nmessage='" + response.getError().getMessage() + "'");
                         }
+                        case COMPARE_DRAWN_SPELLS -> {
+                            MatchedSpellStatsResponse response = blockingStub
+                                    .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                                    .compareDrawnSpells(event.getRequest());
+
+                            logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "'");
+                        }
                     }
                 }
             } catch (Exception e) {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
 
-                logger.warning("CanvasDrawSpellInteractor error while blocking stub '" + e.getMessage() + "'");
+                logger.warning("CanvasAttackInteractor error while blocking stub '" + e.getMessage() + "'");
 
                 // redirect to base activity
                 Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
@@ -284,22 +302,17 @@ class AttackEventWorker extends Thread {
 
 
 
-public class CanvasDrawSpellInteractor implements CanvasInteractor {
+public class CanvasAttackInteractor implements CanvasInteractor {
     private final Path path = new Path();
-    private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
     private AttackEventWorker worker;
 
-    private static final Logger logger = Logger.getLogger(CanvasDrawSpellInteractor.class.getName());
+    private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private final ManagedChannel channel;
 
-    public CanvasDrawSpellInteractor(CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasAttackInteractor(CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
-        logger.info("Start worker");
-
-        worker = new AttackEventWorker(state, canvasWidget);
-        worker.start();
 
         // configuring async client stub
         {
@@ -309,7 +322,7 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
             asyncStub = TowerAttackServiceGrpc.newStub(channel);
         }
 
-        callAsyncAttackTowerById(state, canvasWidget);
+        callAsyncAttackTowerById(canvasWidget);
     }
 
     @Override
@@ -320,17 +333,12 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
     @Override
     public boolean onClearCanvas(CanvasState state) {
         state.clear();
-        System.out.println("CanvasDrawSpellInteractor.onClearCanvas");
+        logger.info("onClearCanvas");
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithClearCanvasRequest())) {
             logger.warning("'Clear canvas' event lost");
         }
         // notifying that event was processes
         return true;
-    }
-
-    @Override
-    public boolean onToggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType, CanvasState state) {
-        return false;
     }
 
     @Override
@@ -360,7 +368,17 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         }
     }
 
-    private void callAsyncAttackTowerById(CanvasState state, CanvasWidget canvasWidget) {
+    @Override
+    public boolean onSubmitCanvas(CanvasState state) {
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithCompareDrawnSpellsRequest())) {
+            logger.warning("'Compare drawn spells' event lost");
+        }
+        state.clear();
+
+        return true;
+    }
+
+    private void callAsyncAttackTowerById(CanvasWidget canvasWidget) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         // creating request
         {
@@ -374,24 +392,25 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
 
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
             @Override
-            public void onNext(AttackTowerByIdResponse response) {
+            public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
                     // TODO: leave attack session
-                    System.out.println("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
+                    logger.warning("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
                 }
                 else {
-                    System.out.println("attackTowerById::onNext: type=" + response.getType());
+                    logger.info("attackTowerById::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
-                        case ATTACK_SESSION_ID -> {
+                        case SESSION_ID -> {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
 
                             logger.info("Start worker");
-                            worker = new AttackEventWorker(state, canvasWidget);
+                            worker = new AttackEventWorker(canvasWidget);
                             worker.start();
                         }
-                        case ATTACK_SESSION_EXPIRED -> {
+                        case SESSION_EXPIRED -> {
+                            logger.info("Attack session expired!");
                             // TODO: leave attack session
                         }
                     }
@@ -401,34 +420,25 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
             @Override
             public void onError(Throwable t) {
                 // TODO: leave attack session
-                System.out.println("attackTowerById::onError: message='" + t.getMessage() + "'");
+                logger.warning("attackTowerById::onError: message='" + t.getMessage() + "'");
             }
 
             @Override
             public void onCompleted() {
                 // TODO: leave attack session
-                System.out.println("attackTowerById::onCompleted: finished");
+                logger.warning("attackTowerById::onCompleted: finished");
             }
         });
-    }
-
-    private Vector2 getPathOffset(Path path) {
-        // calculate bounding box for the path
-        RectF bounds = new RectF();
-        path.computeBounds(bounds, true);
-
-        return new Vector2(bounds.left, bounds.top);
     }
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {
         path.moveTo(x, y);
         Vector2 point = new Vector2(x, y);
-        pathPoints.add(point);
         // update color only when started the new shape
         brush.setColor(state.getBrushColor());
 
-        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithSpellColorRequest(brush.getColor()))) {
-            logger.warning("'Change color' event lost");
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithSpellTypeRequest(state.getSelectedSpellType()))) {
+            logger.warning("'Change spell type' event lost");
         }
 
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
@@ -438,16 +448,26 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         return true;
     }
 
-    private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
+    private boolean onActionMoveContinuePath(float x, float y) {
         path.lineTo(x, y);
         Vector2 point = new Vector2(x, y);
-        pathPoints.add(point);
 
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
             logger.warning("'Line to' event lost");
         }
 
-        Vector2 pathOffset = getPathOffset(path);
+        return true;
+    }
+
+    private boolean onActionUpFinishPathAndSubstitute(float x, float y) {
+        path.lineTo(x, y);
+        Vector2 point = new Vector2(x, y);
+
+        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
+            logger.warning("'Line to' event lost");
+        }
+
+        Vector2 pathOffset = ClientUtils.getPathOffset(path);
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithFinishSpellRequest(pathOffset))) {
             logger.warning("'Offset' event lost");
         }
@@ -455,19 +475,6 @@ public class CanvasDrawSpellInteractor implements CanvasInteractor {
         logger.info("Run hausdorff on server!");
 
         path.reset();
-        pathPoints.clear();
-
-        return true;
-    }
-
-    private boolean onActionMoveContinuePath(float x, float y) {
-        path.lineTo(x, y);
-        Vector2 point = new Vector2(x, y);
-        pathPoints.add(point);
-
-        if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithDrawSpellRequest(point))) {
-            logger.warning("'Line to' event lost");
-        }
 
         return true;
     }

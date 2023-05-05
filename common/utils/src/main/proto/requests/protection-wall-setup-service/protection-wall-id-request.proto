@@ -7,7 +7,12 @@ package request_models;
 
 // common
 import "common/player-data.proto";
+import "common/vector2.proto";
+import "common/spell.proto";
 
-message SelectSpellColorRequest {
-  int32 colorId = 2;
+
+message ProtectionWallIdRequest {
+  common.PlayerData playerData = 1;
+  int32 towerId = 2;
+  int32 protectionWallId = 3;
 };

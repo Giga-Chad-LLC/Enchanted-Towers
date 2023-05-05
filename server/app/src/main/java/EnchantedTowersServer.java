@@ -2,7 +2,6 @@ import components.fs.FileReader;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.SpellTemplate;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import org.json.JSONException;
+import services.ProtectionWallSetupService;
 import services.TowerAttackService;
 import services.TowersService;
 
@@ -27,25 +27,23 @@ public class EnchantedTowersServer {
 
         server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
                 // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
+                .addService(new ProtectionWallSetupService())
                 .addService(new TowerAttackService())
                 .addService(new TowersService())
                 .build()
                 .start();
 
         logger.info("Server started: host='" + host + "', port='" + port + "'");
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-                System.err.println("*** shutting down gRPC server since JVM is shutting down");
-                try {
-                    EnchantedTowersServer.this.stop();
-                } catch (InterruptedException e) {
-                    e.printStackTrace(System.err);
-                }
-                System.err.println("*** server shut down");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            // Use stderr here since the logger may have been reset by its JVM shutdown hook.
+            System.err.println("*** shutting down gRPC server since JVM is shutting down");
+            try {
+                EnchantedTowersServer.this.stop();
+            } catch (InterruptedException e) {
+                e.printStackTrace(System.err);
             }
-        });
+            System.err.println("*** server shut down");
+        }));
     }
 
     private void stop() throws InterruptedException {
@@ -70,7 +68,7 @@ public class EnchantedTowersServer {
     private static void loadSpellTemplatesFromFile(URL resourceUrl) {
         if (!SpellBook.isInstantiated()) {
             try {
-                List<SpellTemplate> data = EnchantmetTemplatesProvider.parseJson(
+                List<EnchantmetTemplatesProvider.SpellTemplateData> data = EnchantmetTemplatesProvider.parseJson(
                     FileReader.readRawFile(resourceUrl)
                 );
                 SpellBook.instantiate(data);

@@ -6,10 +6,8 @@ option java_multiple_files = true;
 package request_models;
 
 // common
-import "common/player-data.proto";
+import "common/spell-type.proto";
 
-
-message AttackSessionIdRequest {
-  int32 sessionId = 1;
-  common.PlayerData playerData = 2;
+message SelectSpellTypeRequest {
+  common.SpellType spellType = 1;
 };

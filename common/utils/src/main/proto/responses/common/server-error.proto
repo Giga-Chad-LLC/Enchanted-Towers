@@ -7,10 +7,11 @@ package response_models;
 
 message ServerError {
   enum ErrorType {
-    TOWER_TOO_FAR = 0;
-    ATTACK_SESSION_NOT_FOUND = 1;
-    INVALID_REQUEST = 2;
-    SPELL_TEMPLATE_NOT_FOUND = 3;
+    INVALID_REQUEST = 0;
+    TOWER_NOT_FOUND = 1;
+    TOWER_TOO_FAR = 2;
+    SESSION_NOT_FOUND = 3;
+    SPELL_TEMPLATE_NOT_FOUND = 4;
   }
 
   ErrorType type = 2;

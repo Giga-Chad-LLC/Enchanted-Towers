@@ -1,51 +1,58 @@
 package components.session;
 
-import enchantedtowers.common.utils.proto.responses.AttackTowerByIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import io.grpc.stub.StreamObserver;
 
 import java.util.*;
 import java.util.function.IntConsumer;
 
+/**
+ * <p>{@link AttackSessionManager} provides convenient API of storing/removing/searching {@link AttackSession}.</p>
+ * <p>Caller must provide thread-safe execution of the class' methods.</p>
+ */
 public class AttackSessionManager {
    // towerId -> sessions
    private final Map<Integer, List<AttackSession>> sessions = new TreeMap<>();
-   private int CURRENT_SESSION_ID = 2;
+   private int CURRENT_SESSION_ID = 0;
 
    public AttackSession createAttackSession(int playerId,
                                   int towerId,
-                                  StreamObserver<AttackTowerByIdResponse> attackerResponseObserver,
+                                  int protectionWallId,
+                                  StreamObserver<SessionInfoResponse> attackerResponseObserver,
                                   IntConsumer onSessionExpiredCallback) {
-      synchronized (sessions) {
-         if (!sessions.containsKey(towerId)) {
-            sessions.put(towerId, new ArrayList<>());
-         }
-
-         int sessionId = CURRENT_SESSION_ID++;
-
-         AttackSession session = new AttackSession(sessionId, playerId, towerId, attackerResponseObserver, onSessionExpiredCallback);
-         sessions.get(towerId).add(session);
-
-         return session;
+      if (!sessions.containsKey(towerId)) {
+         sessions.put(towerId, new ArrayList<>());
       }
+
+      int sessionId = CURRENT_SESSION_ID++;
+
+      AttackSession session = new AttackSession(
+              sessionId, playerId, towerId, protectionWallId, attackerResponseObserver, onSessionExpiredCallback);
+
+      sessions.get(towerId).add(session);
+
+      return session;
    }
 
    public void remove(AttackSession session) {
-      synchronized (sessions) {
-         for (var sessionList : sessions.values()) {
-            if (sessionList.contains(session)) {
-               sessionList.remove(session);
-               return;
-            }
+      for (var sessionList : sessions.values()) {
+         if (sessionList.contains(session)) {
+            // cancelling timeout callback
+            session.cancelExpirationTimeout();
+            sessionList.remove(session);
+            return;
          }
-         throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
       }
+      throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
    }
 
    public AttackSession getKthNeighbourOfSession(int towerId, AttackSession session, int k) {
-      var allSessionsList = sessions.get(towerId);
+      List<AttackSession> allSessionsList = sessions.get(towerId);
       int index = allSessionsList.indexOf(session);
-      // TODO: think of a better way of checking this condition
-      assert(index != -1);
+
+      if (index == -1) {
+         throw new NoSuchElementException("Attack session with id " + session.getId() + " not found in session manager's registry");
+      }
 
       int neighbour = (index + k + allSessionsList.size()) % allSessionsList.size();
 
@@ -60,16 +67,14 @@ public class AttackSessionManager {
     * Otherwise, returns <code>false</code>.
     */
    public boolean hasSessionAssociatedWithPlayerId(int playerId) {
-      synchronized (sessions) {
-         for (var sessionList : sessions.values()) {
-            for (var session : sessionList) {
-               if (playerId == session.getAttackingPlayerId()) {
-                  return true;
-               }
+      for (var sessionList : sessions.values()) {
+         for (var session : sessionList) {
+            if (playerId == session.getAttackingPlayerId()) {
+               return true;
             }
          }
-         return false;
       }
+      return false;
    }
 
    /**
@@ -78,44 +83,38 @@ public class AttackSessionManager {
     * Otherwise, returns <code>false</code>.
     */
    public boolean isPlayerInSpectatingMode(int playerId) {
-      synchronized (sessions) {
-         for (var sessionList : sessions.values()) {
-            for (var session : sessionList) {
-               for (var spectator : session.getSpectators()) {
-                  if (playerId == spectator.playerId()) {
-                     return true;
-                  }
+      for (var sessionList : sessions.values()) {
+         for (var session : sessionList) {
+            for (var spectator : session.getSpectators()) {
+               if (playerId == spectator.playerId()) {
+                  return true;
                }
             }
          }
-         return false;
       }
+      return false;
    }
 
    public Optional<AttackSession> getSessionById(int sessionId) {
-      synchronized (sessions) {
-         for (var sessionList : sessions.values()) {
-            for (var session : sessionList) {
-               if (sessionId == session.getId()) {
-                  return Optional.of(session);
-               }
-            }
-         }
-         return Optional.empty();
-      }
-   }
-
-   public Optional<AttackSession> getAnyAttackSessionByTowerId(int towerId) {
-      synchronized (sessions) {
-         if (sessions.containsKey(towerId)) {
-            var sessionList = sessions.get(towerId);
-
-            // returning first session, if exists
-            for (var session : sessionList) {
+      for (var sessionList : sessions.values()) {
+         for (var session : sessionList) {
+            if (sessionId == session.getId()) {
                return Optional.of(session);
             }
          }
-         return Optional.empty();
       }
+      return Optional.empty();
+   }
+
+   public Optional<AttackSession> getAnyAttackSessionByTowerId(int towerId) {
+      if (sessions.containsKey(towerId)) {
+         var sessionList = sessions.get(towerId);
+
+         // returning first session, if exists
+         for (var session : sessionList) {
+            return Optional.of(session);
+         }
+      }
+      return Optional.empty();
    }
 }

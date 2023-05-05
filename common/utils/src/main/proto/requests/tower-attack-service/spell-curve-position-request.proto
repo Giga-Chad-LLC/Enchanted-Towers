@@ -6,9 +6,8 @@ option java_multiple_files = true;
 package request_models;
 
 // common
-import "common/player-data.proto";
 import "common/vector2.proto";
 
 message SpellCurvePositionRequest {
-  common.Vector2 position = 2;
+  common.Vector2 position = 1;
 };

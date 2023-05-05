@@ -41,8 +41,8 @@ public class CanvasSpectatorFragment extends CanvasFragment {
     private void initSpectatorLayout(View rootView) {
         ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
 
-        addButtonToConstraintLayout(cl, R.id.showPreviousAttackerButton, "Previous", false);
-        addButtonToConstraintLayout(cl, R.id.showNextAttackerButton, "Next", true);
+        addButtonToConstraintLayout(cl, R.id.showPreviousAttackerButton, "Previous", false, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.showNextAttackerButton, "Next", true, 20, 0);
     }
 
     private void initSpectatorFunctionality(View rootView) {
