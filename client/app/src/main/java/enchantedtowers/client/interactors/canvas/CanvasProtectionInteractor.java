@@ -23,7 +23,7 @@ import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.SpellType;
-import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
+import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
@@ -337,7 +337,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     }
 
     private void callAsyncEnterProtectionWall(CanvasWidget canvasWidget) {
-        EnterProtectionWallCreationRequest.Builder requestBuilder = EnterProtectionWallCreationRequest.newBuilder();
+        ProtectionWallIdRequest.Builder requestBuilder = ProtectionWallIdRequest.newBuilder();
         // creating request
         {
             int playerId = ClientStorage.getInstance().getPlayerId().get();

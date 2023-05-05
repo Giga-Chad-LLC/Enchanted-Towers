@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
-import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
+import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
@@ -277,7 +277,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     }
 
     private void callAsyncTryEnterProtectionWallCreationSession(int playerId, int towerId, int wallId) {
-        EnterProtectionWallCreationRequest.Builder requestBuilder = EnterProtectionWallCreationRequest.newBuilder();
+        ProtectionWallIdRequest.Builder requestBuilder = ProtectionWallIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
                 .build();
