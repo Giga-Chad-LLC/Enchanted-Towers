@@ -11,7 +11,7 @@ import "common/vector2.proto";
 import "common/spell.proto";
 
 
-message EnterProtectionWallCreationRequest {
+message ProtectionWallIdRequest {
   common.PlayerData playerData = 1;
   int32 towerId = 2;
   int32 protectionWallId = 3;

@@ -45,4 +45,9 @@ public class ProtectionWallSetupServiceInteractor {
         ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
         wall.setEnchantment(enchantment);
     }
+
+    public void destroyEnchantment(int protectionWallId) {
+        ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
+        wall.removeEnchantment();
+    }
 }

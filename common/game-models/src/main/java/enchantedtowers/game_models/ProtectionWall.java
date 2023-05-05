@@ -53,6 +53,10 @@ public class ProtectionWall {
         this.state.setEnchanted(true);
     }
 
+    public void removeEnchantment() {
+        this.enchantment = Optional.empty();
+    }
+
     public Optional<Enchantment> getEnchantment() {
         return this.enchantment;
     }

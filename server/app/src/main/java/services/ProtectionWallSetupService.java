@@ -4,7 +4,7 @@ import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
-import enchantedtowers.common.utils.proto.requests.EnterProtectionWallCreationRequest;
+import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -90,7 +90,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      * <p>This method serves as a convenient check of ability to enter the creation session for clients, thus {@link ProtectionWallSetupService#enterProtectionWallCreationSession} is still required to make the appropriate validations.</p>
      */
     @Override
-    public synchronized void tryEnterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+    public synchronized void tryEnterProtectionWallCreationSession(ProtectionWallIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
@@ -116,7 +116,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      * Creates {@link ProtectionWallSession} associated with provided tower id and player id if the validation of request succeeds.
      */
     @Override
-    public synchronized void enterProtectionWallCreationSession(EnterProtectionWallCreationRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
+    public synchronized void enterProtectionWallCreationSession(ProtectionWallIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
         SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
 
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
@@ -304,12 +304,109 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         streamObserver.onCompleted();
     }
 
+    /**
+     * Removes {@link Enchantment} from {@link ProtectionWall} of the tower with provided tower id.
+     * TODO: test this method
+     */
+    @Override
+    public synchronized void destroyEnchantment(ProtectionWallIdRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-    // TODO: create destroyEnchantment method that destroys enchantment of protection wall
+        Optional<ServerError> serverError = validateEnchantmentDestroyRequest(request);
 
+        if (serverError.isEmpty()) {
+            // removing enchantment from protection wall
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(request.getTowerId());
+            interactor.destroyEnchantment(request.getProtectionWallId());
+        }
+        else {
+            // error occurred
+            logger.info("Cannot destroy enchantment, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
 
 
     // helper methods
+
+    // TODO: validateEnchantmentDestroyRequest and validateEnteringProtectionWallCreationSession have similar conditions, move into separate method?
+    /**
+     * <p>Validates the request and chesk the conditions required to destroy the enchantment installed on a protection wall of a tower.</p>
+     * <p><b>Required conditions:</b></p>
+     * <ol>
+     *     <li>Tower with provided id exists</li>
+     *     <li>Player is an owner of the tower</li>
+     *     <li>Tower is not being attacked</li>
+     *     <li>Protection wall with provided id exists inside the tower</li>
+     *     <li>Protection wall is enchanted</li>
+     * </ol>
+     */
+    Optional<ServerError> validateEnchantmentDestroyRequest(ProtectionWallIdRequest request) {
+        int towerId = request.getTowerId();
+        int protectionWallId = request.getProtectionWallId();
+        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+
+        boolean towerExists = towerOpt.isPresent();
+
+        boolean isPlayerOwner = towerExists && towerOpt.get().getOwnerId().isPresent() &&
+                towerOpt.get().getOwnerId().get() == request.getPlayerData().getPlayerId();
+
+        boolean isTowerUnderAttack = towerExists && towerOpt.get().isUnderAttack();
+
+        boolean protectionWallExists = towerExists && towerOpt.get().hasProtectionWallWithId(protectionWallId);
+
+        boolean protectionWallIsEnchanted = protectionWallExists &&
+                towerOpt.get().getProtectionWallById(protectionWallId).get().isEnchanted();
+
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (!towerExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.TOWER_NOT_FOUND,
+                    "Tower with id " + towerId + " not found");
+        }
+        else if (!isPlayerOwner) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Player with id " + request.getPlayerData().getPlayerId() +
+                            " is not an owner of tower with id " + towerId);
+        }
+        else if (isTowerUnderAttack) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Tower with id " + towerId + " is being attacked");
+        }
+        else if (!protectionWallExists) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Protection wall with id " + protectionWallId +
+                            " of tower with id " + towerId + " not found");
+        }
+        else if (!protectionWallIsEnchanted) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                    ServerError.ErrorType.INVALID_REQUEST,
+                    "Protection wall with id " + protectionWallId +
+                            " of tower with id " + towerId + " is not enchanted");
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+
     /**
      * <p>Validates the request and checks the conditions required to enter protection wall creation session.
      * If validation fails then sets the appropriate error into response; otherwise does nothing.</p>
@@ -328,7 +425,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      *     </ol>
      * </ol>
      */
-    private Optional<ServerError> validateEnteringProtectionWallCreationSession(EnterProtectionWallCreationRequest request) {
+    private Optional<ServerError> validateEnteringProtectionWallCreationSession(ProtectionWallIdRequest request) {
         int towerId = request.getTowerId();
         int protectionWallId = request.getProtectionWallId();
         Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
@@ -354,13 +451,6 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 cooldownTimeBetweenSessionsCreationExceeded(towerOpt.get().getLastProtectionWallModificationTimestamp().get());
 
         boolean protectionWallModificationAllowed = !hasLastProtectionWallModificationTimestamp || cooldownTimeExceeded;
-
-        // TODO: remove logging after debugging
-        logger.info("hasLastProtectionWallModificationTimestamp=" + hasLastProtectionWallModificationTimestamp +
-                ", cooldownTimeExceeded=" + cooldownTimeExceeded);
-
-        logger.info("protectionWallModificationAllowed=" + protectionWallModificationAllowed +
-                ", isTowerUnderCaptureLock=" + isTowerUnderCaptureLock);
 
         ServerError.Builder errorBuilder = ServerError.newBuilder();
         boolean errorOccurred = false;
