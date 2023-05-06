@@ -25,6 +25,7 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,12 +41,12 @@ import io.grpc.StatusRuntimeException;
 
 public class MapFragment extends Fragment {
     // TODO: make the following fields Optional<T>
-    private GoogleMap googleMap;
-    private AlertDialog GPSAlertDialog;
-    private LocationListener locationUpdatesListener;
-    private GoogleMap.OnMarkerClickListener markerClickListener;
-    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+    private Optional<GoogleMap> googleMap;
+    private Optional<AlertDialog> GPSAlertDialog;
+    private Optional<LocationListener> locationUpdatesListener;
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
+    private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+
 
     public MapFragment() {
         // Required empty public constructor
@@ -75,11 +76,9 @@ public class MapFragment extends Fragment {
         createGPSEnableAlertDialog();
 
         // applying miscellaneous features on map view
-        Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap -> {
+        Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap_ -> {
             // for convenient use if methods
-            this.googleMap = googleMap;
-
-            this.googleMap.setOnMarkerClickListener(markerClickListener);
+            this.googleMap = Optional.of(googleMap_);
 
             // creating client stub
             logger.info("Creating blocking stub");
@@ -87,38 +86,41 @@ public class MapFragment extends Fragment {
             // setting map styles
             applyCustomGoogleMapStyle();
 
-            // registering click listeners on MyLocation button, location point and marker's
+            // registering click listeners on "MyLocation" button, location point and markers
             registerOnMyLocationButtonClickListener();
             registerOnMyLocationClickListener();
             registerOnMyMarkerClickListener();
-            this.googleMap.setOnMarkerClickListener(markerClickListener);
 
             // enabling user location
-            if (PermissionManager.checkLocationPermission(requireContext())) {
-                googleMap.setMyLocationEnabled(true);
-
-                registerOnLocationUpdatesListener();
-
-                // draw circle around last known location
-                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-                if (lastKnownLocation != null) {
-                    getTowers(lastKnownLocation);
-                    double latitude = lastKnownLocation.getLatitude();
-                     double longitude = lastKnownLocation.getLongitude();
-                    drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap);
-                }
-            }
-            else {
-                logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
-            }
+            enableUserLocation();
         });
 
         return view;
     }
 
+    private void enableUserLocation() {
+        if (PermissionManager.checkLocationPermission(requireContext())) {
+            googleMap.get().setMyLocationEnabled(true);
 
+            registerOnLocationUpdatesListener();
+
+            // draw circle around last known location
+            LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+            Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+            if (lastKnownLocation != null) {
+                getTowers(lastKnownLocation);
+                double latitude = lastKnownLocation.getLatitude();
+                double longitude = lastKnownLocation.getLongitude();
+                drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap.get());
+            }
+        }
+        else {
+            logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
+        }
+    }
+
+    // registering listeners
     private void registerOnLocationUpdatesListener() throws SecurityException {
         Objects.requireNonNull(googleMap);
 
@@ -127,74 +129,44 @@ public class MapFragment extends Fragment {
         final int minTimeIntervalBetweenUpdatesMs = 30;
         final int minDistanceBetweenUpdateMeters = 1;
 
-        this.locationUpdatesListener = new LocationListenerCompat() {
-            @Override
-            public void onLocationChanged(@NonNull Location location) {
-                logger.log(Level.INFO, "New location: " + location);
-                googleMap.clear();
-                getTowers(location);
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap);
-            }
+        this.locationUpdatesListener = Optional.of(
+                new LocationListenerCompat() {
+                    @Override
+                    public void onLocationChanged(@NonNull Location location) {
+                        logger.log(Level.INFO, "New location: " + location);
+                        googleMap.get().clear();
+                        getTowers(location);
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap.get());
+                    }
 
-            @Override
-            public void onProviderDisabled(@NonNull String provider) {
-                logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
-                showGPSEnableDialogIfCreated();
-            }
-        };
+                    @Override
+                    public void onProviderDisabled(@NonNull String provider) {
+                        logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
+                        showGPSEnableDialogIfCreated();
+                    }
+                }
+        );
 
         // registering event listener for location updates
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 minTimeIntervalBetweenUpdatesMs,
                 minDistanceBetweenUpdateMeters,
-                locationUpdatesListener);
-    }
-
-
-    private void createGPSEnableAlertDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setMessage(
-                "GPS is disabled. GPS is required to let application function properly.\nWould you mind enabling it?");
-
-        builder.setPositiveButton("Enable GPS", (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            // Nothing
-        });
-
-        this.GPSAlertDialog = builder.create();
-    }
-
-    private void showGPSEnableDialogIfCreated() {
-        if (GPSAlertDialog != null) {
-            if (!GPSAlertDialog.isShowing()) {
-                GPSAlertDialog.show();
-            }
-        }
-        else {
-            logger.log(Level.WARNING, "GPSAlertDialog is null (call 'createGPSEnableAlertDialog' to create)");
-        }
+                locationUpdatesListener.get());
     }
 
     private void registerOnMyMarkerClickListener() {
-        Objects.requireNonNull(googleMap);
-        markerClickListener = marker -> {
+        this.googleMap.get().setOnMarkerClickListener(marker -> {
             Intent intent = new Intent(getActivity(), CanvasActivity.class);
             startActivity(intent);
             return false;
-        };
+        });
     }
 
     private void registerOnMyLocationButtonClickListener() {
-        Objects.requireNonNull(googleMap);
-
-        googleMap.setOnMyLocationButtonClickListener(() -> {
+        googleMap.get().setOnMyLocationButtonClickListener(() -> {
             String message = "MyLocation button clicked";
             logger.log(Level.INFO, message);
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
@@ -204,17 +176,44 @@ public class MapFragment extends Fragment {
 
     private void registerOnMyLocationClickListener() {
         Objects.requireNonNull(googleMap);
-        googleMap.setOnMyLocationClickListener(location -> {
+        googleMap.get().setOnMyLocationClickListener(location -> {
             String message = "Current location: " + location;
             logger.log(Level.INFO, message);
             Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
         });
     }
 
-    private void applyCustomGoogleMapStyle() {
+    // helper methods
 
+    private void createGPSEnableAlertDialog() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(requireContext());
+        alertDialogBuilder.setMessage("GPS is disabled. GPS is required to let application function properly.\n" +
+                "Would you mind enabling it?");
+
+        alertDialogBuilder.setPositiveButton("Enable GPS", (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        });
+
+        alertDialogBuilder.setNegativeButton("Cancel", (dialog, which) -> {
+            // Nothing
+        });
+
+        this.GPSAlertDialog = Optional.of(alertDialogBuilder.create());
+    }
+
+    private void showGPSEnableDialogIfCreated() {
+        if (GPSAlertDialog.isPresent() && !GPSAlertDialog.get().isShowing()) {
+            GPSAlertDialog.get().show();
+        }
+        else {
+            logger.log(Level.WARNING, "GPSAlertDialog either is null or is showing");
+        }
+    }
+
+    private void applyCustomGoogleMapStyle() {
         // applying map style
-        boolean mapStyleAppliedSuccessfully = googleMap.setMapStyle(
+        boolean mapStyleAppliedSuccessfully = googleMap.get().setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
 
         if (mapStyleAppliedSuccessfully) {
@@ -234,7 +233,7 @@ public class MapFragment extends Fragment {
             List<Tower> towers = TowersRegistry.getInstance().getTowers();
             logger.info("getTowers: towers=" + towers);
 
-            drawInteractor.execute(googleMap, towers, location);
+            drawInteractor.execute(googleMap.get(), towers, location);
         }
         catch(StatusRuntimeException err) {
             logger.log(Level.WARNING, "Towers request has fallen", err.getStatus());
@@ -244,13 +243,11 @@ public class MapFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        // TODO: unregister all listeners
-        // TODO: figure out whether it is even correct
         // unregistering location listener if not null
-        if (locationUpdatesListener != null) {
+        if (locationUpdatesListener.isPresent()) {
             logger.log(Level.INFO, "Unregistering location listener");
             LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-            locationManager.removeUpdates(locationUpdatesListener);
+            locationManager.removeUpdates(locationUpdatesListener.get());
         }
         super.onDestroy();
     }
