@@ -9,6 +9,7 @@ import components.session.AttackSession.Spectator;
 import components.session.AttackSessionManager;
 import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
+import enchantedtowers.common.utils.proto.common.SpellDescription;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.LeaveAttackRequest;
 import enchantedtowers.common.utils.proto.requests.LeaveSpectatingRequest;
@@ -970,14 +971,14 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     }
 
     /**
-     * Adds spell descriptions (i.e. {@link SpellDescriptionResponse} instances) of already drawn spells into {@link SpectateTowerAttackResponse} response.
+     * Adds spell descriptions (i.e. {@link SpellDescription} instances) of already drawn spells into {@link SpectateTowerAttackResponse} response.
      */
     private void addSpellDescriptionsOfDrawnSpells(SpectateTowerAttackResponse.Builder responseBuilder, AttackSession session) {
-        List<SpellDescriptionResponse> spellDescriptionResponses = new ArrayList<>();
+        List<SpellDescription> spellDescriptionResponses = new ArrayList<>();
 
         // collecting building descriptions of all already drawn spells on canvas
         for (var spellDescription : session.getDrawnSpellsDescriptions()) {
-            SpellDescriptionResponse.Builder spellDescriptionResponseBuilder = SpellDescriptionResponse.newBuilder();
+            SpellDescription.Builder spellDescriptionResponseBuilder = SpellDescription.newBuilder();
 
             // add spell template offset
             Vector2 offset = spellDescription.offset();

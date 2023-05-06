@@ -3,6 +3,7 @@ package enchantedtowers.game_models;
 import enchantedtowers.game_models.utils.Vector2;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -42,17 +43,14 @@ public class Tower {
     public Tower(int towerId,
                  Vector2 position,
                  Optional<Integer> ownerId,
+                 List<ProtectionWall> protectionWalls,
                  Optional<Instant> lastProtectionWallModificationTimestamp,
                  boolean isUnderProtectionWallsInstallation,
                  boolean isUnderCaptureLock,
                  boolean isUnderAttack) {
         this.towerId = towerId;
         this.position = position;
-        protectionWalls = List.of(
-                new ProtectionWall(0),
-                new ProtectionWall(1),
-                new ProtectionWall(2)
-        );
+        this.protectionWalls = protectionWalls;
         this.ownerId = ownerId;
         this.lastProtectionWallModificationTimestamp = lastProtectionWallModificationTimestamp;
         this.isUnderProtectionWallsInstallation = isUnderProtectionWallsInstallation;
@@ -60,10 +58,11 @@ public class Tower {
         this.isUnderAttack = isUnderAttack;
     }
 
-    // TODO: add protection walls
+
     static public Tower of(int towerId,
                            Vector2 position,
                            Optional<Integer> ownerId,
+                           List<ProtectionWall> protectionWalls,
                            Optional<Instant> lastProtectionWallModificationTimestamp,
                            boolean isUnderProtectionWallsInstallation,
                            boolean isUnderCaptureLock,
@@ -71,6 +70,7 @@ public class Tower {
         return new Tower(towerId,
                         position,
                         ownerId,
+                        protectionWalls,
                         lastProtectionWallModificationTimestamp,
                         isUnderProtectionWallsInstallation,
                         isUnderCaptureLock,
@@ -140,6 +140,10 @@ public class Tower {
         synchronized (lock) {
             return lastProtectionWallModificationTimestamp;
         }
+    }
+
+    public List<ProtectionWall> getProtectionWalls() {
+        return Collections.unmodifiableList(protectionWalls);
     }
 
     public Optional<ProtectionWall> getProtectionWallById(int protectionWallId) {

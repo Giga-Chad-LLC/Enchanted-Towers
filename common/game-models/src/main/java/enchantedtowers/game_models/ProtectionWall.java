@@ -3,7 +3,7 @@ package enchantedtowers.game_models;
 import java.util.Optional;
 
 public class ProtectionWall {
-    private static class WallState {
+    public static class WallState {
         private boolean broken;
         private boolean enchanted;
 
@@ -39,12 +39,17 @@ public class ProtectionWall {
         this.enchantment = Optional.empty();
     }
 
-    public int getId() {
-        return id;
+    ProtectionWall(int id, WallState state, Optional<Enchantment> enchantment) {
+        this.id = id;
+        this.state = state;
+        this.enchantment = enchantment;
+    }
+    static public ProtectionWall of(int id, WallState state, Optional<Enchantment> enchantment) {
+        return new ProtectionWall(id, state, enchantment);
     }
 
-    public boolean hasEnchantment() {
-        return enchantment.isPresent();
+    public int getId() {
+        return id;
     }
 
     public void setEnchantment(Enchantment enchantment) {

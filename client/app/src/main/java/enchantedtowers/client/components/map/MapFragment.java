@@ -40,7 +40,6 @@ import io.grpc.StatusRuntimeException;
 
 
 public class MapFragment extends Fragment {
-    // TODO: make the following fields Optional<T>
     private Optional<GoogleMap> googleMap;
     private Optional<AlertDialog> GPSAlertDialog;
     private Optional<LocationListener> locationUpdatesListener;
