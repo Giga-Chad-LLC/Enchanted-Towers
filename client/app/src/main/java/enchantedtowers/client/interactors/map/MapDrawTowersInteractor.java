@@ -54,7 +54,7 @@ public class MapDrawTowersInteractor{
 
                 float[] results = new float[1];
                 Location.distanceBetween(coordinatesForMarkerAtTower.latitude, coordinatesForMarkerAtTower.longitude,
-                        userPosition.getLatitude(), userPosition.getLongitude(), results); //TODO: refactor.
+                        userPosition.getLatitude(), userPosition.getLongitude(), results); // TODO: refactor.
 
                 MarkerOptions markerOptions = new MarkerOptions()
                         .position(coordinatesForMarkerAtTower)

@@ -20,9 +20,9 @@ public class CreateTowersResponseInteractor {
     final static double MAX_DISTANCE = 2000;
     public CreateTowersResponseInteractor() {
         storedTowers = new ArrayList<>();
-        storedTowers.add(new Tower(0, new Vector2(1, 1)));
-        storedTowers.add(new Tower(1, new Vector2(2, 3)));
-        storedTowers.add(new Tower(2, new Vector2(5, 12)));
+        storedTowers.add(new Tower(0, new Vector2(39, -115)));
+        storedTowers.add(new Tower(1, new Vector2(37, -118)));
+        storedTowers.add(new Tower(2, new Vector2(41, -120)));
     }
 
     private static boolean isInsideRequiredArea(double x, double x0, double y, double y0) {
