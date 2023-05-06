@@ -19,37 +19,35 @@ import io.grpc.StatusRuntimeException;
 
 public class DrawTowersOnMapInteractor {
     private final Logger logger = Logger.getLogger(DrawTowersOnMapInteractor.class.getName());
+    private final CircleOptions circleOptions = new CircleOptions()
+            .radius(200)
+            .strokeColor(Color.BLACK)
+            .fillColor(Color.argb(48, 255, 0, 0))
+            .strokeWidth(2);
 
     public void drawCircleAroundPoint(LatLng point, GoogleMap googleMap) {
         Objects.requireNonNull(googleMap);
-
-        CircleOptions circleOptions = new CircleOptions();
         circleOptions.center(point);
-        circleOptions.radius(200);
-        circleOptions.strokeColor(Color.BLACK);
-        circleOptions.fillColor(0x30ff0000);
-        circleOptions.strokeWidth(2);
-
         googleMap.addCircle(circleOptions);
     }
 
     public void execute(GoogleMap googleMap, List<Tower> towers, Location userPosition) {
         try {
-            for (var tower : towers){
-                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getPosition().x, tower.getPosition().y);
+            for (var tower : towers) {
+                LatLng markerPosition = new LatLng(tower.getPosition().x, tower.getPosition().y);
 
                 // TODO: refactor
                 float[] results = new float[1];
-                Location.distanceBetween(coordinatesForMarkerAtTower.latitude, coordinatesForMarkerAtTower.longitude,
+                Location.distanceBetween(markerPosition.latitude, markerPosition.longitude,
                         userPosition.getLatitude(), userPosition.getLongitude(), results);
 
-                MarkerOptions markerOptions = new MarkerOptions()
-                        .position(coordinatesForMarkerAtTower)
+                var markerOptions = new MarkerOptions()
+                        .position(markerPosition)
                         .icon(BitmapDescriptorFactory.defaultMarker(results[0] > 200 ? BitmapDescriptorFactory.HUE_AZURE: BitmapDescriptorFactory.HUE_RED));
 
                 googleMap.addMarker(markerOptions);
 
-                drawCircleAroundPoint(coordinatesForMarkerAtTower, googleMap);
+                drawCircleAroundPoint(markerPosition, googleMap);
             }
         }
         catch(StatusRuntimeException err) {
