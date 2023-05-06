@@ -1,24 +1,19 @@
 package services;
 
-import io.grpc.stub.StreamObserver;
-
-// interactors
-import interactors.CreateTowersResponseInteractor;
-// requests
-import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
-// responses
+import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
-// services
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+import interactors.CreateTowersResponseInteractor;
+import io.grpc.stub.StreamObserver;
 
 
 public class TowersService extends TowersServiceGrpc.TowersServiceImplBase {
     @Override
-    public void getTowersCoordinates(PlayerCoordinatesRequest request, StreamObserver<TowersAggregationResponse> responseObserver) {
-        System.out.println("getTowersCoordinates: player cords: [x=" + request.getX() + ", y=" + request.getY() + "]");
+    public void getTowers(Empty emptyRequest, StreamObserver<TowersAggregationResponse> responseObserver) {
+        System.out.println("TowersService::getTowers");
 
         CreateTowersResponseInteractor interactor = new CreateTowersResponseInteractor();
-        TowersAggregationResponse response = interactor.execute(request);
+        TowersAggregationResponse response = interactor.execute();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

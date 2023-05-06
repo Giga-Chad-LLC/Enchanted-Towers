@@ -50,11 +50,12 @@ public class MapDrawTowersInteractor{
         try {
             towers = response.getTowersList();
             for (TowerResponse tower: towers){
-                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getX(), tower.getY());
+                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getPosition().getX(), tower.getPosition().getY());
 
+                // TODO: refactor
                 float[] results = new float[1];
                 Location.distanceBetween(coordinatesForMarkerAtTower.latitude, coordinatesForMarkerAtTower.longitude,
-                        userPosition.getLatitude(), userPosition.getLongitude(), results); // TODO: refactor.
+                        userPosition.getLatitude(), userPosition.getLongitude(), results);
 
                 MarkerOptions markerOptions = new MarkerOptions()
                         .position(coordinatesForMarkerAtTower)

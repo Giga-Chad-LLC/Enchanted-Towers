@@ -31,6 +31,7 @@ import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
+import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
@@ -236,15 +237,11 @@ public class MapFragment extends Fragment {
     }
 
     private void getTowers(Location location) {
-        PlayerCoordinatesRequest request = PlayerCoordinatesRequest.newBuilder()
-                .setX(location.getLatitude())
-                .setY(location.getLongitude())
-                .build();
         try {
             logger.info("getTowers: requesting towers");
             // TODO: performance bottle neck since it is blocking the execution thread (android studio warns about application not responding)
             // TODO: change to async stub
-            TowersAggregationResponse response = blockingStub.getTowersCoordinates(request);
+            TowersAggregationResponse response = blockingStub.getTowers(Empty.newBuilder().build());
             logger.info("getTowers: towers=" + response.getTowersList());
 
             drawInteractor.execute(googleMap, response, location);
