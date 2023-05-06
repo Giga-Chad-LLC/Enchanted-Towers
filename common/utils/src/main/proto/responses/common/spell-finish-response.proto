@@ -6,10 +6,10 @@ option java_multiple_files = true;
 package response_models;
 
 // responses
-import "responses/common/spell-description-response.proto";
+import "common/spell-description.proto";
 import "responses/common/server-error.proto";
 
 message SpellFinishResponse {
-  response_models.SpellDescriptionResponse spellDescription = 1;
+  common.SpellDescription spellDescription = 1;
   response_models.ServerError error = 2;
 };

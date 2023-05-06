@@ -7,14 +7,17 @@ package response_models;
 
 // common
 import "common/vector2.proto";
+// responses
+import "responses/towers-service/protection-wall-response.proto";
+
 
 message TowerResponse {
   int32 towerId = 1;
   common.Vector2 position = 2;
-  // TODO: List<ProtectionWall> protectionWalls;
-  optional int32 ownerId = 3;
-  optional int64 lastProtectionWallModificationTimestamp_ms = 4;
-  bool isUnderProtectionWallsInstallation = 5;
-  bool isUnderCaptureLock = 6;
-  bool isUnderAttack = 7;
+  repeated ProtectionWallResponse protectionWalls = 3;
+  optional int32 ownerId = 4;
+  optional int64 lastProtectionWallModificationTimestamp_ms = 5;
+  bool isUnderProtectionWallsInstallation = 6;
+  bool isUnderCaptureLock = 7;
+  bool isUnderAttack = 8;
 };
