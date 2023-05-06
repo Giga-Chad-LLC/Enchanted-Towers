@@ -1,10 +1,9 @@
-package enchantedtowers.game_models.registry;
+package components.registry;
 
 import enchantedtowers.game_models.Tower;
 
 import enchantedtowers.game_models.utils.Vector2;
-import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

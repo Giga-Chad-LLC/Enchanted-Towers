@@ -26,7 +26,7 @@ import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
-import enchantedtowers.game_models.registry.TowersRegistry;
+import components.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
 import interactors.TowerAttackServiceInteractor;
 import io.grpc.stub.ServerCallStreamObserver;

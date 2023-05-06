@@ -10,7 +10,7 @@ import enchantedtowers.game_models.Tower;
 // proto
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
-import enchantedtowers.game_models.registry.TowersRegistry;
+import components.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
 
 

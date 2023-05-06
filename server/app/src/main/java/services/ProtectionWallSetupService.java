@@ -1,6 +1,5 @@
 package services;
 
-import components.session.AttackSession;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
@@ -18,7 +17,7 @@ import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
-import enchantedtowers.game_models.registry.TowersRegistry;
+import components.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
 import interactors.ProtectionWallSetupServiceInteractor;
 import io.grpc.stub.ServerCallStreamObserver;

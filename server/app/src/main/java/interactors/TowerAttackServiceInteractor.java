@@ -4,7 +4,7 @@ import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
-import enchantedtowers.game_models.registry.TowersRegistry;
+import components.registry.TowersRegistry;
 
 import java.util.List;
 
