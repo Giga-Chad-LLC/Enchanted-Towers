@@ -23,6 +23,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,14 +31,9 @@ import java.util.logging.Logger;
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
-import enchantedtowers.client.interactors.map.MapDrawTowersInteractor;
-import enchantedtowers.common.utils.proto.common.Empty;
-import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
-import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
-import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
-import enchantedtowers.common.utils.storage.ServerApiStorage;
-import io.grpc.Grpc;
-import io.grpc.InsecureChannelCredentials;
+import enchantedtowers.client.components.registry.TowersRegistry;
+import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
+import enchantedtowers.game_models.Tower;
 import io.grpc.StatusRuntimeException;
 
 
@@ -49,8 +45,7 @@ public class MapFragment extends Fragment {
     private LocationListener locationUpdatesListener;
     private GoogleMap.OnMarkerClickListener markerClickListener;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
-    private TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
-    private final MapDrawTowersInteractor drawInteractor = new MapDrawTowersInteractor();
+    private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
 
     public MapFragment() {
         // Required empty public constructor
@@ -89,13 +84,7 @@ public class MapFragment extends Fragment {
             // creating client stub
             logger.info("Creating blocking stub");
 
-            // creating client stub
-            String host   = ServerApiStorage.getInstance().getClientHost();
-            int port      = ServerApiStorage.getInstance().getPort();
-            String target = host + ":" + port;
-            blockingStub = TowersServiceGrpc.newBlockingStub(
-                    Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
-
+            // setting map styles
             applyCustomGoogleMapStyle();
 
             // registering click listeners on MyLocation button, location point and marker's
@@ -241,10 +230,11 @@ public class MapFragment extends Fragment {
             logger.info("getTowers: requesting towers");
             // TODO: performance bottle neck since it is blocking the execution thread (android studio warns about application not responding)
             // TODO: change to async stub
-            TowersAggregationResponse response = blockingStub.getTowers(Empty.newBuilder().build());
-            logger.info("getTowers: towers=" + response.getTowersList());
 
-            drawInteractor.execute(googleMap, response, location);
+            List<Tower> towers = TowersRegistry.getInstance().getTowers();
+            logger.info("getTowers: towers=" + towers);
+
+            drawInteractor.execute(googleMap, towers, location);
         }
         catch(StatusRuntimeException err) {
             logger.log(Level.WARNING, "Towers request has fallen", err.getStatus());

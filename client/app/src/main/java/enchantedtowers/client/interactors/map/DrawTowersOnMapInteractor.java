@@ -3,13 +3,10 @@ package enchantedtowers.client.interactors.map;
 import android.graphics.Color;
 import android.location.Location;
 
-import androidx.annotation.NonNull;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
@@ -17,17 +14,11 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import enchantedtowers.common.utils.proto.responses.TowerResponse;
-import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
+import enchantedtowers.game_models.Tower;
 import io.grpc.StatusRuntimeException;
 
-public class MapDrawTowersInteractor{
-    private List<TowerResponse> towers;
-    private final Logger logger = Logger.getLogger(MapDrawTowersInteractor.class.getName());
-
-    public MapDrawTowersInteractor() {
-        //empty
-    }
+public class DrawTowersOnMapInteractor {
+    private final Logger logger = Logger.getLogger(DrawTowersOnMapInteractor.class.getName());
 
     public void drawCircleAroundPoint(LatLng point, GoogleMap googleMap) {
         Objects.requireNonNull(googleMap);
@@ -42,15 +33,10 @@ public class MapDrawTowersInteractor{
         googleMap.addCircle(circleOptions);
     }
 
-    public List<TowerResponse> getTowers() {
-        return towers;
-    }
-
-    public void execute(GoogleMap googleMap, TowersAggregationResponse response, Location userPosition) {
+    public void execute(GoogleMap googleMap, List<Tower> towers, Location userPosition) {
         try {
-            towers = response.getTowersList();
-            for (TowerResponse tower: towers){
-                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getPosition().getX(), tower.getPosition().getY());
+            for (var tower : towers){
+                LatLng coordinatesForMarkerAtTower = new LatLng(tower.getPosition().x, tower.getPosition().y);
 
                 // TODO: refactor
                 float[] results = new float[1];

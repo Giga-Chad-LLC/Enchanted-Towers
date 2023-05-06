@@ -17,7 +17,7 @@ import io.grpc.InsecureChannelCredentials;
 
 public class TowersRegistry {
     static private TowersRegistry instance = null;
-    private TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
+    private final TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
 
     static public TowersRegistry getInstance() {
         if (instance == null) {
@@ -37,15 +37,16 @@ public class TowersRegistry {
 
         TowersAggregationResponse response = blockingStub.getTowers(Empty.newBuilder().build());
 
-        // TODO: create Tower.of(TowerResponse)
         for (TowerResponse data : response.getTowersList()) {
             int towerId = data.getTowerId();
             Vector2 position = new Vector2(data.getPosition().getX(), data.getPosition().getY());
+
             Optional<Integer> ownerId = data.hasOwnerId() ? Optional.of(data.getOwnerId()) : Optional.empty();
             Optional<Instant> lastProtectionWallModificationTimestamp =
                     data.hasLastProtectionWallModificationTimestampMs() ?
                             Optional.of(Instant.ofEpochMilli(data.getLastProtectionWallModificationTimestampMs()))
                             : Optional.empty();
+
             boolean isUnderProtectionWallsInstallation = data.getIsUnderProtectionWallsInstallation();
             boolean isUnderCaptureLock = data.getIsUnderCaptureLock();
             boolean isUnderAttack = data.getIsUnderAttack();
@@ -62,8 +63,9 @@ public class TowersRegistry {
         }
     }
 
-    // instance fields
+    // instance members
     private final List<Tower> towers = new ArrayList<>();
+
 
     public List<Tower> getTowers() {
         return towers;
