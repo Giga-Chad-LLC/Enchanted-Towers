@@ -44,10 +44,10 @@
         android:id="@+id/logIn"
         android:layout_width="65dp"
         android:layout_height="40dp"
+        android:onClick="changeActivity"
         android:text="Log in"
         android:textSize="8sp"
-        android:onClick="changeActivity"
-        app:layout_constraintEnd_toStartOf="@+id/signUp"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
@@ -64,6 +64,8 @@
     <FrameLayout
         android:id="@+id/frame_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="-16dp"
+        tools:layout_editor_absoluteY="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
