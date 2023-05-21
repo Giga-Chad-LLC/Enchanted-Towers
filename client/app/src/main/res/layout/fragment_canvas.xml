@@ -8,11 +8,11 @@
 
     <enchantedtowers.client.components.canvas.CanvasWidget
         android:id="@+id/canvasView"
-        android:layout_width="411dp"
-        android:layout_height="445dp"
+        android:layout_width="400dp"
+        android:layout_height="400dp"
+        android:layout_marginTop="5dp"
         android:background="#FFD5A4"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.666"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
