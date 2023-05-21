@@ -7,6 +7,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
@@ -43,9 +44,13 @@ public class DrawTowersOnMapInteractor {
 
                 var markerOptions = new MarkerOptions()
                         .position(markerPosition)
-                        .icon(BitmapDescriptorFactory.defaultMarker(results[0] > 200 ? BitmapDescriptorFactory.HUE_AZURE: BitmapDescriptorFactory.HUE_RED));
+                        .icon(BitmapDescriptorFactory.defaultMarker(results[0] > 200 ? BitmapDescriptorFactory.HUE_AZURE : BitmapDescriptorFactory.HUE_RED));
 
-                googleMap.addMarker(markerOptions);
+                Marker marker = googleMap.addMarker(markerOptions);
+                // setting tower id on marker
+                if (marker != null) {
+                    marker.setTag(tower.getId());
+                }
 
                 drawCircleAroundPoint(markerPosition, googleMap);
             }

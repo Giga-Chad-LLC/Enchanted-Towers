@@ -158,6 +158,8 @@ public class MapFragment extends Fragment {
 
     private void registerOnMyMarkerClickListener() {
         this.googleMap.get().setOnMarkerClickListener(marker -> {
+            logger.info("MarkerTag: '" + marker.getTag() + "'");
+
             var dialog = TowerStatisticsDialogFragment.newInstance();
             dialog.show(getParentFragmentManager(), dialog.getTag());
             /*Intent intent = new Intent(getActivity(), CanvasActivity.class);

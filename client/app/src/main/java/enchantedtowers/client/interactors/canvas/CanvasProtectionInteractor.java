@@ -68,6 +68,7 @@ class ProtectionEventWorker extends Thread {
             requestBuilder.setRequestType(ProtectionWallRequest.RequestType.ADD_SPELL);
 
             var storage = ClientStorage.getInstance();
+            // TODO: may throw if drawing starts quick! check that is the matter
             assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
 
             // set session id
