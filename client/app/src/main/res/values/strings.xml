@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Enchanted Towers</string>
+    <string name="abandoned">Abandoned</string>
+    <string name="protection_wall_count">%d/%d</string>
 </resources>

@@ -32,15 +32,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Owner"
+                        android:text="Owner:"
                         android:textSize="20sp" />
 
                     <TextView
+                        android:id="@+id/owner_id"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="right"
-                        android:text="Dima"
+                        android:text=""
                         android:textSize="20sp" />
 
                 </LinearLayout>
@@ -56,15 +57,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Mage level"
+                        android:text="Mage level:"
                         android:textSize="20sp" />
 
                     <TextView
+                        android:id="@+id/mage_level"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="right"
-                        android:text="20"
+                        android:text=""
                         android:textSize="20sp" />
 
                 </LinearLayout>
@@ -81,15 +83,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Title 3"
+                        android:text="Elements:"
                         android:textSize="20sp" />
 
                     <TextView
+                        android:id="@+id/used_elements"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="right"
-                        android:text="Text 3"
+                        android:text=""
                         android:textSize="20sp" />
 
                 </LinearLayout>
@@ -104,28 +107,30 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Title 4"
+                        android:text="Walls:"
                         android:textSize="20sp" />
 
                     <TextView
+                        android:id="@+id/walls_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="right"
-                        android:text="Text 4"
+                        android:text=""
                         android:textSize="20sp" />
 
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Attack button -->
+            <!-- button -->
             <Button
+                android:id="@+id/action_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="1140dp"
-                android:text="Attack!" />
+                android:layout_marginTop="40dp"
+                android:text="" />
 
         </LinearLayout>
 
