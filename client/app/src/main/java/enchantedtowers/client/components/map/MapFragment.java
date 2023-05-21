@@ -33,6 +33,7 @@ import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
+import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
 import enchantedtowers.game_models.Tower;
 import io.grpc.StatusRuntimeException;
@@ -59,6 +60,9 @@ public class MapFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         logger.log(Level.INFO, "Created with context '" + requireContext().getClass().getName() + "'");
+
+        // TODO: remove from here into input field
+        ClientStorage.getInstance().setPlayerId(0);
     }
 
     @Override
@@ -158,12 +162,22 @@ public class MapFragment extends Fragment {
 
     private void registerOnMyMarkerClickListener() {
         this.googleMap.get().setOnMarkerClickListener(marker -> {
-            logger.info("MarkerTag: '" + marker.getTag() + "'");
 
-            var dialog = TowerStatisticsDialogFragment.newInstance();
-            dialog.show(getParentFragmentManager(), dialog.getTag());
-            /*Intent intent = new Intent(getActivity(), CanvasActivity.class);
-            startActivity(intent);*/
+            Integer towerId = (Integer) marker.getTag();
+
+            if (towerId != null) {
+                logger.info("Tower id stored in marker tag: '" + towerId + "'");
+
+                var dialog = TowerStatisticsDialogFragment.newInstance(towerId);
+                dialog.show(getParentFragmentManager(), dialog.getTag());
+
+                /*Intent intent = new Intent(getActivity(), CanvasActivity.class);
+                startActivity(intent);*/
+            }
+            else {
+                logger.warning("Clicked marker does not store tower id");
+            }
+
             return false;
         });
     }
