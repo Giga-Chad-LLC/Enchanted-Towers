@@ -41,6 +41,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
 
+    <Button
+        android:id="@+id/changeToCameraActivity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:onClick="changeActivity"
+        android:text="Camera"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
+
     <FrameLayout
         android:id="@+id/frame_layout"
         android:layout_width="match_parent"

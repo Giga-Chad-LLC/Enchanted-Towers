@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.components.utils.MessageOnStartActivity;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -26,7 +27,7 @@ import io.grpc.stub.StreamObserver;
 
 
 // TODO: rename/remove this activity (created only for testing)
-public class AttackTowerMenuActivity extends AppCompatActivity {
+public class AttackTowerMenuActivity extends AppCompatActivity implements MessageOnStartActivity {
     private TowerAttackServiceGrpc.TowerAttackServiceStub towerAttackAsyncStub;
     private ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub towerProtectAsyncStub;
     private ManagedChannel channel;
@@ -108,14 +109,8 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        Bundle extras = getIntent().getExtras();
-        System.out.println("AttackTowerMenuActivity onStart extras: " + extras);
-
-        if (extras != null && extras.getBoolean("showToastOnStart", false)) {
-            ClientUtils.showToastOnUIThread(this, extras.getString("toastMessage", ""), Toast.LENGTH_SHORT);
-        }
-
         super.onStart();
+        showOnStartMessageIfExists(this);
     }
 
 
