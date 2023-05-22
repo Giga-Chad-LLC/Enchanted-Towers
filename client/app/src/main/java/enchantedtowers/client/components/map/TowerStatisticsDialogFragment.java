@@ -1,6 +1,5 @@
 package enchantedtowers.client.components.map;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -186,7 +185,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                             // TODO: pop up notification modal
                             String message = "setAttackOnClickListener error: " + response.getError().getMessage();
                             System.err.println(message);
-                            ClientUtils.showToastOnUIThread(requireActivity(), message, Toast.LENGTH_LONG);
+                            ClientUtils.showError(requireActivity(), message);
                         }
                         else {
                             System.out.println("setAttackOnClickListener::Received response: success=" + response.getSuccess());
@@ -198,7 +197,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                     public void onError(Throwable t) {
                         // Handle the error
                         System.err.println("setAttackOnClickListener::Error: " + t.getMessage());
-                        ClientUtils.showToastOnUIThread(requireActivity(), t.getMessage(), Toast.LENGTH_SHORT);
+                        ClientUtils.showError(requireActivity(), t.getMessage());
                     }
 
                     @Override
@@ -237,13 +236,13 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                         if (response.hasError()) {
                             String message = "setCaptureOnClickListener::Received error: " + response.getError().getMessage();
                             System.err.println(message);
-                            ClientUtils.showToastOnUIThread(requireActivity(), message, Toast.LENGTH_LONG);
+                            ClientUtils.showError(requireActivity(), message);
                         }
                         else {
                             System.out.println("setCaptureOnClickListener::Received response: success=" + response.getSuccess());
                             ClientStorage.getInstance().setPlayerId(playerId);
                             ClientStorage.getInstance().setTowerId(towerId);
-                            ClientUtils.showToastOnUIThread(requireActivity(), "Captured tower with id " + towerId, Toast.LENGTH_LONG);
+                            ClientUtils.showInfo(requireActivity(), "Captured tower with id " + towerId);
                         }
                     }
 
@@ -251,7 +250,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                     public void onError(Throwable t) {
                         // Handle the error
                         System.err.println("setCaptureOnClickListener::Error: " + t.getMessage());
-                        ClientUtils.showToastOnUIThread(requireActivity(), t.getMessage(), Toast.LENGTH_SHORT);
+                        ClientUtils.showError(requireActivity(), t.getMessage());
                     }
 
                     @Override

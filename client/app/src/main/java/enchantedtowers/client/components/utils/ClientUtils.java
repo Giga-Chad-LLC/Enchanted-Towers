@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
+import enchantedtowers.client.components.dialogs.NotificationDialog;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;
 
@@ -23,6 +24,21 @@ public class ClientUtils {
 
     public static void showToastOnUIThread(Activity context, String message, int type) {
         context.runOnUiThread(() -> Toast.makeText(context, message, type).show());
+    }
+
+    public static void showError(Activity context, String description) {
+        showNotificationOnUIThread(context, "Error occurred", description, "Dismiss", null);
+    }
+
+    public static void showInfo(Activity context, String description) {
+        showNotificationOnUIThread(context, "Event info", description, "Dismiss", null);
+    }
+
+    public static void showNotificationOnUIThread(Activity context, String title, String description, String buttonMessage, Runnable callback) {
+        context.runOnUiThread(() -> {
+            NotificationDialog dialog = NotificationDialog.newInstance(context, title, description, buttonMessage, callback);
+            dialog.show();
+        });
     }
 
     /**
