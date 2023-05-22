@@ -1,5 +1,6 @@
 package enchantedtowers.client.components.map;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,12 +14,14 @@ import androidx.annotation.Nullable;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.registry.TowersRegistry;
+import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
@@ -47,6 +50,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private final ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub towerProtectAsyncStub;
     private final ManagedChannel channel;
     private final int towerId;
+    private Optional<TowersRegistryManager.Subscription> onTowerUpdateSubscription = Optional.empty();
 
     public static TowerStatisticsDialogFragment newInstance(int towerId) {
         return new TowerStatisticsDialogFragment(towerId);
@@ -70,16 +74,24 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_tower_statistics_dialog, container, false);
-        // get the views and attach the listener
 
         Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         setTowerStatisticsOnView(view, tower);
 
-        // tower has no enchanted protection walls -> capture
-        // player is owner -> set protection wall
-        // player is not owner -> attack
+        // subscribe to tower updates
+        logger.info("Register subscription for updates of tower with id " + towerId);
+        onTowerUpdateSubscription = Optional.of(updatedTower -> onTowerUpdateCallback(view, updatedTower));
+        TowersRegistryManager.getInstance().subscribeOnTowerUpdates(towerId, onTowerUpdateSubscription.get());
 
         return view;
+    }
+
+    private void onTowerUpdateCallback(View view, Tower updatedTower) {
+        requireActivity().runOnUiThread(() -> {
+            logger.info("Received update of tower with id " + towerId);
+            setTowerStatisticsOnView(view, updatedTower);
+            view.postInvalidate();
+        });
     }
 
     private void setTowerStatisticsOnView(View view, Tower tower) {
@@ -92,7 +104,9 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         // TODO: replace with owner username later
         // setting owner view
         if (tower.getOwnerId().isPresent()) {
-            ownerIdView.setText(tower.getOwnerId().get());
+            String username = tower.getOwnerId().get().toString();
+            String content = String.format(getString(R.string.username), username);
+            ownerIdView.setText(content);
         }
         else {
             ownerIdView.setText(R.string.abandoned);
@@ -121,15 +135,25 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         {
             int playerId = ClientStorage.getInstance().getPlayerId().get();
 
-            if (!tower.isProtected()) {
-                type = ActionButtonType.CAPTURE;
-            }
-            else if (tower.getOwnerId().isPresent() && playerId == tower.getOwnerId().get()) {
+            // TODO: add spectating state
+            // player is owner
+            if (tower.getOwnerId().isPresent() && playerId == tower.getOwnerId().get()) {
                 type = ActionButtonType.SETUP_PROTECTION_WALL;
+            }
+            // tower is not protected and player is not owner
+            else if (!tower.isProtected()) {
+                type = ActionButtonType.CAPTURE;
             }
             else {
                 type = ActionButtonType.ATTACK;
             }
+        }
+
+        logger.info("Selected type of button: " + type);
+
+        // if other listeners assigned remove them
+        if (actionButton.hasOnClickListeners()) {
+            actionButton.setOnClickListener(null);
         }
 
         switch (type) {
@@ -244,9 +268,14 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
 
     @Override
     public void onDestroy() {
-        logger.info("Shutting down...");
-        channel.shutdownNow();
+        logger.info("Unregister subscription for updates of tower with id " + towerId);
+        // unregister tower updates subscription
+        onTowerUpdateSubscription.ifPresent(
+                subscription -> TowersRegistryManager.getInstance().unsubscribeFromTowerUpdates(towerId, subscription));
+
         try {
+            logger.info("Shutting down...");
+            channel.shutdownNow();
             // TODO: move 300 to named constant
             channel.awaitTermination(300, TimeUnit.MILLISECONDS);
             logger.info("Shut down successfully");
