@@ -42,7 +42,6 @@ public class MapFragment extends Fragment {
     private Optional<AlertDialog> GPSAlertDialog = Optional.empty();
     private Optional<LocationListener> locationUpdatesListener = Optional.empty();
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
-    private final TowersRegistryManager towersRegistryManager = new TowersRegistryManager();
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
 
@@ -90,7 +89,7 @@ public class MapFragment extends Fragment {
             enableUserLocationAndRegisterLocationUpdatesListener();
 
             // requesting towers from server
-            towersRegistryManager.requestTowers(new TowersRegistryManager.Callback() {
+            TowersRegistryManager.getInstance().requestTowers(new TowersRegistryManager.Callback() {
                 @Override
                 public void onError(Throwable t) {
                     // TODO: show error notification
@@ -255,7 +254,8 @@ public class MapFragment extends Fragment {
             locationManager.removeUpdates(locationUpdatesListener.get());
         }
         // shutting down towers manager
-        towersRegistryManager.shutdown();
+        TowersRegistryManager.getInstance().shutdown();
+
         // clearing map
         googleMap.ifPresent(GoogleMap::clear);
 
