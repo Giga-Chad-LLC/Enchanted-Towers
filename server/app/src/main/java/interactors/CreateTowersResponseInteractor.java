@@ -12,37 +12,18 @@ import enchantedtowers.game_models.utils.Vector2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 
 public class CreateTowersResponseInteractor {
-    public TowersAggregationResponse execute() {
+    public TowersAggregationResponse createResponseWithAllTowers() {
         List<Tower> towers = TowersRegistry.getInstance().getTowers();
         List<TowerResponse> towerResponses = new ArrayList<>();
 
         for (Tower tower : towers) {
-            Vector2 position = tower.getPosition();
-
-            var towerPosition = enchantedtowers.common.utils.proto.common.Vector2.newBuilder()
-                    .setX(position.x)
-                    .setY(position.y)
-                    .build();
-
-            TowerResponse.Builder towerResponseBuilder = TowerResponse.newBuilder()
-                    .setTowerId(tower.getId())
-                    .setPosition(towerPosition)
-                    .setIsUnderProtectionWallsInstallation(tower.isUnderProtectionWallsInstallation())
-                    .setIsUnderCaptureLock(tower.isUnderCaptureLock())
-                    .setIsUnderAttack(tower.isUnderAttack());
-
-            tower.getOwnerId().ifPresent(towerResponseBuilder::setOwnerId);
-            tower.getLastProtectionWallModificationTimestamp().ifPresent(
-                    timestamp -> towerResponseBuilder.setLastProtectionWallModificationTimestampMs(timestamp.toEpochMilli()));
-
-            // adding protection walls
-            List<ProtectionWallResponse> protectionWalls = createProtectionWallResponses(tower);
-            towerResponseBuilder.addAllProtectionWalls(protectionWalls);
-
-            towerResponses.add(towerResponseBuilder.build());
+            TowerResponse response = createTowerResponse(tower);
+            towerResponses.add(response);
         }
 
         return TowersAggregationResponse
@@ -51,7 +32,51 @@ public class CreateTowersResponseInteractor {
                 .build();
     }
 
-    List<ProtectionWallResponse> createProtectionWallResponses(Tower tower) {
+    public TowersAggregationResponse createResponseWithTowersWithIds(List<Integer> towerIds) {
+        List<TowerResponse> towerResponses = new ArrayList<>();
+
+        for (int id : towerIds) {
+            Optional<Tower> tower = TowersRegistry.getInstance().getTowerById(id);
+            if (tower.isEmpty()) {
+                throw new NoSuchElementException("Tower with id " + id + " not found");
+            }
+            TowerResponse response = createTowerResponse(tower.get());
+            towerResponses.add(response);
+        }
+
+        return TowersAggregationResponse
+                .newBuilder()
+                .addAllTowers(towerResponses)
+                .build();
+    }
+
+    private TowerResponse createTowerResponse(Tower tower) {
+        Vector2 position = tower.getPosition();
+
+        var towerPosition = enchantedtowers.common.utils.proto.common.Vector2.newBuilder()
+                .setX(position.x)
+                .setY(position.y)
+                .build();
+
+        TowerResponse.Builder towerResponseBuilder = TowerResponse.newBuilder()
+                .setTowerId(tower.getId())
+                .setPosition(towerPosition)
+                .setIsUnderProtectionWallsInstallation(tower.isUnderProtectionWallsInstallation())
+                .setIsUnderCaptureLock(tower.isUnderCaptureLock())
+                .setIsUnderAttack(tower.isUnderAttack());
+
+        tower.getOwnerId().ifPresent(towerResponseBuilder::setOwnerId);
+        tower.getLastProtectionWallModificationTimestamp().ifPresent(
+                timestamp -> towerResponseBuilder.setLastProtectionWallModificationTimestampMs(timestamp.toEpochMilli()));
+
+        // adding protection walls
+        List<ProtectionWallResponse> protectionWalls = createProtectionWallResponses(tower);
+        towerResponseBuilder.addAllProtectionWalls(protectionWalls);
+
+        return towerResponseBuilder.build();
+    }
+
+    private List<ProtectionWallResponse> createProtectionWallResponses(Tower tower) {
         List<ProtectionWallResponse> protectionWalls = new ArrayList<>();
 
         for (var wall : tower.getProtectionWalls()) {

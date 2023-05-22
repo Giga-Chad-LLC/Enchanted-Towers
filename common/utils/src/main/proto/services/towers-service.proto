@@ -15,4 +15,5 @@ import "responses/towers-service/towers-aggregation-response.proto";
 
 service TowersService {
     rpc GetTowers(common.Empty) returns (response_models.TowersAggregationResponse) {}
+    rpc ListenTowersUpdates(common.Empty) returns (stream response_models.TowersAggregationResponse) {}
 }
