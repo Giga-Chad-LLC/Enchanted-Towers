@@ -8,6 +8,7 @@ import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
+import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 public class TowersRegistryManager {
@@ -16,6 +17,7 @@ public class TowersRegistryManager {
         void onError(Throwable t);
     }
 
+    private final ManagedChannel channel;
     private final TowersServiceGrpc.TowersServiceStub asyncStub;
 
     public TowersRegistryManager() {
@@ -24,8 +26,8 @@ public class TowersRegistryManager {
         int port      = ServerApiStorage.getInstance().getPort();
         String target = host + ":" + port;
 
-        asyncStub = TowersServiceGrpc.newStub(
-                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
+        channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
+        asyncStub = TowersServiceGrpc.newStub(channel);
     }
 
     public void requestTowers(Callback callback) {
@@ -47,5 +49,15 @@ public class TowersRegistryManager {
                 callback.onCompleted();
             }
         });
+    }
+
+    public void shutdown() {
+        channel.shutdownNow();
+        try {
+            // TODO: move 300 to named constant
+            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

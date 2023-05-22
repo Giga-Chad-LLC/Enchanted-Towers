@@ -100,7 +100,10 @@ public class MapFragment extends Fragment {
                 @Override
                 public void onCompleted() {
                     // drawing towers
-                    drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
+                    requireActivity().runOnUiThread(() -> {
+                        logger.info("Drawing " + TowersRegistry.getInstance().getTowers().size() + " towers on map");
+                        drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
+                    });
                 }
             });
         });
@@ -251,6 +254,8 @@ public class MapFragment extends Fragment {
             LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
             locationManager.removeUpdates(locationUpdatesListener.get());
         }
+        // shutting down towers manager
+        towersRegistryManager.shutdown();
         // clearing map
         googleMap.ifPresent(GoogleMap::clear);
 
