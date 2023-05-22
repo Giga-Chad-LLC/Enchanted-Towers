@@ -22,7 +22,6 @@ import io.grpc.InsecureChannelCredentials;
 
 public class TowersRegistry {
     static private TowersRegistry instance = null;
-    // private final TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
 
     static public TowersRegistry getInstance() {
         if (instance == null) {
@@ -31,48 +30,7 @@ public class TowersRegistry {
         return instance;
     }
 
-    public void createTowersFromResponse(TowersAggregationResponse response) {
-        for (TowerResponse data : response.getTowersList()) {
-            int towerId = data.getTowerId();
-            Vector2 position = new Vector2(data.getPosition().getX(), data.getPosition().getY());
-
-            Optional<Integer> ownerId = data.hasOwnerId() ? Optional.of(data.getOwnerId()) : Optional.empty();
-
-            List<ProtectionWall> protectionWalls = createProtectionWalls(data);
-
-            Optional<Instant> lastProtectionWallModificationTimestamp = data.hasLastProtectionWallModificationTimestampMs() ?
-                    Optional.of(Instant.ofEpochMilli(data.getLastProtectionWallModificationTimestampMs()))
-                    : Optional.empty();
-
-            boolean isUnderProtectionWallsInstallation = data.getIsUnderProtectionWallsInstallation();
-            boolean isUnderCaptureLock = data.getIsUnderCaptureLock();
-            boolean isUnderAttack = data.getIsUnderAttack();
-
-            towers.add(Tower.of(
-                    towerId,
-                    position,
-                    ownerId,
-                    protectionWalls,
-                    lastProtectionWallModificationTimestamp,
-                    isUnderProtectionWallsInstallation,
-                    isUnderCaptureLock,
-                    isUnderAttack
-            ));
-        }
-    }
-
-
-    private TowersRegistry() {
-        // creating client stub
-        /*String host   = ServerApiStorage.getInstance().getClientHost();
-        int port      = ServerApiStorage.getInstance().getPort();
-        String target = host + ":" + port;
-
-        blockingStub = TowersServiceGrpc.newBlockingStub(
-                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
-
-        TowersAggregationResponse response = blockingStub.getTowers(Empty.newBuilder().build());*/
-    }
+    private TowersRegistry() {}
 
     static private List<ProtectionWall> createProtectionWalls(TowerResponse response) {
         List<ProtectionWall> protectionWalls = new ArrayList<>();
@@ -114,6 +72,35 @@ public class TowersRegistry {
     // instance members
     private final List<Tower> towers = new ArrayList<>();
 
+    public void createTowersFromResponse(TowersAggregationResponse response) {
+        for (TowerResponse data : response.getTowersList()) {
+            int towerId = data.getTowerId();
+            Vector2 position = new Vector2(data.getPosition().getX(), data.getPosition().getY());
+
+            Optional<Integer> ownerId = data.hasOwnerId() ? Optional.of(data.getOwnerId()) : Optional.empty();
+
+            List<ProtectionWall> protectionWalls = createProtectionWalls(data);
+
+            Optional<Instant> lastProtectionWallModificationTimestamp = data.hasLastProtectionWallModificationTimestampMs() ?
+                    Optional.of(Instant.ofEpochMilli(data.getLastProtectionWallModificationTimestampMs()))
+                    : Optional.empty();
+
+            boolean isUnderProtectionWallsInstallation = data.getIsUnderProtectionWallsInstallation();
+            boolean isUnderCaptureLock = data.getIsUnderCaptureLock();
+            boolean isUnderAttack = data.getIsUnderAttack();
+
+            towers.add(Tower.of(
+                    towerId,
+                    position,
+                    ownerId,
+                    protectionWalls,
+                    lastProtectionWallModificationTimestamp,
+                    isUnderProtectionWallsInstallation,
+                    isUnderCaptureLock,
+                    isUnderAttack
+            ));
+        }
+    }
 
     public List<Tower> getTowers() {
         return towers;
