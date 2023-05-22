@@ -1,6 +1,7 @@
 package enchantedtowers.client.components.registry;
 
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
@@ -12,6 +13,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 public class TowersRegistryManager {
+    private final static Logger logger = Logger.getLogger(TowersRegistryManager.class.getName());
+
     public interface Callback {
         void onCompleted();
         void onError(Throwable t);
@@ -28,6 +31,9 @@ public class TowersRegistryManager {
 
         channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
         asyncStub = TowersServiceGrpc.newStub(channel);
+
+        // registering stream observer for tower updates
+        listenTowersUpdates();
     }
 
     public void requestTowers(Callback callback) {
@@ -51,11 +57,35 @@ public class TowersRegistryManager {
         });
     }
 
+    private void listenTowersUpdates() {
+        logger.info("Listening for towers updates");
+        asyncStub.listenTowersUpdates(Empty.newBuilder().build(), new StreamObserver<>() {
+            @Override
+            public void onNext(TowersAggregationResponse response) {
+                // updating towers in towers registry
+                logger.info("Towers update received");
+                TowersRegistry.getInstance().updateTowersFromResponse(response);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                logger.info("Error occured: " + t.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                logger.info("TowersService completed connection of listenTowersUpdates request");
+            }
+        });
+    }
+
     public void shutdown() {
+        logger.info("Shutting down...");
         channel.shutdownNow();
         try {
             // TODO: move 300 to named constant
             channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            logger.info("Shut down successfully");
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

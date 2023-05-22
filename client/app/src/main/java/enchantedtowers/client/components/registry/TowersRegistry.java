@@ -2,6 +2,7 @@ package enchantedtowers.client.components.registry;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,44 +70,57 @@ public class TowersRegistry {
         return new Enchantment(spells);
     }
 
+    static private Tower createTowerFromResponse(TowerResponse response) {
+        int towerId = response.getTowerId();
+        Vector2 position = new Vector2(response.getPosition().getX(), response.getPosition().getY());
+
+        Optional<Integer> ownerId = response.hasOwnerId() ? Optional.of(response.getOwnerId()) : Optional.empty();
+
+        List<ProtectionWall> protectionWalls = createProtectionWalls(response);
+
+        Optional<Instant> lastProtectionWallModificationTimestamp = response.hasLastProtectionWallModificationTimestampMs() ?
+                Optional.of(Instant.ofEpochMilli(response.getLastProtectionWallModificationTimestampMs()))
+                : Optional.empty();
+
+        boolean isUnderProtectionWallsInstallation = response.getIsUnderProtectionWallsInstallation();
+        boolean isUnderCaptureLock = response.getIsUnderCaptureLock();
+        boolean isUnderAttack = response.getIsUnderAttack();
+
+        return Tower.of(
+                towerId,
+                position,
+                ownerId,
+                protectionWalls,
+                lastProtectionWallModificationTimestamp,
+                isUnderProtectionWallsInstallation,
+                isUnderCaptureLock,
+                isUnderAttack
+        );
+    }
+
     // instance members
     private final List<Tower> towers = new ArrayList<>();
 
-    public void createTowersFromResponse(TowersAggregationResponse response) {
+    public synchronized void createTowersFromResponse(TowersAggregationResponse response) {
         for (TowerResponse data : response.getTowersList()) {
-            int towerId = data.getTowerId();
-            Vector2 position = new Vector2(data.getPosition().getX(), data.getPosition().getY());
-
-            Optional<Integer> ownerId = data.hasOwnerId() ? Optional.of(data.getOwnerId()) : Optional.empty();
-
-            List<ProtectionWall> protectionWalls = createProtectionWalls(data);
-
-            Optional<Instant> lastProtectionWallModificationTimestamp = data.hasLastProtectionWallModificationTimestampMs() ?
-                    Optional.of(Instant.ofEpochMilli(data.getLastProtectionWallModificationTimestampMs()))
-                    : Optional.empty();
-
-            boolean isUnderProtectionWallsInstallation = data.getIsUnderProtectionWallsInstallation();
-            boolean isUnderCaptureLock = data.getIsUnderCaptureLock();
-            boolean isUnderAttack = data.getIsUnderAttack();
-
-            towers.add(Tower.of(
-                    towerId,
-                    position,
-                    ownerId,
-                    protectionWalls,
-                    lastProtectionWallModificationTimestamp,
-                    isUnderProtectionWallsInstallation,
-                    isUnderCaptureLock,
-                    isUnderAttack
-            ));
+            Tower tower = createTowerFromResponse(data);
+            towers.add(tower);
         }
     }
 
-    public List<Tower> getTowers() {
-        return towers;
+    public synchronized void updateTowersFromResponse(TowersAggregationResponse response) {
+        for (TowerResponse data : response.getTowersList()) {
+            Tower updatedTower = createTowerFromResponse(data);
+            towers.removeIf(tower -> tower.getId() == updatedTower.getId());
+            towers.add(updatedTower);
+        }
     }
 
-    public Optional<Tower> getTowerById(int towerId) {
+    public synchronized List<Tower> getTowers() {
+        return Collections.unmodifiableList(towers);
+    }
+
+    public synchronized Optional<Tower> getTowerById(int towerId) {
         for (var tower : towers) {
             if (tower.getId() == towerId) {
                 return Optional.of(tower);

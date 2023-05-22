@@ -14,14 +14,13 @@ import androidx.annotation.Nullable;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
-import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
-import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
@@ -43,6 +42,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         SETUP_PROTECTION_WALL,
     }
 
+    private final static Logger logger = Logger.getLogger(TowerStatisticsDialogFragment.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub towerAttackAsyncStub;
     private final ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub towerProtectAsyncStub;
     private final ManagedChannel channel;
@@ -240,5 +240,19 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private void setTrySetupProtectionWallOnClickListener(Button actionButton) {
         actionButton.setText("Set up protection wall");
         // TODO: show modal with protection wall selection
+    }
+
+    @Override
+    public void onDestroy() {
+        logger.info("Shutting down...");
+        channel.shutdownNow();
+        try {
+            // TODO: move 300 to named constant
+            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            logger.info("Shut down successfully");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        super.onDestroy();
     }
 }
