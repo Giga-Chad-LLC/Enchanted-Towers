@@ -23,13 +23,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
@@ -37,15 +35,6 @@ import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
-import enchantedtowers.common.utils.proto.common.Empty;
-import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
-import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
-import enchantedtowers.common.utils.storage.ServerApiStorage;
-import enchantedtowers.game_models.Tower;
-import io.grpc.Grpc;
-import io.grpc.InsecureChannelCredentials;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
 
 
 public class MapFragment extends Fragment {
@@ -54,19 +43,10 @@ public class MapFragment extends Fragment {
     private Optional<LocationListener> locationUpdatesListener = Optional.empty();
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
     private final TowersRegistryManager towersRegistryManager = new TowersRegistryManager();
-    //private final TowersServiceGrpc.TowersServiceStub asyncStub;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
 
-    public MapFragment() {
-        // creating client stub
-        /*String host   = ServerApiStorage.getInstance().getClientHost();
-        int port      = ServerApiStorage.getInstance().getPort();
-        String target = host + ":" + port;
-
-        asyncStub = TowersServiceGrpc.newStub(
-                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());*/
-    }
+    public MapFragment() {}
 
     public static MapFragment newInstance() {
         return new MapFragment();

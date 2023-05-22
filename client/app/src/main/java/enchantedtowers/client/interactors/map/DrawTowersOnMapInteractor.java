@@ -1,7 +1,6 @@
 package enchantedtowers.client.interactors.map;
 
 import android.graphics.Color;
-import android.location.Location;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -12,14 +11,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import enchantedtowers.game_models.Tower;
-import io.grpc.StatusRuntimeException;
 
 public class DrawTowersOnMapInteractor {
-    private final Logger logger = Logger.getLogger(DrawTowersOnMapInteractor.class.getName());
     private final CircleOptions circleOptions = new CircleOptions()
             .radius(200)
             .strokeColor(Color.BLACK)

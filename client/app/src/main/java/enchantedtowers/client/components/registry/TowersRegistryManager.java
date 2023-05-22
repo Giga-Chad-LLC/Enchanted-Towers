@@ -1,10 +1,7 @@
 package enchantedtowers.client.components.registry;
 
-import android.widget.Toast;
-
 import java.util.concurrent.TimeUnit;
 
-import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
