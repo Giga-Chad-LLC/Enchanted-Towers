@@ -32,31 +32,20 @@ public class DrawTowersOnMapInteractor {
         googleMap.addCircle(circleOptions);
     }
 
-    public void execute(GoogleMap googleMap, List<Tower> towers, Location userPosition) {
-        try {
-            for (var tower : towers) {
-                LatLng markerPosition = new LatLng(tower.getPosition().x, tower.getPosition().y);
+    public void drawTowerIcons(GoogleMap googleMap, List<Tower> towers) {
+        for (var tower : towers) {
+            LatLng markerPosition = new LatLng(tower.getPosition().x, tower.getPosition().y);
 
-                // TODO: refactor
-                float[] results = new float[1];
-                Location.distanceBetween(markerPosition.latitude, markerPosition.longitude,
-                        userPosition.getLatitude(), userPosition.getLongitude(), results);
+            var markerOptions = new MarkerOptions()
+                    .position(markerPosition)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
 
-                var markerOptions = new MarkerOptions()
-                        .position(markerPosition)
-                        .icon(BitmapDescriptorFactory.defaultMarker(results[0] > 200 ? BitmapDescriptorFactory.HUE_AZURE : BitmapDescriptorFactory.HUE_RED));
-
-                Marker marker = googleMap.addMarker(markerOptions);
-                // setting tower id on marker
-                if (marker != null) {
-                    marker.setTag(tower.getId());
-                }
-
+            Marker marker = googleMap.addMarker(markerOptions);
+            // setting tower id on marker
+            if (marker != null) {
+                marker.setTag(tower.getId());
                 drawCircleAroundPoint(markerPosition, googleMap);
             }
-        }
-        catch(StatusRuntimeException err) {
-            logger.log(Level.WARNING, "MapDrawTowersInteractor has fallen", err.getStatus());
         }
     }
 

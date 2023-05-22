@@ -122,8 +122,11 @@ public class MapFragment extends Fragment {
                         registerOnMyLocationClickListener();
                         registerOnMarkerClickListener();
 
-                        // enabling user location
-                        enableUserLocation();
+                        // enabling user location and registering location updates listener
+                        enableUserLocationAndRegisterLocationUpdatesListener();
+
+                        // drawing towers
+                        drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
                     });
                 }
             });
@@ -132,21 +135,21 @@ public class MapFragment extends Fragment {
         return view;
     }
 
-    private void enableUserLocation() {
+    private void enableUserLocationAndRegisterLocationUpdatesListener() {
         if (PermissionManager.checkLocationPermission(requireContext())) {
             googleMap.get().setMyLocationEnabled(true);
 
             registerOnLocationUpdatesListener();
 
             // draw circle around last known location
-            LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-            Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            {
+                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            if (lastKnownLocation != null) {
-                getTowers(lastKnownLocation);
-                double latitude = lastKnownLocation.getLatitude();
-                double longitude = lastKnownLocation.getLongitude();
-                drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap.get());
+                if (lastKnownLocation != null) {
+                    var playerLocation = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                    drawInteractor.drawCircleAroundPoint(playerLocation, googleMap.get());
+                }
             }
         }
         else {
@@ -157,7 +160,6 @@ public class MapFragment extends Fragment {
     // registering listeners
     private void registerOnLocationUpdatesListener() throws SecurityException {
         Objects.requireNonNull(googleMap);
-
         LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
 
         this.locationUpdatesListener = Optional.of(
@@ -165,17 +167,14 @@ public class MapFragment extends Fragment {
                     @Override
                     public void onLocationChanged(@NonNull Location location) {
                         logger.log(Level.INFO, "New location: " + location);
-                        googleMap.get().clear();
-                        getTowers(location);
-                        double latitude = location.getLatitude();
-                        double longitude = location.getLongitude();
-                        drawInteractor.drawCircleAroundPoint(new LatLng(latitude, longitude), googleMap.get());
+                        var playerLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                        drawInteractor.drawCircleAroundPoint(playerLocation, googleMap.get());
                     }
 
                     @Override
                     public void onProviderDisabled(@NonNull String provider) {
                         logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
-                        showGPSEnableDialogIfCreated();
+                        showGPSEnableDialogIfAllowed();
                     }
                 }
         );
@@ -201,7 +200,6 @@ public class MapFragment extends Fragment {
 
                 var dialog = TowerStatisticsDialogFragment.newInstance(towerId);
                 dialog.show(getParentFragmentManager(), dialog.getTag());
-
                 /*Intent intent = new Intent(getActivity(), CanvasActivity.class);
                 startActivity(intent);*/
             }
@@ -250,7 +248,7 @@ public class MapFragment extends Fragment {
         this.GPSAlertDialog = Optional.of(alertDialogBuilder.create());
     }
 
-    private void showGPSEnableDialogIfCreated() {
+    private void showGPSEnableDialogIfAllowed() {
         if (GPSAlertDialog.isPresent() && !GPSAlertDialog.get().isShowing()) {
             GPSAlertDialog.get().show();
         }
@@ -271,23 +269,6 @@ public class MapFragment extends Fragment {
             logger.log(Level.WARNING, "Map style applying failed");
         }
     }
-
-    private void getTowers(Location location) {
-        try {
-            logger.info("getTowers: requesting towers");
-            // TODO: performance bottle neck since it is blocking the execution thread (android studio warns about application not responding)
-            // TODO: change to async stub
-
-            List<Tower> towers = TowersRegistry.getInstance().getTowers();
-            logger.info("getTowers: towers=" + towers);
-
-            drawInteractor.execute(googleMap.get(), towers, location);
-        }
-        catch(StatusRuntimeException err) {
-            logger.log(Level.WARNING, "Towers request has fallen", err.getStatus());
-        }
-    }
-
 
     @Override
     public void onDestroy() {
