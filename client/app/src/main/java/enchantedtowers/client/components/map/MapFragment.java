@@ -34,10 +34,17 @@ import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
+import enchantedtowers.common.utils.proto.common.Empty;
+import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
+import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.Tower;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
 import io.grpc.StatusRuntimeException;
-
+import io.grpc.stub.StreamObserver;
 
 
 public class MapFragment extends Fragment {
@@ -45,11 +52,18 @@ public class MapFragment extends Fragment {
     private Optional<AlertDialog> GPSAlertDialog;
     private Optional<LocationListener> locationUpdatesListener;
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
+    private final TowersServiceGrpc.TowersServiceStub asyncStub;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
 
     public MapFragment() {
-        // Required empty public constructor
+        // creating client stub
+        String host   = ServerApiStorage.getInstance().getClientHost();
+        int port      = ServerApiStorage.getInstance().getPort();
+        String target = host + ":" + port;
+
+        asyncStub = TowersServiceGrpc.newStub(
+                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
     }
 
     public static MapFragment newInstance() {
@@ -82,20 +96,37 @@ public class MapFragment extends Fragment {
         Objects.requireNonNull(supportMapFragment).getMapAsync(googleMap_ -> {
             // for convenient use if methods
             this.googleMap = Optional.of(googleMap_);
-
-            // creating client stub
-            logger.info("Creating blocking stub");
-
             // setting map styles
             applyCustomGoogleMapStyle();
 
-            // registering click listeners on "MyLocation" button, location point and markers
-            registerOnMyLocationButtonClickListener();
-            registerOnMyLocationClickListener();
-            registerOnMyMarkerClickListener();
+            // requesting towers from server
+            // TODO: move into separate manager
+            asyncStub.getTowers(Empty.newBuilder().build(), new StreamObserver<>() {
+                @Override
+                public void onNext(TowersAggregationResponse response) {
+                    // storing towers in towers registry
+                    TowersRegistry.getInstance().createTowersFromResponse(response);
+                }
 
-            // enabling user location
-            enableUserLocation();
+                @Override
+                public void onError(Throwable t) {
+                    // TODO: show error notification
+                    ClientUtils.showToastOnUIThread(requireActivity(), t.getMessage(), Toast.LENGTH_LONG);
+                }
+
+                @Override
+                public void onCompleted() {
+                    requireActivity().runOnUiThread(() -> {
+                        // registering click listeners on "MyLocation" button, location point and markers
+                        registerOnMyLocationButtonClickListener();
+                        registerOnMyLocationClickListener();
+                        registerOnMarkerClickListener();
+
+                        // enabling user location
+                        enableUserLocation();
+                    });
+                }
+            });
         });
 
         return view;
@@ -129,9 +160,6 @@ public class MapFragment extends Fragment {
 
         LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
 
-        final int minTimeIntervalBetweenUpdatesMs = 30;
-        final int minDistanceBetweenUpdateMeters = 1;
-
         this.locationUpdatesListener = Optional.of(
                 new LocationListenerCompat() {
                     @Override
@@ -152,6 +180,9 @@ public class MapFragment extends Fragment {
                 }
         );
 
+        final int minTimeIntervalBetweenUpdatesMs = 30;
+        final int minDistanceBetweenUpdateMeters = 1;
+
         // registering event listener for location updates
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
@@ -160,7 +191,7 @@ public class MapFragment extends Fragment {
                 locationUpdatesListener.get());
     }
 
-    private void registerOnMyMarkerClickListener() {
+    private void registerOnMarkerClickListener() {
         this.googleMap.get().setOnMarkerClickListener(marker -> {
 
             Integer towerId = (Integer) marker.getTag();

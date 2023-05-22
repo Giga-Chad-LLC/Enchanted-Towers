@@ -22,7 +22,7 @@ import io.grpc.InsecureChannelCredentials;
 
 public class TowersRegistry {
     static private TowersRegistry instance = null;
-    private final TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
+    // private final TowersServiceGrpc.TowersServiceBlockingStub blockingStub;
 
     static public TowersRegistry getInstance() {
         if (instance == null) {
@@ -31,17 +31,7 @@ public class TowersRegistry {
         return instance;
     }
 
-    private TowersRegistry() {
-        // creating client stub
-        String host   = ServerApiStorage.getInstance().getClientHost();
-        int port      = ServerApiStorage.getInstance().getPort();
-        String target = host + ":" + port;
-
-        blockingStub = TowersServiceGrpc.newBlockingStub(
-                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
-
-        TowersAggregationResponse response = blockingStub.getTowers(Empty.newBuilder().build());
-
+    public void createTowersFromResponse(TowersAggregationResponse response) {
         for (TowerResponse data : response.getTowersList()) {
             int towerId = data.getTowerId();
             Vector2 position = new Vector2(data.getPosition().getX(), data.getPosition().getY());
@@ -51,8 +41,8 @@ public class TowersRegistry {
             List<ProtectionWall> protectionWalls = createProtectionWalls(data);
 
             Optional<Instant> lastProtectionWallModificationTimestamp = data.hasLastProtectionWallModificationTimestampMs() ?
-                            Optional.of(Instant.ofEpochMilli(data.getLastProtectionWallModificationTimestampMs()))
-                            : Optional.empty();
+                    Optional.of(Instant.ofEpochMilli(data.getLastProtectionWallModificationTimestampMs()))
+                    : Optional.empty();
 
             boolean isUnderProtectionWallsInstallation = data.getIsUnderProtectionWallsInstallation();
             boolean isUnderCaptureLock = data.getIsUnderCaptureLock();
@@ -69,6 +59,19 @@ public class TowersRegistry {
                     isUnderAttack
             ));
         }
+    }
+
+
+    private TowersRegistry() {
+        // creating client stub
+        /*String host   = ServerApiStorage.getInstance().getClientHost();
+        int port      = ServerApiStorage.getInstance().getPort();
+        String target = host + ":" + port;
+
+        blockingStub = TowersServiceGrpc.newBlockingStub(
+                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
+
+        TowersAggregationResponse response = blockingStub.getTowers(Empty.newBuilder().build());*/
     }
 
     static private List<ProtectionWall> createProtectionWalls(TowerResponse response) {
