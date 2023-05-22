@@ -71,8 +71,7 @@ public class TowersRegistryManager {
             shutdownCalled.set(false);
         }
 
-        asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                 .getTowers(Empty.newBuilder().build(), new StreamObserver<>() {
+        asyncStub.getTowers(Empty.newBuilder().build(), new StreamObserver<>() {
             @Override
             public void onNext(TowersAggregationResponse response) {
                 // storing towers in towers registry
