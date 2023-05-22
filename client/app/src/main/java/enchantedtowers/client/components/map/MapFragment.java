@@ -33,6 +33,7 @@ import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
+import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
@@ -48,22 +49,23 @@ import io.grpc.stub.StreamObserver;
 
 
 public class MapFragment extends Fragment {
-    private Optional<GoogleMap> googleMap;
-    private Optional<AlertDialog> GPSAlertDialog;
-    private Optional<LocationListener> locationUpdatesListener;
+    private Optional<GoogleMap> googleMap = Optional.empty();
+    private Optional<AlertDialog> GPSAlertDialog = Optional.empty();
+    private Optional<LocationListener> locationUpdatesListener = Optional.empty();
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
-    private final TowersServiceGrpc.TowersServiceStub asyncStub;
+    private final TowersRegistryManager towersRegistryManager = new TowersRegistryManager();
+    //private final TowersServiceGrpc.TowersServiceStub asyncStub;
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
 
     public MapFragment() {
         // creating client stub
-        String host   = ServerApiStorage.getInstance().getClientHost();
+        /*String host   = ServerApiStorage.getInstance().getClientHost();
         int port      = ServerApiStorage.getInstance().getPort();
         String target = host + ":" + port;
 
         asyncStub = TowersServiceGrpc.newStub(
-                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());
+                Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build());*/
     }
 
     public static MapFragment newInstance() {
@@ -99,15 +101,16 @@ public class MapFragment extends Fragment {
             // setting map styles
             applyCustomGoogleMapStyle();
 
-            // requesting towers from server
-            // TODO: move into separate manager
-            asyncStub.getTowers(Empty.newBuilder().build(), new StreamObserver<>() {
-                @Override
-                public void onNext(TowersAggregationResponse response) {
-                    // storing towers in towers registry
-                    TowersRegistry.getInstance().createTowersFromResponse(response);
-                }
+            // registering click listeners on "MyLocation" button, location point and markers
+            registerOnMyLocationButtonClickListener();
+            registerOnMyLocationClickListener();
+            registerOnMarkerClickListener();
 
+            // enabling user location and registering location updates listener
+            enableUserLocationAndRegisterLocationUpdatesListener();
+
+            // requesting towers from server
+            towersRegistryManager.requestTowers(new TowersRegistryManager.Callback() {
                 @Override
                 public void onError(Throwable t) {
                     // TODO: show error notification
@@ -116,18 +119,8 @@ public class MapFragment extends Fragment {
 
                 @Override
                 public void onCompleted() {
-                    requireActivity().runOnUiThread(() -> {
-                        // registering click listeners on "MyLocation" button, location point and markers
-                        registerOnMyLocationButtonClickListener();
-                        registerOnMyLocationClickListener();
-                        registerOnMarkerClickListener();
-
-                        // enabling user location and registering location updates listener
-                        enableUserLocationAndRegisterLocationUpdatesListener();
-
-                        // drawing towers
-                        drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
-                    });
+                    // drawing towers
+                    drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
                 }
             });
         });
@@ -278,6 +271,9 @@ public class MapFragment extends Fragment {
             LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
             locationManager.removeUpdates(locationUpdatesListener.get());
         }
+        // clearing map
+        googleMap.ifPresent(GoogleMap::clear);
+
         super.onDestroy();
     }
 }
