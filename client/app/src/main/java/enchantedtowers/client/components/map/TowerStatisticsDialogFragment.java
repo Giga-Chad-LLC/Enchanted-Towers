@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.dialogs.ProtectionWallGridDialog;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
@@ -158,7 +159,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         switch (type) {
             case ATTACK -> setTryAttackOnClickListener(actionButton);
             case CAPTURE -> setCaptureOnClickListener(actionButton);
-            case SETUP_PROTECTION_WALL -> setTrySetupProtectionWallOnClickListener(actionButton);
+            case SETUP_PROTECTION_WALL -> setTrySetupProtectionWallOnClickListener(actionButton, tower);
         }
     }
 
@@ -260,9 +261,23 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 }));
     }
 
-    private void setTrySetupProtectionWallOnClickListener(Button actionButton) {
+    private void setTrySetupProtectionWallOnClickListener(Button actionButton, Tower tower) {
         actionButton.setText("Set up protection wall");
-        // TODO: show modal with protection wall selection
+
+        // setting up dialog
+        ProtectionWallGridDialog dialog = new ProtectionWallGridDialog(requireContext());
+        for (var wall : tower.getProtectionWalls()) {
+            int imageId = R.drawable.protection_wall_frame_empty;
+            String title = "Non-enchanted";
+
+            if (wall.isEnchanted()) {
+                imageId = R.drawable.protection_wall_frame_0;
+                title = "Enchanted";
+            }
+            dialog.addImage(imageId, title);
+        }
+
+        actionButton.setOnClickListener(view -> dialog.show());
     }
 
     @Override
