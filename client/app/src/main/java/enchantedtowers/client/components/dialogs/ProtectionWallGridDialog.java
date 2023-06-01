@@ -29,7 +29,7 @@ public class ProtectionWallGridDialog extends Dialog {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.protection_wall_grid_dialog);
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = findViewById(R.id.protection_wall_grid_recycler_view);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         recyclerView.setAdapter(adapter);
     }

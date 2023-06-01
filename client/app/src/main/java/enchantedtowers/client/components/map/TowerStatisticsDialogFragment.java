@@ -271,7 +271,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
             String title = "Non-enchanted";
 
             if (wall.isEnchanted()) {
-                imageId = R.drawable.protection_wall_frame_0;
+                imageId = R.drawable.protection_wall_frame_1;
                 title = "Enchanted";
             }
             dialog.addImage(imageId, title);
