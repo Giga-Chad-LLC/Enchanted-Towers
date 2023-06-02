@@ -17,13 +17,17 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.data.ProtectionWallData;
 import enchantedtowers.client.components.dialogs.ProtectionWallGridDialog;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.PlayerData;
+import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
@@ -183,7 +187,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                         // Handle the response
                         if (response.hasError()) {
                             serverErrorReceived = true;
-                            // TODO: pop up notification modal
                             String message = "setAttackOnClickListener error: " + response.getError().getMessage();
                             System.err.println(message);
                             ClientUtils.showError(requireActivity(), message);
@@ -261,11 +264,73 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 }));
     }
 
+    private void onProtectionWallClick(ProtectionWallData data) {
+        var playerData = PlayerData.newBuilder()
+                .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
+                .build();
+
+        ProtectionWallIdRequest request = ProtectionWallIdRequest.newBuilder()
+                        .setTowerId(data.getTowerId())
+                        .setProtectionWallId(data.getProtectionWallId())
+                        .setPlayerData(playerData)
+                        .build();
+
+        towerProtectAsyncStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .tryEnterProtectionWallCreationSession(request, new StreamObserver<>() {
+                    boolean serverErrorReceived = false;
+                    @Override
+                    public void onNext(ActionResultResponse response) {
+                        // Handle the response
+                        if (response.hasError()) {
+                            serverErrorReceived = true;
+                            String message = "onProtectionWallClick error: " + response.getError().getMessage();
+                            System.err.println(message);
+                            ClientUtils.showError(requireActivity(), message);
+                        }
+                        else {
+                            // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                            int playerId = ClientStorage.getInstance().getPlayerId().get();
+                            int wallId = data.getProtectionWallId();
+
+                            ClientStorage.getInstance().setPlayerId(playerId);
+                            ClientStorage.getInstance().setTowerId(towerId);
+                            ClientStorage.getInstance().setProtectionWallId(wallId);
+
+                            System.out.println("onProtectionWallClick received response: success=" + response.getSuccess());
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        // Handle the error
+                        System.err.println("onProtectionWallClick error: " + t.getMessage());
+                        ClientUtils.showError(requireActivity(), t.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        // Handle the completion
+                        if (!serverErrorReceived) {
+                            System.out.println("onProtectionWallClick completed: redirecting to CanvasActivity intent");
+                            Intent intent = new Intent(requireActivity(), CanvasActivity.class);
+                            intent.putExtra("isProtecting", true);
+                            startActivity(intent);
+                        }
+                        else {
+                            System.out.println("onProtectionWallClick completed: server responded with an error");
+                        }
+                    }
+                });
+    }
+
     private void setTrySetupProtectionWallOnClickListener(Button actionButton, Tower tower) {
         actionButton.setText("Set up protection wall");
 
-        // setting up dialog
-        ProtectionWallGridDialog dialog = new ProtectionWallGridDialog(requireContext());
+        // setting up dialog and providing on protection wall click callback
+        ProtectionWallGridDialog dialog = new ProtectionWallGridDialog(
+                requireContext(), this::onProtectionWallClick);
+
         for (var wall : tower.getProtectionWalls()) {
             int imageId = R.drawable.protection_wall_frame_empty;
             String title = "Non-enchanted";
@@ -274,7 +339,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 imageId = R.drawable.protection_wall_frame_1;
                 title = "Enchanted";
             }
-            dialog.addImage(imageId, title);
+            dialog.addImage(tower.getId(), wall.getId(), imageId, title);
         }
 
         actionButton.setOnClickListener(view -> dialog.show());

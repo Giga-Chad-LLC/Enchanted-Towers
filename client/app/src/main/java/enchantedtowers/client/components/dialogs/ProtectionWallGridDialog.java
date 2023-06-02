@@ -12,16 +12,17 @@ import java.util.List;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.adapters.ProtectionWallGridAdapter;
 import enchantedtowers.client.components.data.ProtectionWallData;
+import enchantedtowers.game_models.ProtectionWall;
 
 
 public class ProtectionWallGridDialog extends Dialog {
     private final List<ProtectionWallData> items;
     private final ProtectionWallGridAdapter adapter;
 
-    public ProtectionWallGridDialog(@NonNull Context context) {
+    public ProtectionWallGridDialog(@NonNull Context context, ProtectionWallGridAdapter.OnItemClickCallback callback) {
         super(context);
         items = new ArrayList<>();
-        adapter = new ProtectionWallGridAdapter(items);
+        adapter = new ProtectionWallGridAdapter(items, callback);
     }
 
     @Override
@@ -34,10 +35,9 @@ public class ProtectionWallGridDialog extends Dialog {
         recyclerView.setAdapter(adapter);
     }
 
-    public void addImage(Integer imageId, String title) {
+    public void addImage(int towerId, int protectionWallId, Integer imageId, String title) {
         int position = items.size();
-        items.add(new ProtectionWallData(imageId, title));
+        items.add(new ProtectionWallData(towerId, protectionWallId, imageId, title));
         adapter.notifyItemInserted(position);
-        // adapter.notifyDataSetChanged();
     }
 }

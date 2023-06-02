@@ -14,10 +14,17 @@ import enchantedtowers.client.components.data.ProtectionWallData;
 
 
 public class ProtectionWallGridAdapter extends RecyclerView.Adapter<ProtectionWallGridAdapter.ImageViewHolder> {
-    private final List<ProtectionWallData> items;
+    @FunctionalInterface
+    public interface OnItemClickCallback {
+        void call(ProtectionWallData data);
+    }
 
-    public ProtectionWallGridAdapter(List<ProtectionWallData> items) {
+    private final List<ProtectionWallData> items;
+    private final OnItemClickCallback callback;
+
+    public ProtectionWallGridAdapter(List<ProtectionWallData> items, OnItemClickCallback callback) {
         this.items = items;
+        this.callback = callback;
     }
 
     @NonNull
@@ -33,6 +40,9 @@ public class ProtectionWallGridAdapter extends RecyclerView.Adapter<ProtectionWa
 
         holder.imageView.setImageResource(data.getImageId());
         holder.titleTextView.setText(data.getTitle());
+
+        // register click event listener
+        holder.imageView.setOnClickListener(v -> callback.call(data));
     }
 
     @Override
