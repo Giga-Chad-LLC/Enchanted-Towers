@@ -13,7 +13,9 @@ import androidx.annotation.Nullable;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -327,6 +329,14 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private void setTrySetupProtectionWallOnClickListener(Button actionButton, Tower tower) {
         actionButton.setText("Set up protection wall");
 
+        List<Integer> availableEnchantedWallsImages = List.of(
+                R.drawable.protection_wall_frame_1,
+                R.drawable.protection_wall_frame_2,
+                R.drawable.protection_wall_frame_3,
+                R.drawable.protection_wall_frame_4,
+                R.drawable.protection_wall_frame_5
+        );
+
         // setting up dialog and providing on protection wall click callback
         ProtectionWallGridDialog dialog = new ProtectionWallGridDialog(
                 requireContext(), this::onProtectionWallClick);
@@ -336,7 +346,9 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
             String title = "Non-enchanted";
 
             if (wall.isEnchanted()) {
-                imageId = R.drawable.protection_wall_frame_1;
+                // choose random image from available ones
+                int index = ThreadLocalRandom.current().nextInt(availableEnchantedWallsImages.size());
+                imageId = availableEnchantedWallsImages.get(index);
                 title = "Enchanted";
             }
             dialog.addImage(tower.getId(), wall.getId(), imageId, title);
