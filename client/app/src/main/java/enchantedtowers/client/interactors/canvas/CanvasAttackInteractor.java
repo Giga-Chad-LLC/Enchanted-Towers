@@ -1,5 +1,6 @@
 package enchantedtowers.client.interactors.canvas;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -13,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -425,8 +427,12 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
             @Override
             public void onCompleted() {
-                // TODO: leave attack session
                 logger.warning("attackTowerById::onCompleted: finished");
+                ClientUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        MapActivity.class,
+                        "Attack session ended"
+                );
             }
         });
     }
