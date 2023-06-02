@@ -291,14 +291,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                             ClientUtils.showError(requireActivity(), message);
                         }
                         else {
-                            // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
-                            int playerId = ClientStorage.getInstance().getPlayerId().get();
-                            int wallId = data.getProtectionWallId();
-
-                            ClientStorage.getInstance().setPlayerId(playerId);
-                            ClientStorage.getInstance().setTowerId(towerId);
-                            ClientStorage.getInstance().setProtectionWallId(wallId);
-
                             System.out.println("onProtectionWallClick received response: success=" + response.getSuccess());
                         }
                     }
@@ -314,6 +306,14 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                     public void onCompleted() {
                         // Handle the completion
                         if (!serverErrorReceived) {
+                            // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
+                            int playerId = ClientStorage.getInstance().getPlayerId().get();
+                            int wallId = data.getProtectionWallId();
+
+                            ClientStorage.getInstance().setPlayerId(playerId);
+                            ClientStorage.getInstance().setTowerId(towerId);
+                            ClientStorage.getInstance().setProtectionWallId(wallId);
+
                             System.out.println("onProtectionWallClick completed: redirecting to CanvasActivity intent");
                             Intent intent = new Intent(requireActivity(), CanvasActivity.class);
                             intent.putExtra("isProtecting", true);

@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -383,18 +384,18 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: leave attack session
+                // TODO: leave protect session
                 logger.warning("onError: " + t.getMessage());
             }
 
             @Override
             public void onCompleted() {
-                // TODO: leave attack session
+                // TODO: leave protect session
                 logger.warning("onCompleted: finished");
 
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
-                        AttackTowerMenuActivity.class,
+                        MapActivity.class,
                         "Protection wall was set successfully!"
                 );
             }
