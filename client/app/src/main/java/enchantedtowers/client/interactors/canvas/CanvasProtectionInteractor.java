@@ -390,9 +390,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
             @Override
             public void onCompleted() {
-                // TODO: leave protect session
                 logger.warning("onCompleted: finished");
-
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
                         MapActivity.class,
