@@ -3,8 +3,14 @@ package enchantedtowers.client;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import enchantedtowers.client.components.storage.ClientStorage;
+import enchantedtowers.client.components.utils.ClientUtils;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -12,6 +18,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // TODO: temporary solution (must be done after registration/login)
+        Button button = findViewById(R.id.main_activity_set_player_id_button);
+        EditText playerIdTextInput = findViewById(R.id.main_activity_player_id_text_input);
+        button.setOnClickListener(v -> {
+            try {
+                int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
+                ClientStorage.getInstance().setPlayerId(playerId);
+
+                ClientUtils.showToastOnUIThread(MainActivity.this, "Player id set to " + playerId, Toast.LENGTH_LONG);
+            } catch (NumberFormatException err) {
+                ClientUtils.showToastOnUIThread(MainActivity.this, err.getMessage(), Toast.LENGTH_LONG);
+            }
+        });
     }
 
     public void changeActivity(View view) {
