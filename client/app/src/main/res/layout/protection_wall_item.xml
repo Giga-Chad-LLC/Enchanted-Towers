@@ -5,14 +5,13 @@
     android:layout_margin="10dp">
 
     <ImageView
-        android:id="@+id/protection_wall_image_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:scaleType="fitXY"
+        android:id="@+id/protection_wall_image_view"
         android:layout_marginBottom="10dp"
         android:adjustViewBounds="true"
-        android:minWidth="200dp"
-        android:minHeight="200dp"
-        android:scaleType="fitXY" />
+         />
 
     <TextView
         android:id="@+id/protection_wall_title"
