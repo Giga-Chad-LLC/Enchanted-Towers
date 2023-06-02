@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
+import components.mediator.TowersUpdatesMediator;
 import components.session.AttackSession;
 import components.session.AttackSession.Spectator;
 import components.session.AttackSessionManager;
@@ -108,6 +109,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     .build();
 
             streamObserver.onNext(responseBuilder.build());
+
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
         }
         else {
             logger.info("Attack session cannot be created, reason: '" + serverError.get().getMessage() + "'");
@@ -151,6 +155,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             sessionManager.remove(session);
 
             responseBuilder.setSuccess(true);
+
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
         }
         else if (!sessionExists) {
             // session not found
@@ -880,6 +887,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         // disconnecting spectators
         disconnectSpectators(session);
 
+        // notifying listeners of tower update
+        TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
+
         sessionManager.remove(session);
     }
 
@@ -925,6 +935,9 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             var attackerResponseObserver = session.getAttackerResponseObserver();
             attackerResponseObserver.onNext(responseBuilder.build());
             attackerResponseObserver.onCompleted();
+
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
 
             sessionManager.remove(session);
         }
