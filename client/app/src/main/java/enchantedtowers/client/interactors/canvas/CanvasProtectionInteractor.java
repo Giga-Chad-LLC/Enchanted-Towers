@@ -70,7 +70,8 @@ class ProtectionEventWorker extends Thread {
 
             var storage = ClientStorage.getInstance();
             // TODO: may throw if drawing starts quick! check that is the matter
-            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+            assert(storage.getPlayerId().isPresent());
+            assert(storage.getSessionId().isPresent());
 
             // set session id
             requestBuilder.setSessionId(storage.getSessionId().get());
@@ -90,7 +91,6 @@ class ProtectionEventWorker extends Thread {
             }
 
             // set spell color
-
             requestBuilder.getSpellBuilder()
                     .addAllPoints(protoPoints)
                     .setOffset(protoOffset)
@@ -232,13 +232,13 @@ class ProtectionEventWorker extends Thread {
                 logger.warning("CanvasProtectionInteractor error while blocking stub '" + e.getMessage() + "'");
 
                 // redirect to base activity
-                Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
+                Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 intent.putExtra("showToastOnStart", true);
                 intent.putExtra("toastMessage", e.getMessage());
 
-                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
+                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + MapActivity.class + ", intent=" + intent);
 
                 canvasWidget.getContext().startActivity(intent);
             }

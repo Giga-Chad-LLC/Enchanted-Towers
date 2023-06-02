@@ -32,6 +32,7 @@ import enchantedtowers.common.utils.proto.common.PlayerData;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -44,8 +45,8 @@ import io.grpc.stub.StreamObserver;
 
 
 public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
-    // TODO: add SPECTATE state to give ability to spectate for the owner
     enum ActionButtonType {
+        SPECTATE,
         CAPTURE,
         ATTACK,
         SETUP_PROTECTION_WALL,
@@ -140,13 +141,14 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         ActionButtonType type;
         {
             int playerId = ClientStorage.getInstance().getPlayerId().get();
+            boolean isPlayerTowerOwner = tower.getOwnerId().isPresent() && playerId == tower.getOwnerId().get();
 
-            // TODO: add spectating state
-            // player is owner
-            if (tower.getOwnerId().isPresent() && playerId == tower.getOwnerId().get()) {
+            if (isPlayerTowerOwner && tower.isUnderAttack()) {
+                type = ActionButtonType.SPECTATE;
+            }
+            else if (isPlayerTowerOwner) {
                 type = ActionButtonType.SETUP_PROTECTION_WALL;
             }
-            // tower is not protected and player is not owner
             else if (!tower.isProtected()) {
                 type = ActionButtonType.CAPTURE;
             }
@@ -163,10 +165,62 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         }
 
         switch (type) {
-            case ATTACK -> setTryAttackOnClickListener(actionButton);
-            case CAPTURE -> setCaptureOnClickListener(actionButton);
+            case SPECTATE -> setSpectateOnClickListener(actionButton);
+            // TODO: remove tower from param since towerId is available
             case SETUP_PROTECTION_WALL -> setTrySetupProtectionWallOnClickListener(actionButton, tower);
+            case CAPTURE -> setCaptureOnClickListener(actionButton);
+            case ATTACK -> setTryAttackOnClickListener(actionButton);
         }
+    }
+
+    private void setSpectateOnClickListener(Button actionButton) {
+        actionButton.setText("Spectate");
+
+        int playerId = ClientStorage.getInstance().getPlayerId().get();
+
+        TowerIdRequest request = TowerIdRequest.newBuilder()
+                .setTowerId(towerId)
+                .setPlayerData(PlayerData.newBuilder().setPlayerId(playerId).build())
+                .build();
+
+        actionButton.setOnClickListener(v -> towerAttackAsyncStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .trySpectateTowerById(request, new StreamObserver<>() {
+                    private boolean serverErrorReceived = false;
+                    @Override
+                    public void onNext(SessionIdResponse response) {
+                        if (response.hasError()) {
+                            serverErrorReceived = true;
+                            String message = "setSpectateOnClickListener error: " + response.getError().getMessage();
+                            System.err.println(message);
+                            ClientUtils.showError(requireActivity(), message);
+                        }
+                        else {
+                            System.err.println("setSpectateOnClickListener session id: " + response.getSessionId());
+                            ClientStorage.getInstance().setSessionId(response.getSessionId());
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        System.err.println("setSpectateOnClickListener error: " + t.getMessage());
+                        ClientUtils.showError(requireActivity(), t.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        // redirecting to spectate canvas
+                        if (!serverErrorReceived) {
+                            System.out.println("setSpectateOnClickListener completed: redirecting to CanvasActivity intent");
+                            Intent intent = new Intent(requireActivity(), CanvasActivity.class);
+                            intent.putExtra("isSpectating", true);
+                            startActivity(intent);
+                        }
+                        else {
+                            System.out.println("setSpectateOnClickListener completed: server responded with an error");
+                        }
+                    }
+                }));
     }
 
     private void setTryAttackOnClickListener(Button actionButton) {
@@ -174,19 +228,17 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
 
         int playerId = ClientStorage.getInstance().getPlayerId().get();
 
-        TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
-        requestBuilder.getPlayerDataBuilder()
-                .setPlayerId(playerId)
+        TowerIdRequest request = TowerIdRequest.newBuilder()
+                .setTowerId(towerId)
+                .setPlayerData(PlayerData.newBuilder().setPlayerId(playerId).build())
                 .build();
-        requestBuilder.setTowerId(towerId);
 
-        actionButton.setOnClickListener(view -> towerAttackAsyncStub
+        actionButton.setOnClickListener(v -> towerAttackAsyncStub
                 .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                .tryAttackTowerById(requestBuilder.build(), new StreamObserver<>() {
+                .tryAttackTowerById(request, new StreamObserver<>() {
                     boolean serverErrorReceived = false;
                     @Override
                     public void onNext(ActionResultResponse response) {
-                        // Handle the response
                         if (response.hasError()) {
                             serverErrorReceived = true;
                             String message = "setAttackOnClickListener error: " + response.getError().getMessage();
@@ -195,21 +247,19 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                         }
                         else {
                             System.out.println("setAttackOnClickListener::Received response: success=" + response.getSuccess());
-                            ClientStorage.getInstance().setTowerId(towerId);
                         }
                     }
 
                     @Override
                     public void onError(Throwable t) {
-                        // Handle the error
                         System.err.println("setAttackOnClickListener::Error: " + t.getMessage());
                         ClientUtils.showError(requireActivity(), t.getMessage());
                     }
 
                     @Override
                     public void onCompleted() {
-                        // Handle the completion
                         if (!serverErrorReceived) {
+                            ClientStorage.getInstance().setTowerId(towerId);
                             System.out.println("setAttackOnClickListener::Completed: redirecting to CanvasActivity intent");
                             Intent intent = new Intent(requireActivity(), CanvasActivity.class);
                             intent.putExtra("isAttacking", true);
@@ -238,7 +288,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 .captureTower(requestBuilder.build(), new StreamObserver<>() {
                     @Override
                     public void onNext(ActionResultResponse response) {
-                        // Handle the response
                         if (response.hasError()) {
                             String message = "setCaptureOnClickListener::Received error: " + response.getError().getMessage();
                             System.err.println(message);
@@ -254,7 +303,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
 
                     @Override
                     public void onError(Throwable t) {
-                        // Handle the error
                         System.err.println("setCaptureOnClickListener::Error: " + t.getMessage());
                         ClientUtils.showError(requireActivity(), t.getMessage());
                     }
@@ -283,7 +331,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                     boolean serverErrorReceived = false;
                     @Override
                     public void onNext(ActionResultResponse response) {
-                        // Handle the response
                         if (response.hasError()) {
                             serverErrorReceived = true;
                             String message = "onProtectionWallClick error: " + response.getError().getMessage();
@@ -297,22 +344,16 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
 
                     @Override
                     public void onError(Throwable t) {
-                        // Handle the error
                         System.err.println("onProtectionWallClick error: " + t.getMessage());
                         ClientUtils.showError(requireActivity(), t.getMessage());
                     }
 
                     @Override
                     public void onCompleted() {
-                        // Handle the completion
                         if (!serverErrorReceived) {
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
-                            int playerId = ClientStorage.getInstance().getPlayerId().get();
-                            int wallId = data.getProtectionWallId();
-
-                            ClientStorage.getInstance().setPlayerId(playerId);
                             ClientStorage.getInstance().setTowerId(towerId);
-                            ClientStorage.getInstance().setProtectionWallId(wallId);
+                            ClientStorage.getInstance().setProtectionWallId(data.getProtectionWallId());
 
                             System.out.println("onProtectionWallClick completed: redirecting to CanvasActivity intent");
                             Intent intent = new Intent(requireActivity(), CanvasActivity.class);

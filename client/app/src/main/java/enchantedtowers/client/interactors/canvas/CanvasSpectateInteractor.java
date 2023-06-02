@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -133,7 +134,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 logger.info("spectateTowerBySessionId::onCompleted");
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
-                        AttackTowerMenuActivity.class,
+                        MapActivity.class,
                         null
                 );
             }
