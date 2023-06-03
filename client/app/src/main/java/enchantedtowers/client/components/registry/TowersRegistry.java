@@ -33,6 +33,15 @@ public class TowersRegistry {
 
     private TowersRegistry() {}
 
+    public synchronized Optional<Tower> getTowerById(int towerId) {
+        for (var tower : towers) {
+            if (tower.getId() == towerId) {
+                return Optional.of(tower);
+            }
+        }
+        return Optional.empty();
+    }
+
     static private List<ProtectionWall> createProtectionWalls(TowerResponse response) {
         List<ProtectionWall> protectionWalls = new ArrayList<>();
 
@@ -120,12 +129,4 @@ public class TowersRegistry {
         return Collections.unmodifiableList(towers);
     }
 
-    public synchronized Optional<Tower> getTowerById(int towerId) {
-        for (var tower : towers) {
-            if (tower.getId() == towerId) {
-                return Optional.of(tower);
-            }
-        }
-        return Optional.empty();
-    }
 }
