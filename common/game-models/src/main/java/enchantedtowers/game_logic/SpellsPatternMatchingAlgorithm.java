@@ -78,6 +78,9 @@ public class SpellsPatternMatchingAlgorithm {
         System.out.println("Matched template: " + matchedTemplateId);
 
         Vector2 patternOffset = pattern.getOffset();
+        // recalculate matched template boundaries
+        templateBounds = templates.get(matchedTemplateId).getBoundary();
+
         Vector2 matchedTemplateOffset = new Vector2(
                 patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,
                 patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
