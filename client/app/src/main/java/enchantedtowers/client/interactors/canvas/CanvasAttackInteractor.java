@@ -345,6 +345,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     @Override
     public boolean onClearCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         state.clear();
         logger.info("onClearCanvas");
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithClearCanvasRequest())) {
@@ -356,6 +360,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
+        if (worker == null) {
+            return false;
+        }
+
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
             case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(x, y);
@@ -383,6 +391,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     @Override
     public boolean onSubmitCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithCompareDrawnSpellsRequest())) {
             logger.warning("'Compare drawn spells' event lost");
         }
@@ -404,10 +416,16 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         }
 
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
+            private String errorMessage = null;
+            private boolean errorReceived = false;
+
             @Override
             public void onNext(SessionInfoResponse response) {
+
                 if (response.hasError()) {
                     // TODO: leave attack session
+                    errorReceived = true;
+                    errorMessage = response.getError().getMessage();
                     logger.warning("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
                 }
                 else {
@@ -442,7 +460,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
                         MapActivity.class,
-                        "Attack session ended"
+                        (errorReceived ? errorMessage : "Attack session ended")
                 );
             }
         });

@@ -441,9 +441,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
             protectionWallDialog.dismiss();
         }
 
-        // dismissing all created notification dialogs
-        ClientUtils.dismissCreatedDialogs();
-
         try {
             logger.info("Shutting down...");
             channel.shutdownNow();
