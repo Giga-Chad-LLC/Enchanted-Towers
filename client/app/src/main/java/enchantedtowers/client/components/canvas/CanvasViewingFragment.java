@@ -42,27 +42,8 @@ public class CanvasViewingFragment extends CanvasFragment {
         int towerId = ClientStorage.getInstance().getTowerId().get();
         int wallId = ClientStorage.getInstance().getProtectionWallId().get();
 
-        // TODO: move into interactor
         CanvasViewingInteractor interactor = new CanvasViewingInteractor(towerId, wallId);
         interactor.addTemplateDescriptionsInCanvasState(canvasWidget.getState());
-
-        /*
-        ProtectionWall protectionWall = TowersRegistry.getInstance().getTowerById(towerId).get().getProtectionWallById(wallId).get();
-        if (!protectionWall.isEnchanted()) {
-            throw new RuntimeException("Protection wall with id " + wallId + " of tower with id " + towerId + " not enchanted. Cannot show the enchantment on the canvas!");
-        }
-
-        Enchantment enchantment = protectionWall.getEnchantment().get();
-        for (TemplateDescription description : enchantment.getTemplateDescriptions()) {
-            Spell spell = SpellBook.getTemplateById(description.id());
-            if (spell == null) {
-                throw new RuntimeException("Spell template with id " + description.id() + " not found. Cannot show the enchantment on the canvas!");
-            }
-            spell.setOffset(description.offset());
-            CanvasSpellDecorator drawable = new CanvasSpellDecorator(description.spellType(), spell);
-            canvasWidget.getState().addItem(drawable);
-        }
-        */
 
         canvasWidget.setInteractors(List.of(
                 new CanvasDrawStateInteractor()
