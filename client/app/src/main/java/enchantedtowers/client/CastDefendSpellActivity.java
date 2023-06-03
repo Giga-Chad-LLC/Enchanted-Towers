@@ -5,7 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
@@ -16,6 +20,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -28,12 +33,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import enchantedtowers.client.components.utils.ClientUtils;
@@ -48,43 +58,126 @@ public class CastDefendSpellActivity extends AppCompatActivity {
     private static final Logger logger = Logger.getLogger(CastDefendSpellActivity.class.getName());
 
     private final ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() != RESULT_OK) {
-                    ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Error while taking image!", Toast.LENGTH_LONG);
-                    logger.warning("Error while taking picture, result code is not OK: code=" + result.getResultCode());
-                    return;
-                }
+            new ActivityResultContracts.StartActivityForResult(), this::cameraLaunchCallback);
 
-                // The photo was taken successfully
-                // You can access the photo using the 'result' parameter
-                // Bitmap capturedImage = (Bitmap) data.getExtras().get("data");
-                logger.info("Loading captured image bitmap in launcher, uri=" + capturedImageUri);
-                Bitmap capturedImage = null;
-                try {
-                    Bitmap savedOnDeviceImage = MediaStore.Images.Media.getBitmap(getContentResolver(), capturedImageUri);
-                    capturedImage = rotateImageIfRequired(getBaseContext(), savedOnDeviceImage, capturedImageUri);
-                } catch (IOException e) {
-                    ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to show create image", Toast.LENGTH_LONG);
-                    logger.warning("Error while loading saved image: " + e.getMessage());
-                    e.printStackTrace();
-                    return;
-                }
+    private void cameraLaunchCallback(ActivityResult result) {
+        if (result.getResultCode() != RESULT_OK) {
+            ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Error while taking image!", Toast.LENGTH_LONG);
+            logger.warning("Error while taking picture, result code is not OK: code=" + result.getResultCode());
+            return;
+        }
 
-                Mat imageMat = new Mat();
-                Utils.bitmapToMat(capturedImage, imageMat);
-                logger.info("Created opencv 'Mat' object for taken photo");
+        // The photo was taken successfully
+        logger.info("Loading captured image bitmap in launcher, uri=" + capturedImageUri);
+        Bitmap capturedImage = null;
 
-                Mat grayscaleImageMat = new Mat();
-                Imgproc.cvtColor(imageMat, grayscaleImageMat, Imgproc.COLOR_RGB2GRAY); // COLOR_BGR2GRAY
+        try {
+            Bitmap savedOnDeviceImage = MediaStore.Images.Media.getBitmap(getContentResolver(), capturedImageUri);
+            capturedImage = rotateImageIfRequired(getBaseContext(), savedOnDeviceImage, capturedImageUri);
+        } catch (IOException e) {
+            ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to show create image", Toast.LENGTH_LONG);
+            logger.warning("Error while loading saved image: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
 
-                logger.info("Show taken image in grayscale");
-                Utils.matToBitmap(grayscaleImageMat, capturedImage);
-                imageView.setImageBitmap(capturedImage);
+        // Create opencv 'Mat' object for taken photo
+        Mat imageMat = new Mat();
+        Utils.bitmapToMat(capturedImage, imageMat);
 
-                imageMat.release();
-                grayscaleImageMat.release();
-                logger.info("Released opencv 'Mat' object for taken photo");
-            });
+        // Convert to greyscale
+        Mat grayscaleImageMat = new Mat();
+        Imgproc.cvtColor(imageMat, grayscaleImageMat, Imgproc.COLOR_RGB2GRAY);
+        imageMat.release();
+
+        // Apply histogram equalization or adaptive histogram equalization
+//        Mat highContrastImageMat = new Mat();
+//        Imgproc.equalizeHist(grayscaleImageMat, highContrastImageMat);
+//        grayscaleImageMat.release();
+
+        // Apply contrast-limited adaptive histogram equalization (CLAHE) for more localized enhancement
+//        Mat highContrastImageMat = new Mat();
+//        Imgproc.createCLAHE(1.0, new Size(50, 50)).apply(grayscaleImageMat, highContrastImageMat);
+//        grayscaleImageMat.release();
+
+        // retrieve edges of the image
+        Mat edgesImageMat = new Mat();
+        // TODO: learn how to setup good thresholds
+        double highThreshold = 180.0;
+        double lowThreshold = 0.6 * highThreshold;
+        Imgproc.Canny(grayscaleImageMat, edgesImageMat, lowThreshold, highThreshold);
+        grayscaleImageMat.release();
+
+        // Run morphological operations
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Mat smallKernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(2, 2));
+        Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_CLOSE, kernel);
+        Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_OPEN, smallKernel);
+        // Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_OPEN, kernel);
+
+        // get contours from the image
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        // TODO: learn about different types of modes and algorithms of finding contours
+        Imgproc.findContours(edgesImageMat, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        hierarchy.release(); // don't need it yet, I guess
+
+        // Show found contours on the image
+        Bitmap edgesBitmap = Bitmap.createBitmap(capturedImage.getWidth(), capturedImage.getHeight(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(edgesImageMat, edgesBitmap);
+        Bitmap resultingBitmap = blitContoursToBitmap(edgesBitmap, contours);
+
+        edgesImageMat.release();
+
+        imageView.setImageBitmap(resultingBitmap);
+
+        // remove temporary image file
+        logger.info("Remove created temp image from filesystem");
+        deleteTempImageFile(capturedImageUri);
+        capturedImageUri = null;
+    }
+
+    private Bitmap blitContoursToBitmap(Bitmap targetBitmap, List<MatOfPoint> contours) {
+        // Create a new canvas from the target bitmap
+        Bitmap mutableBitmap = targetBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas = new Canvas(mutableBitmap);
+
+        // Create a paint object for drawing the contours
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(5.0f);
+
+        // Iterate over the contours and draw them on the canvas
+        Path path = new Path();
+        for (MatOfPoint contour : contours) {
+            // Convert the contour to a list of points
+            List<Point> opencvPoints = contour.toList();
+            // logger.info("Path: length=" + opencvPoints.size() + ", points=" + opencvPoints);
+
+            // Create a path and move to the first point
+            Point firstPoint = opencvPoints.get(0);
+            path.moveTo((float) firstPoint.x, (float) firstPoint.y);
+
+            // Draw lines connecting the subsequent points
+            for (int i = 1; i < opencvPoints.size(); i++) {
+                Point point = opencvPoints.get(i);
+                path.lineTo((float) point.x, (float) point.y);
+            }
+
+            // Close the contour if necessary
+            if (contour.size().height > 2) {
+                path.close();
+            }
+
+            // Draw the contour on the canvas
+            canvas.drawPath(path, paint);
+            path.reset();
+        }
+
+        return mutableBitmap;
+    }
 
     /**
      * On some devices retrieved image is captured rotated, so we need to adjust to that
@@ -189,13 +282,12 @@ public class CastDefendSpellActivity extends AppCompatActivity {
     }
 
     private void deleteTempImageFile(Uri imageUri) {
-        if (imageUri != null) {
-            File imageFile = new File(imageUri.getPath());
-            if (imageFile.exists()) {
-                if (!imageFile.delete()) {
-                    logger.warning("Unable to delete temp file from the gallery");
-                }
-            }
+        int deletedObjects = getBaseContext().getContentResolver().delete(imageUri, null, null);
+        if (deletedObjects != 1) {
+            logger.warning("Something went wrong while deleting temp image, deleted objects count " + deletedObjects);
+        }
+        else {
+            logger.info("Deleted temp image successfully: " + imageUri.getPath());
         }
     }
 
