@@ -37,7 +37,8 @@ public class CanvasViewingFragment extends CanvasFragment {
     private void initViewerFunctionality(View rootView) {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
 
-        // TowerId and WallId must be set in ClientStorage, we will create elements from enchantment and store them inside canvas state
+        // TowerId and WallId must be set in ClientStorage
+        // We will create spells from enchantment and store them inside canvas state
         int towerId = ClientStorage.getInstance().getTowerId().get();
         int wallId = ClientStorage.getInstance().getProtectionWallId().get();
 
