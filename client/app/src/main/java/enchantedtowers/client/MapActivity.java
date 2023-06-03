@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
+import enchantedtowers.client.components.utils.ClientUtils;
 
 
 public class MapActivity extends AppCompatActivity {
@@ -24,6 +25,18 @@ public class MapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+
+
+        Bundle extras = getIntent().getExtras();
+        System.out.println(getComponentName() + " extras: " + extras);
+
+        if (extras != null && extras.getBoolean("showToastOnStart", false)) {
+            ClientUtils.showInfo(this, extras.getString("toastMessage", ""));
+        }
+
+
+
 
         ActivityResultLauncher<String[]> locationPermissionLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {

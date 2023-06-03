@@ -23,6 +23,11 @@ public class TowerAttackServiceInteractor {
         this.tower.setUnderAttack(false);
     }
 
+    public boolean isProtectionWallEnchanted(int protectionWallId) {
+        ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
+        return wall.isEnchanted();
+    }
+
     public int getEnchantedProtectionWallId() {
         return tower.getEnchantedProtectionWall().getId();
     }
@@ -34,5 +39,10 @@ public class TowerAttackServiceInteractor {
 
     public Enchantment enchantmentOf(List<TemplateDescription> templateDescriptions) {
         return new Enchantment(templateDescriptions);
+    }
+
+    public void destroyProtectionWallWithId(int protectionWallId) {
+        ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
+        wall.destroyEnchantment();
     }
 }

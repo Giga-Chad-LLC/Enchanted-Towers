@@ -397,7 +397,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 R.drawable.protection_wall_frame_5
         );
 
-        // TODO: move to drawProtectionWallIcons (in order to reuse in case of tower update)
         // clear previously added data
         protectionWallDialog.clear();
 

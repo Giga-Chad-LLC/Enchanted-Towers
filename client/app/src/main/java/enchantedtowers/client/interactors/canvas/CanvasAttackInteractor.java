@@ -267,26 +267,37 @@ class AttackEventWorker extends Thread {
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
                                     .compareDrawnSpells(event.getRequest());
 
-                            logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "'");
+                            logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "', protection wall destroyed=" + response.getProtectionWallDestroyed());
+
+                            // TODO: show matches stats
+
+                            // protection wall destroyed -> redirect to MapActivity
+                            if (response.getProtectionWallDestroyed()) {
+                                logger.info("Protection wall successfully destroyed!");
+                                ClientUtils.redirectToActivityAndPopHistory((Activity) canvasWidget.getContext(), MapActivity.class, "Protection wall successfully destroyed!");
+                            }
                         }
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
 
-                logger.warning("CanvasAttackInteractor error while blocking stub '" + e.getMessage() + "'");
+                logger.warning("CanvasAttackInteractor error while blocking stub: '" + e.getMessage() + "'");
+                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + MapActivity.class);
 
                 // redirect to base activity
-                Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
+                ClientUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(), MapActivity.class, e.getMessage());
+
+                /*Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 intent.putExtra("showToastOnStart", true);
                 intent.putExtra("toastMessage", e.getMessage());
 
-                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + MapActivity.class + ", intent=" + intent);
-
-                canvasWidget.getContext().startActivity(intent);
+                canvasWidget.getContext().startActivity(intent);*/
             }
         }
 

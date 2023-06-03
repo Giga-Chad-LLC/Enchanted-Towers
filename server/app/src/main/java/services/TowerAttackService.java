@@ -37,6 +37,7 @@ import io.grpc.stub.StreamObserver;
 
 
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
+    private final static double MINIMUM_REQUIRED_MATCH_COEFFICIENT = 0.80;
     private final AttackSessionManager sessionManager = new AttackSessionManager();
     private final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
@@ -429,6 +430,21 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         Optional<ServerError> serverError = validateCanvasAction(request, RequestType.COMPARE_DRAWN_SPELLS);
 
+        // check that protection wall is still enchanted (i.e. it was not destroyed during previous attempt)
+        if (serverError.isEmpty()) {
+            AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+
+            if (!interactor.isProtectionWallEnchanted(session.getProtectionWallId())) {
+                ServerError.Builder errorBuilder = ServerError.newBuilder();
+                ProtoModelsUtils.buildServerError(errorBuilder,
+                        ServerError.ErrorType.INVALID_REQUEST,
+                        "Protection wall with id " + session.getProtectionWallId() + " already destroyed");
+
+                serverError = Optional.of(errorBuilder.build());
+            }
+        }
+
         if (serverError.isEmpty()) {
             AttackSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
@@ -441,8 +457,36 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             // [spell type] -> [match value in range of [0, 1]]
             Map<SpellType, Double> matches = EnchantmentMatchingAlgorithm.getEnchantmentMatchStatsWithHausdorffMetric(guess, actual);
-
             logger.info("Got matches: " + matches);
+
+            // clearing drawn spells
+            session.clearDrawnSpellsDescriptions();
+
+            // notifying spectators to clear the canvas
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
+            for (var spectator : session.getSpectators()) {
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
+
+            // checking whether player has succeeded to break the protection wall
+            final boolean protectionWallDestroyed = isProtectionWallDestroyed(matches);
+
+            logger.info("compareDrawnSpells: protection wall " + session.getProtectionWallId() +
+                             " destroyed state: " + protectionWallDestroyed);
+
+            if (protectionWallDestroyed) {
+                // destroy protection wall
+                interactor.destroyProtectionWallWithId(session.getProtectionWallId());
+
+                // notifying listeners of tower update
+                TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
+
+                responseBuilder.setProtectionWallDestroyed(true);
+            }
+            else {
+                responseBuilder.setProtectionWallDestroyed(false);
+            }
 
             // add spell matching stats into response
             List<MatchedSpellStatsResponse.SpellStat> spellStats = new ArrayList<>();
@@ -460,16 +504,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             responseBuilder.addAllStats(spellStats);
-
-            // clearing drawn spells
-            session.clearDrawnSpellsDescriptions();
-
-            // notifying spectators to clear the canvas
-            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-            spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
-            for (var spectator : session.getSpectators()) {
-                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
-            }
         }
         else {
             // error occurred
@@ -663,6 +697,17 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     // helper methods
+
+    private static boolean isProtectionWallDestroyed(Map<SpellType, Double> matches) {
+        boolean destroyed = true;
+        for (var match : matches.values()) {
+            if (match < MINIMUM_REQUIRED_MATCH_COEFFICIENT) {
+                destroyed = false;
+                break;
+            }
+        }
+        return destroyed;
+    }
 
     /**
      * <p>Validates that player can start attack session of the tower.</p>
@@ -905,12 +950,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
     /**
      * <p>The callback is intended to be fired once the session expires.</p>
      * <p>Callback is <code>synchronized</code> because {@link AttackSession} fires it in another thread using {@link Timeout} utility.</p>
-     * <p><b>The callback does all the following actions:</b></p>
-     * <ol>
-     *     <li>Marks the tower as not being under attack any more</li>
-     *     <li>Disconnects all spectators</li>
-     *     <li>Sends response with session expired state to the attacker and disconnects him</li>
-     * </ol>
      */
     private synchronized void onSessionExpired(int sessionId) {
         Optional<AttackSession> sessionOpt = sessionManager.getSessionById(sessionId);
@@ -918,33 +957,44 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         if (sessionOpt.isPresent()) {
             AttackSession session = sessionOpt.get();
             logger.info("onSessionExpired: session with id " + sessionId + " expired");
-
-            // mark tower to not be under attack
-            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
-            interactor.unsetTowerUnderAttackState();
-
-            // closing connection with spectators
-            disconnectSpectators(session);
-
-            // sending response with session expiration to attacker and closing connection
-            SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
-            responseBuilder.getExpirationBuilder().build();
-
-            // closing connection with attacker
-            var attackerResponseObserver = session.getAttackerResponseObserver();
-            attackerResponseObserver.onNext(responseBuilder.build());
-            attackerResponseObserver.onCompleted();
-
-            // notifying listeners of tower update
-            TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
-
-            sessionManager.remove(session);
+            closeSessionWithCorrectDisconnections(session);
         }
         else {
             // no session found
             logger.info("onSessionExpired: session with id " + sessionId + " not found");
         }
+    }
+
+    /**
+     * <p><b>The method does all the following actions:</b></p>
+     * <ol>
+     *     <li>Marks the tower as not being under attack any more</li>
+     *     <li>Disconnects all spectators</li>
+     *     <li>Sends response with session expired state to the attacker and disconnects him</li>
+     * </ol>
+     */
+    private void closeSessionWithCorrectDisconnections(AttackSession session) {
+        // mark tower to not be under attack
+        TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+        interactor.unsetTowerUnderAttackState();
+
+        // closing connection with spectators
+        disconnectSpectators(session);
+
+        // sending response with session expiration to attacker and closing connection
+        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+        responseBuilder.getExpirationBuilder().build();
+
+        // closing connection with attacker
+        var attackerResponseObserver = session.getAttackerResponseObserver();
+        attackerResponseObserver.onNext(responseBuilder.build());
+        attackerResponseObserver.onCompleted();
+
+        // notifying listeners of tower update
+        TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
+
+        sessionManager.remove(session);
     }
 
     /**

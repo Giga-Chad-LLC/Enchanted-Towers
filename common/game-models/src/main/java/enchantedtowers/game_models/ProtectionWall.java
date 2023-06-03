@@ -53,14 +53,28 @@ public class ProtectionWall {
     }
 
     public void setEnchantment(Enchantment enchantment) {
-        this.enchantment = Optional.of(enchantment);
-        this.state.setBroken(false);
         this.state.setEnchanted(true);
+        this.state.setBroken(false);
+        this.enchantment = Optional.of(enchantment);
     }
 
+    /**
+     * Method removes wall's {@link Enchantment}. The removal is meant to have been made by an owner, not by an attacker.
+     * In order to <b>destroy</b> the protection use {@link ProtectionWall#destroyEnchantment}.
+     */
     public void removeEnchantment() {
         this.state.setEnchanted(false);
         this.state.setBroken(false);
+        this.enchantment = Optional.empty();
+    }
+
+    /**
+     * Method destroys wall's {@link Enchantment}. The removal is meant to have been made by an attacker, not by an owner.
+     * In order to <b>remove</b> the protection use {@link ProtectionWall#removeEnchantment}.
+     */
+    public void destroyEnchantment() {
+        this.state.setEnchanted(false);
+        this.state.setBroken(true);
         this.enchantment = Optional.empty();
     }
 
