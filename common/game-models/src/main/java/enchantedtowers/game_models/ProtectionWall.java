@@ -59,6 +59,8 @@ public class ProtectionWall {
     }
 
     public void removeEnchantment() {
+        this.state.setEnchanted(false);
+        this.state.setBroken(false);
         this.enchantment = Optional.empty();
     }
 
