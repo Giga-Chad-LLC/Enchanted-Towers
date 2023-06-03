@@ -19,7 +19,11 @@ public class ProtectionWallGridDialog extends Dialog {
     private final List<ProtectionWallData> items;
     private final ProtectionWallGridAdapter adapter;
 
-    public ProtectionWallGridDialog(@NonNull Context context, ProtectionWallGridAdapter.OnItemClickCallback callback) {
+    public static ProtectionWallGridDialog newInstance(@NonNull Context context, ProtectionWallGridAdapter.OnItemClickCallback callback) {
+        return new ProtectionWallGridDialog(context, callback);
+    }
+
+    private ProtectionWallGridDialog(Context context, ProtectionWallGridAdapter.OnItemClickCallback callback) {
         super(context);
         items = new ArrayList<>();
         adapter = new ProtectionWallGridAdapter(items, callback);

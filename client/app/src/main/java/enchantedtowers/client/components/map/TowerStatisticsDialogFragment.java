@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -19,10 +18,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.data.ProtectionWallData;
+import enchantedtowers.client.components.dialogs.ProtectionWallActionsDialog;
 import enchantedtowers.client.components.dialogs.ProtectionWallGridDialog;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
@@ -112,7 +111,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         // setting owner view
         if (tower.getOwnerId().isPresent()) {
             String username = tower.getOwnerId().get().toString();
-            String content = String.format(getString(R.string.username), username);
+            String content = String.format(view.getContext().getString(R.string.username), username);
             ownerIdView.setText(content);
         }
         else {
@@ -132,7 +131,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
             long enchantedProtectionWallsCount = tower.getProtectionWalls().stream().filter(ProtectionWall::isEnchanted).count();
             long protectionWallsCount = tower.getProtectionWalls().size();
             String content = String.format(
-                    getString(R.string.protection_wall_count), enchantedProtectionWallsCount, protectionWallsCount);
+                    view.getContext().getString(R.string.protection_wall_count), enchantedProtectionWallsCount, protectionWallsCount);
 
             wallsCountView.setText(content);
         }
@@ -167,7 +166,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         switch (type) {
             case SPECTATE -> setSpectateOnClickListener(actionButton);
             // TODO: remove tower from param since towerId is available
-            case SETUP_PROTECTION_WALL -> setTrySetupProtectionWallOnClickListener(actionButton, tower);
+            case SETUP_PROTECTION_WALL -> setTrySetupProtectionWallOnClickListener(actionButton);
             case CAPTURE -> setCaptureOnClickListener(actionButton);
             case ATTACK -> setTryAttackOnClickListener(actionButton);
         }
@@ -315,15 +314,31 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     }
 
     private void onProtectionWallClick(ProtectionWallData data) {
-        var playerData = PlayerData.newBuilder()
-                .setPlayerId(ClientStorage.getInstance().getPlayerId().get())
-                .build();
+        boolean isEnchanted = TowersRegistry.getInstance()
+                .getTowerById(data.getTowerId()).get()
+                .getProtectionWallById(data.getProtectionWallId()).get()
+                .isEnchanted();
+
+        // wall not enchanted -> enter protection wall creation
+        // otherwise -> open action dialog
+        if (isEnchanted) {
+            ProtectionWallActionsDialog dialog = ProtectionWallActionsDialog.newInstance(data);
+            dialog.show(getParentFragmentManager(), dialog.getTag());
+        }
+        else {
+            makeTryEnterProtectionWallCreationSessionAsyncCall(data);
+        }
+    }
+
+
+    private void makeTryEnterProtectionWallCreationSessionAsyncCall(ProtectionWallData data) {
+        int playerId = ClientStorage.getInstance().getPlayerId().get();
 
         ProtectionWallIdRequest request = ProtectionWallIdRequest.newBuilder()
-                        .setTowerId(data.getTowerId())
-                        .setProtectionWallId(data.getProtectionWallId())
-                        .setPlayerData(playerData)
-                        .build();
+                .setTowerId(data.getTowerId())
+                .setProtectionWallId(data.getProtectionWallId())
+                .setPlayerData(PlayerData.newBuilder().setPlayerId(playerId).build())
+                .build();
 
         towerProtectAsyncStub
                 .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
@@ -367,7 +382,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 });
     }
 
-    private void setTrySetupProtectionWallOnClickListener(Button actionButton, Tower tower) {
+    private void setTrySetupProtectionWallOnClickListener(Button actionButton) {
         actionButton.setText("Set up protection wall");
 
         List<Integer> availableEnchantedWallsImages = List.of(
@@ -379,9 +394,10 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         );
 
         // setting up dialog and providing on protection wall click callback
-        ProtectionWallGridDialog dialog = new ProtectionWallGridDialog(
+        ProtectionWallGridDialog dialog = ProtectionWallGridDialog.newInstance(
                 requireContext(), this::onProtectionWallClick);
 
+        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         for (var wall : tower.getProtectionWalls()) {
             int imageId = R.drawable.protection_wall_frame_empty;
             String title = "Non-enchanted";

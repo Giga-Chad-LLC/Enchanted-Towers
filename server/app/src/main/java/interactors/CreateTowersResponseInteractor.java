@@ -121,5 +121,4 @@ public class CreateTowersResponseInteractor {
 
         return EnchantmentResponse.newBuilder().addAllSpells(spells).build();
     }
-
 }
