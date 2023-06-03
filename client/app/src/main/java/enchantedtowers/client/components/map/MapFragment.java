@@ -185,12 +185,7 @@ public class MapFragment extends Fragment {
     }
 
     private void registerOnMyLocationButtonClickListener() {
-        googleMap.get().setOnMyLocationButtonClickListener(() -> {
-            String message = "MyLocation button clicked";
-            logger.log(Level.INFO, message);
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-            return false;
-        });
+        googleMap.get().setOnMyLocationButtonClickListener(() -> false);
     }
 
     private void registerOnMyLocationClickListener() {
