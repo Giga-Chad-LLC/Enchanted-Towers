@@ -44,4 +44,9 @@ public class ProtectionWallGridDialog extends Dialog {
         items.add(new ProtectionWallData(towerId, protectionWallId, imageId, title));
         adapter.notifyItemInserted(position);
     }
+
+    public void clear() {
+        adapter.notifyItemRangeRemoved(0, adapter.getItemCount());
+        items.clear();
+    }
 }

@@ -1,6 +1,5 @@
 package enchantedtowers.client.components.dialogs;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,12 +13,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.data.ProtectionWallData;
 import enchantedtowers.client.components.map.TowerStatisticsDialogFragment;
-import enchantedtowers.client.components.registry.TowersRegistry;
-import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.PlayerData;
@@ -27,7 +23,6 @@ import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
-import enchantedtowers.game_models.Tower;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;

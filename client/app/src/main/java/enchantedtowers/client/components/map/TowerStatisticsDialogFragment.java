@@ -56,6 +56,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private final ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub towerProtectAsyncStub;
     private final ManagedChannel channel;
     private final int towerId;
+    private ProtectionWallGridDialog protectionWallDialog;
     private Optional<TowersRegistryManager.Subscription> onTowerUpdateSubscription = Optional.empty();
 
     public static TowerStatisticsDialogFragment newInstance(int towerId) {
@@ -80,6 +81,9 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_tower_statistics_dialog, container, false);
+
+        // create protection walls dialog
+        protectionWallDialog = ProtectionWallGridDialog.newInstance(requireContext(), this::onProtectionWallClick);
 
         Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         setTowerStatisticsOnView(view, tower);
@@ -393,9 +397,9 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 R.drawable.protection_wall_frame_5
         );
 
-        // setting up dialog and providing on protection wall click callback
-        ProtectionWallGridDialog dialog = ProtectionWallGridDialog.newInstance(
-                requireContext(), this::onProtectionWallClick);
+        // TODO: move to drawProtectionWallIcons (in order to reuse in case of tower update)
+        // clear previously added data
+        protectionWallDialog.clear();
 
         Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         for (var wall : tower.getProtectionWalls()) {
@@ -408,10 +412,11 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 imageId = availableEnchantedWallsImages.get(index);
                 title = "Enchanted";
             }
-            dialog.addImage(tower.getId(), wall.getId(), imageId, title);
+
+            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId, title);
         }
 
-        actionButton.setOnClickListener(view -> dialog.show());
+        actionButton.setOnClickListener(view -> protectionWallDialog.show());
     }
 
     @Override
@@ -420,6 +425,25 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         // unregister tower updates subscription
         onTowerUpdateSubscription.ifPresent(
                 subscription -> TowersRegistryManager.getInstance().unsubscribeFromTowerUpdates(towerId, subscription));
+
+        // removing listeners from action button
+        {
+            var activity = getActivity();
+            if (activity != null) {
+                Button actionButton = activity.findViewById(R.id.action_button);
+                if (actionButton != null && actionButton.hasOnClickListeners()) {
+                    actionButton.setOnClickListener(null);
+                }
+            }
+        }
+
+        // dismissing protection wall dialog
+        if (protectionWallDialog.isShowing()) {
+            protectionWallDialog.dismiss();
+        }
+
+        // dismissing all created notification dialogs
+        ClientUtils.dismissCreatedDialogs();
 
         try {
             logger.info("Shutting down...");

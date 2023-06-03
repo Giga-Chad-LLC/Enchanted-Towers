@@ -1,12 +1,14 @@
 package enchantedtowers.client.components.utils;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import enchantedtowers.client.components.dialogs.NotificationDialog;
@@ -14,6 +16,8 @@ import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class ClientUtils {
+    private final static List<Dialog> createdDialogs = new ArrayList<>();
+
     public static Vector2 getPathOffset(Path path) {
         // calculate bounding box for the path
         RectF bounds = new RectF();
@@ -36,9 +40,22 @@ public class ClientUtils {
 
     public static void showNotificationOnUIThread(Activity context, String title, String description, String buttonMessage, Runnable callback) {
         context.runOnUiThread(() -> {
-            NotificationDialog dialog = NotificationDialog.newInstance(context, title, description, buttonMessage, callback);
-            dialog.show();
+            synchronized (createdDialogs) {
+                NotificationDialog dialog = NotificationDialog.newInstance(context, title, description, buttonMessage, callback);
+                createdDialogs.add(dialog);
+                dialog.show();
+            }
         });
+    }
+
+    public static void dismissCreatedDialogs() {
+        synchronized (createdDialogs) {
+            for (var dialog : createdDialogs) {
+                if (dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+            }
+        }
     }
 
     /**
