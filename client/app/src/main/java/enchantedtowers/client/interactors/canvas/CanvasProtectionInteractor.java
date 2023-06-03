@@ -273,12 +273,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         brush = state.getBrushCopy();
 
         // configuring async client stub
-        {
-            String host = ServerApiStorage.getInstance().getClientHost();
-            int port = ServerApiStorage.getInstance().getPort();
-            channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-            asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
-        }
+        String host = ServerApiStorage.getInstance().getClientHost();
+        int port = ServerApiStorage.getInstance().getPort();
+        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+        asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 
         callAsyncEnterProtectionWall(canvasWidget);
     }
@@ -290,6 +288,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onClearCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         logger.info("onClearCanvas");
 
         if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithClearCanvasRequest())) {
@@ -305,6 +307,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onSubmitCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithCompleteEnchantmentRequest())) {
             logger.warning("'Add spell' event lost");
         }
@@ -314,6 +320,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
+        if (worker == null) {
+            return false;
+        }
+
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
             case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(state, x, y);
