@@ -1,5 +1,6 @@
 package enchantedtowers.client.components.dialogs;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.CanvasActivity;
+import enchantedtowers.client.MainActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.data.ProtectionWallData;
 import enchantedtowers.client.components.map.TowerStatisticsDialogFragment;
@@ -67,6 +70,12 @@ public class ProtectionWallActionsDialog extends BottomSheetDialogFragment {
 
     private void onViewProtectionWallEnchantmentClickCallback(View view) {
         // TODO: implement view functionality
+        ClientStorage.getInstance().setTowerId(protectionWallData.getTowerId());
+        ClientStorage.getInstance().setProtectionWallId(protectionWallData.getProtectionWallId());
+
+        Intent intent = new Intent(requireActivity(), CanvasActivity.class);
+        intent.putExtra("isViewing", true);
+        startActivity(intent);
     }
 
     private void onDestroyProtectionWallEnchantmentButtonClickCallback(View view) {
