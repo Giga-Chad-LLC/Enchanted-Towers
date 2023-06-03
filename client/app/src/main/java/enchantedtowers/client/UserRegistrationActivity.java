@@ -19,22 +19,19 @@ import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 public class UserRegistrationActivity extends AppCompatActivity {
-    private AuthServiceGrpc.AuthServiceStub authServiceStub;
-    //private AuthServiceGrpc.AuthServiceBlockingStub authStub;
-    private ManagedChannel channel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration);
     }
 
-    public void sendUserData(View view) {
+    public void sendUserDataForRegistration(View view) {
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
-        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        //authStub = AuthServiceGrpc.newBlockingStub(channel);
-        authServiceStub = AuthServiceGrpc.newStub(channel);
+
+        ManagedChannel channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+        AuthServiceGrpc.AuthServiceStub authServiceStub = AuthServiceGrpc.newStub(channel);
 
         EditText userNameTextInput = findViewById(R.id.editTextPersonName);
         EditText userPasswordTextInput = findViewById(R.id.editTextPassword);
@@ -45,8 +42,6 @@ public class UserRegistrationActivity extends AppCompatActivity {
                 .setPassword(userPasswordTextInput.getText().toString())
                 .setEmail(userEmailTextInput.getText().toString())
                 .build();
-
-        //try {
 
         authServiceStub.register(request, new StreamObserver<>() {
             @Override
@@ -60,7 +55,7 @@ public class UserRegistrationActivity extends AppCompatActivity {
 
             @Override
             public void onError(Throwable t) {
-
+                Toast.makeText(UserRegistrationActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -68,16 +63,6 @@ public class UserRegistrationActivity extends AppCompatActivity {
                 Toast.makeText(UserRegistrationActivity.this, "You are registered", Toast.LENGTH_SHORT).show();
             }
         });
-
-            /*ActionResultResponse response = authStub.register(request);
-            if (response.hasError()) {
-                Toast.makeText(this, response.getError().getMessage(), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "you registered", Toast.LENGTH_SHORT).show();
-            }*/
-        /*} catch (Exception err) {
-            System.out.println(err.getMessage());
-            Toast.makeText(this, err.getMessage(), Toast.LENGTH_SHORT).show();
-        }*/
     }
 }
+

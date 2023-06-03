@@ -52,6 +52,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
             }
         }
 
+        responseObserver.onNext(ActionResultResponse.newBuilder().build());
         users.add(newUser);
         logger.log(Level.INFO, "New user(Email: " + newUser.eMail + ", Name: " + newUser.userName + ", Password:" +newUser.password + ")");
 
@@ -66,17 +67,19 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         newUser.eMail = request.getEmail();
         newUser.password = request.getPassword();
+        logger.log(Level.INFO, "Next user(Email: " + newUser.eMail  + ", Password:" +newUser.password + ")");
 
         for (var user: users) {
             if (user.eMail.equals(newUser.eMail) && user.password.equals(newUser.password)) {
-                //ActionResultResponse response = ActionResultResponse.newBuilder().setSuccess(true).build();
                 LoginResponse response = LoginResponse.newBuilder().build();
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
+                logger.log(Level.INFO, "User is find");
                 return;
             }
         }
 
+        logger.log(Level.INFO, "User not find");
         ServerError error = ServerError.newBuilder().setMessage("User not exist").setType(ServerError.ErrorType.INVALID_REQUEST).build();
         LoginResponse response = LoginResponse.newBuilder().setError(error).build();
         responseObserver.onNext(response);

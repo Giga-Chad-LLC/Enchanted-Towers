@@ -34,6 +34,7 @@
         <activity android:name=".MapActivity" />
         <activity android:name=".AttackTowerMenuActivity" />
         <activity android:name=".UserRegistrationActivity" />
+        <activity android:name=".UserLoginActivity" />
     </application>
 
 </manifest>
