@@ -201,7 +201,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         logger.info("Shutting down grpc channel...");
         channel.shutdownNow();
         try {
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

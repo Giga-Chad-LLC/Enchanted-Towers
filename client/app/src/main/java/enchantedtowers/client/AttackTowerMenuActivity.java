@@ -123,7 +123,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     protected void onDestroy() {
         channel.shutdownNow();
         try {
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

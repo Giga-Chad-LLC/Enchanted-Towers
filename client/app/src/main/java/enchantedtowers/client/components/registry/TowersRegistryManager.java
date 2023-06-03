@@ -164,8 +164,7 @@ public class TowersRegistryManager {
         try {
             logger.info("Shutting down...");
             channel.shutdownNow();
-            // TODO: move 300 to named constant
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
             logger.info("Shut down successfully");
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
