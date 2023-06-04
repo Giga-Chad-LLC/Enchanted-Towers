@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// responses
+import "responses/towers-service/enchantment-response.proto";
+
+
+message ProtectionWallResponse {
+  message WallState {
+    bool broken = 1;
+    bool enchanted = 2;
+  }
+
+  int32 id = 1;
+  WallState state = 2;
+  EnchantmentResponse enchantment = 3;
+};

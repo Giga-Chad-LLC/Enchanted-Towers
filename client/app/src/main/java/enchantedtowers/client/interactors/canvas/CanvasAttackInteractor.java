@@ -1,5 +1,6 @@
 package enchantedtowers.client.interactors.canvas;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -13,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -265,26 +267,37 @@ class AttackEventWorker extends Thread {
                                     .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
                                     .compareDrawnSpells(event.getRequest());
 
-                            logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "'");
+                            logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "', protection wall destroyed=" + response.getProtectionWallDestroyed());
+
+                            // TODO: show matches stats
+
+                            // protection wall destroyed -> redirect to MapActivity
+                            if (response.getProtectionWallDestroyed()) {
+                                logger.info("Protection wall successfully destroyed!");
+                                ClientUtils.redirectToActivityAndPopHistory((Activity) canvasWidget.getContext(), MapActivity.class, "Protection wall successfully destroyed!");
+                            }
                         }
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 // Thread interrupted, exit the loop
                 isRunning.set(false);
 
-                logger.warning("CanvasAttackInteractor error while blocking stub '" + e.getMessage() + "'");
+                logger.warning("CanvasAttackInteractor error while blocking stub: '" + e.getMessage() + "'");
+                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + MapActivity.class);
 
                 // redirect to base activity
-                Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
+                ClientUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(), MapActivity.class, e.getMessage());
+
+                /*Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 intent.putExtra("showToastOnStart", true);
                 intent.putExtra("toastMessage", e.getMessage());
 
-                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
-
-                canvasWidget.getContext().startActivity(intent);
+                canvasWidget.getContext().startActivity(intent);*/
             }
         }
 
@@ -332,6 +345,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     @Override
     public boolean onClearCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         state.clear();
         logger.info("onClearCanvas");
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithClearCanvasRequest())) {
@@ -343,6 +360,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
+        if (worker == null) {
+            return false;
+        }
+
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
             case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(x, y);
@@ -362,7 +383,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         logger.info("Shutting down grpc channel...");
         channel.shutdownNow();
         try {
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -370,6 +391,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     @Override
     public boolean onSubmitCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         if (!worker.enqueueEvent(AttackEventWorker.Event.createEventWithCompareDrawnSpellsRequest())) {
             logger.warning("'Compare drawn spells' event lost");
         }
@@ -391,10 +416,16 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         }
 
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
+            private String errorMessage = null;
+            private boolean errorReceived = false;
+
             @Override
             public void onNext(SessionInfoResponse response) {
+
                 if (response.hasError()) {
                     // TODO: leave attack session
+                    errorReceived = true;
+                    errorMessage = response.getError().getMessage();
                     logger.warning("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
                 }
                 else {
@@ -425,8 +456,12 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
             @Override
             public void onCompleted() {
-                // TODO: leave attack session
                 logger.warning("attackTowerById::onCompleted: finished");
+                ClientUtils.redirectToActivityAndPopHistory(
+                        (Activity) canvasWidget.getContext(),
+                        MapActivity.class,
+                        (errorReceived ? errorMessage : "Attack session ended")
+                );
             }
         });
     }

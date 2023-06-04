@@ -15,9 +15,10 @@ import "responses/common/server-error.proto";
 message MatchedSpellStatsResponse {
   message SpellStat {
     common.SpellType spellType = 1;
-    double match = 2; // value in range of [0, 1] which defines percentage of match of the specified spell type
+    double match = 2; // value in range of [0.0, 1.0] which defines percentage of match of the specified spell type
   }
 
   response_models.ServerError error = 2;
   repeated SpellStat stats = 3;
+  bool protectionWallDestroyed = 4;
 };

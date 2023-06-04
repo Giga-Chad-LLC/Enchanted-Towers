@@ -11,6 +11,7 @@ import "common/vector2.proto";
 import "common/spell.proto";
 
 
+// TODO: rename since it clashes with ProtectionWallResponse
 message ProtectionWallRequest {
   enum RequestType {
     ADD_SPELL = 0;

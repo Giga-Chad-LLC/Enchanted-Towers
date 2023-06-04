@@ -3,9 +3,11 @@ package enchantedtowers.game_models;
 import enchantedtowers.game_models.utils.Vector2;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
 
 public class Tower {
     private final int towerId;
@@ -14,13 +16,12 @@ public class Tower {
     private Optional<Integer> ownerId;
     private Optional<Instant> lastProtectionWallModificationTimestamp;
     private boolean isUnderProtectionWallsInstallation;
-    // defines whether the tower has been captured recently and whether owner can install enchantments on unprotected walls
+    // defines whether the tower has been captured recently
     private boolean isUnderCaptureLock;
     private boolean isUnderAttack;
 
-
     // lock variable is used for synchronization
-    private final Object lock;
+    private final Object lock = new Object();
     // TODO: remove lock, use synchronized methods
 
 
@@ -37,7 +38,43 @@ public class Tower {
         isUnderProtectionWallsInstallation = false;
         isUnderCaptureLock = false;
         isUnderAttack = false;
-        lock = new Object();
+    }
+
+    public Tower(int towerId,
+                 Vector2 position,
+                 Optional<Integer> ownerId,
+                 List<ProtectionWall> protectionWalls,
+                 Optional<Instant> lastProtectionWallModificationTimestamp,
+                 boolean isUnderProtectionWallsInstallation,
+                 boolean isUnderCaptureLock,
+                 boolean isUnderAttack) {
+        this.towerId = towerId;
+        this.position = position;
+        this.protectionWalls = protectionWalls;
+        this.ownerId = ownerId;
+        this.lastProtectionWallModificationTimestamp = lastProtectionWallModificationTimestamp;
+        this.isUnderProtectionWallsInstallation = isUnderProtectionWallsInstallation;
+        this.isUnderCaptureLock = isUnderCaptureLock;
+        this.isUnderAttack = isUnderAttack;
+    }
+
+
+    static public Tower of(int towerId,
+                           Vector2 position,
+                           Optional<Integer> ownerId,
+                           List<ProtectionWall> protectionWalls,
+                           Optional<Instant> lastProtectionWallModificationTimestamp,
+                           boolean isUnderProtectionWallsInstallation,
+                           boolean isUnderCaptureLock,
+                           boolean isUnderAttack) {
+        return new Tower(towerId,
+                        position,
+                        ownerId,
+                        protectionWalls,
+                        lastProtectionWallModificationTimestamp,
+                        isUnderProtectionWallsInstallation,
+                        isUnderCaptureLock,
+                        isUnderAttack);
     }
 
     public int getId() {
@@ -103,6 +140,10 @@ public class Tower {
         synchronized (lock) {
             return lastProtectionWallModificationTimestamp;
         }
+    }
+
+    public List<ProtectionWall> getProtectionWalls() {
+        return Collections.unmodifiableList(protectionWalls);
     }
 
     public Optional<ProtectionWall> getProtectionWallById(int protectionWallId) {

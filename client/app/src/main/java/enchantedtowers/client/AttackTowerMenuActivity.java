@@ -123,7 +123,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
     protected void onDestroy() {
         channel.shutdownNow();
         try {
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -298,7 +298,6 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
                             ClientUtils.showToastOnUIThread(AttackTowerMenuActivity.this, message, Toast.LENGTH_LONG);
                         }
                         else {
-                            // TODO: remove sessionId, it will be retrieved later in corresponding interactor
                             System.out.println("tryProtectTowerById::Received response: success=" + response.getSuccess());
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                             ClientStorage.getInstance().setPlayerId(playerId);

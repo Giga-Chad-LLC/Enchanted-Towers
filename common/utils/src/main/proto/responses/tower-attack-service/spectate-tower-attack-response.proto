@@ -8,8 +8,8 @@ package response_models;
 // common
 import "common/vector2.proto";
 import "common/spell-type.proto";
+import "common/spell-description.proto";
 // responses
-import "responses/common/spell-description-response.proto";
 import "responses/common/server-error.proto";
 import "responses/common/current-canvas-state-response.proto";
 
@@ -37,5 +37,5 @@ message SpectateTowerAttackResponse {
   // DRAW_SPELL
   common.Vector2 spellPoint = 5;
   // FINISH_SPELL
-  response_models.SpellDescriptionResponse spellDescription = 6;
+  common.SpellDescription spellDescription = 6;
 };

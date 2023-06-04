@@ -12,9 +12,10 @@ import androidx.fragment.app.Fragment;
 
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
+import enchantedtowers.client.components.utils.ClientUtils;
 
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends BaseActivity {
     private final String[] locationPermissions = new String[] {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
