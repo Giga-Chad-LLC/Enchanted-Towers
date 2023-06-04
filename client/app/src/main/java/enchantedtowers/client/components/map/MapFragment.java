@@ -25,6 +25,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -34,16 +36,35 @@ import enchantedtowers.client.R;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
-import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
+import enchantedtowers.game_models.Tower;
 
 
 public class MapFragment extends Fragment {
+    private static class TowerUpdateSubscription {
+        private final int towerId;
+        private final TowersRegistryManager.Subscription callback;
+
+        TowerUpdateSubscription(int towerId, TowersRegistryManager.Subscription callback) {
+            this.towerId = towerId;
+            this.callback = callback;
+        }
+
+        public int towerId() {
+            return towerId;
+        }
+
+        public TowersRegistryManager.Subscription callback() {
+            return callback;
+        }
+    }
+
     private Optional<GoogleMap> googleMap = Optional.empty();
     private Optional<AlertDialog> GPSAlertDialog = Optional.empty();
     private Optional<LocationListener> locationUpdatesListener = Optional.empty();
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
+    private final List<TowerUpdateSubscription> onTowerUpdateSubscriptions = new ArrayList<>();
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
 
 
@@ -101,12 +122,30 @@ public class MapFragment extends Fragment {
                     requireActivity().runOnUiThread(() -> {
                         logger.info("Drawing " + TowersRegistry.getInstance().getTowers().size() + " towers on map");
                         drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
+
+                        // register for tower updates
+                        registerTowersUpdatesSubscriptions();
                     });
                 }
             });
         });
 
         return view;
+    }
+
+    private void registerTowersUpdatesSubscriptions() {
+        List<Tower> towers = TowersRegistry.getInstance().getTowers();
+
+        for (var tower : towers) {
+            int towerId = tower.getId();
+            logger.info("Register subscription for updates of tower with id " + tower.getId());
+
+            TowerUpdateSubscription subscription = new TowerUpdateSubscription(towerId,
+                    updatedTower -> googleMap.ifPresent(map -> requireActivity().runOnUiThread(() -> drawInteractor.updateMarkerAssociatedWithTower(map, updatedTower))));
+
+            onTowerUpdateSubscriptions.add(subscription);
+            TowersRegistryManager.getInstance().subscribeOnTowerUpdates(towerId, subscription.callback());
+        }
     }
 
     private void enableUserLocationAndRegisterLocationUpdatesListener() {
@@ -265,6 +304,13 @@ public class MapFragment extends Fragment {
             LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
             locationManager.removeUpdates(locationUpdatesListener.get());
         }
+
+        // unregistering towers updates listeners
+        for (var subscription : onTowerUpdateSubscriptions) {
+            TowersRegistryManager.getInstance()
+                    .unsubscribeFromTowerUpdates(subscription.towerId(), subscription.callback());
+        }
+
         // shutting down towers manager
         TowersRegistryManager.getInstance().shutdown();
 
