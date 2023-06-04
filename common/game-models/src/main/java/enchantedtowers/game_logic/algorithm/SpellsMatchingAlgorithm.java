@@ -26,7 +26,7 @@ public class SpellsPatternMatchingAlgorithm {
             );
 
             return getMatchedTemplate(
-                SpellBook.getTemplates(),
+                SpellBook.getSpellTemplates(),
                 pattern,
                 spellType,
                 new HausdorffMetric()

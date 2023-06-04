@@ -68,7 +68,7 @@ public class EnchantmentMatchingAlgorithm {
             continue;
          }
 
-         Spell spell = SpellBook.getTemplateById(template.id());
+         Spell spell = SpellBook.getSpellTemplateById(template.id());
          if (spell == null) {
             logger.warning("In getEnchantmentGeometryBySpellType(): spell template not found, template id " + template.id());
             continue;

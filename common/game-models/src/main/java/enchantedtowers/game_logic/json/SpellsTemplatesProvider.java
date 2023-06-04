@@ -11,7 +11,7 @@ import java.util.List;
 import enchantedtowers.game_models.utils.Vector2;
 
 
-public class EnchantmetTemplatesProvider {
+public class SpellsTemplatesProvider {
     static public class SpellTemplateData {
         private final int id;
         private final List<Vector2> points;
@@ -30,9 +30,9 @@ public class EnchantmetTemplatesProvider {
         }
     }
 
-    static public List<SpellTemplateData> parseJson(String jsonString) throws JSONException {
+    static public List<SpellTemplateData> parseSpellsJson(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
-        JSONArray templatesJson = content.getJSONArray("canvasTemplates");
+        JSONArray templatesJson = content.getJSONArray("spellsTemplates");
 
         List<SpellTemplateData> templates = new ArrayList<>();
 
