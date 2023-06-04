@@ -6,13 +6,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +27,7 @@ import java.util.logging.Logger;
 
 import enchantedtowers.client.CanvasActivity;
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.adapters.UsedSpellsAdapter;
 import enchantedtowers.client.components.data.ProtectionWallData;
 import enchantedtowers.client.components.dialogs.ProtectionWallActionsDialog;
 import enchantedtowers.client.components.dialogs.ProtectionWallGridDialog;
@@ -28,6 +36,7 @@ import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.PlayerData;
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -36,6 +45,7 @@ import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrp
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.ProtectionWall;
+import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -58,6 +68,9 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private final int towerId;
     private ProtectionWallGridDialog protectionWallDialog;
     private Optional<TowersRegistryManager.Subscription> onTowerUpdateSubscription = Optional.empty();
+    // the following members used to draw used enchantment spells
+    private final List<Integer> usedSpellImageIds = new ArrayList<>();
+    private final UsedSpellsAdapter adapter;
 
     public static TowerStatisticsDialogFragment newInstance(int towerId) {
         return new TowerStatisticsDialogFragment(towerId);
@@ -72,6 +85,8 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
         towerAttackAsyncStub = TowerAttackServiceGrpc.newStub(channel);
         towerProtectAsyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
+
+        adapter = new UsedSpellsAdapter(usedSpellImageIds);
     }
 
     @Nullable
@@ -85,7 +100,13 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         // create protection walls dialog
         protectionWallDialog = ProtectionWallGridDialog.newInstance(requireContext(), this::onProtectionWallClick);
 
+        // setting up RecyclerView for the used spells
+        RecyclerView recyclerView = view.findViewById(R.id.used_spells_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        recyclerView.setAdapter(adapter);
+
         Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+
         setTowerStatisticsOnView(view, tower);
 
         // subscribe to tower updates
@@ -107,7 +128,6 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private void setTowerStatisticsOnView(View view, Tower tower) {
         TextView ownerIdView = view.findViewById(R.id.owner_id);
         TextView mageLevelView = view.findViewById(R.id.mage_level);
-        TextView elementsView = view.findViewById(R.id.used_elements);
         TextView wallsCountView = view.findViewById(R.id.walls_count);
         Button actionButton = view.findViewById(R.id.action_button);
 
@@ -126,9 +146,8 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         // setting mage level view
         mageLevelView.setText("20");
 
-        // TODO: replace with icons
-        // setting elements
-        elementsView.setText("Fire, Water");
+        // setting spell images
+        setSpellImagesInDialogView(view, tower);
 
         // setting walls count
         {
@@ -174,6 +193,58 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
             case CAPTURE -> setCaptureOnClickListener(actionButton);
             case ATTACK -> setTryAttackOnClickListener(actionButton);
         }
+    }
+
+    private void setSpellImagesInDialogView(View view, Tower tower) {
+        clearSpellImages();
+
+        TextView noUsedSpellsPresentText = view.findViewById(R.id.no_used_spells_present);
+        assert(noUsedSpellsPresentText != null);
+
+        RecyclerView spellsRecycler = view.findViewById(R.id.used_spells_recycler_view);
+        assert(spellsRecycler != null);
+
+        if (tower.isProtected()) {
+            // hiding 'N/A' text view, restoring recycler view
+            noUsedSpellsPresentText.setVisibility(View.GONE);
+            spellsRecycler.setVisibility(View.VISIBLE);
+
+            List<TemplateDescription> TemplateDescriptions = tower.getEnchantedProtectionWall()
+                    .getEnchantment().get().getTemplateDescriptions();
+
+            Map<Integer, Boolean> insertedSpellImages = new HashMap<>();
+
+            for (var description : TemplateDescriptions) {
+                Integer imageId = switch (description.spellType()) {
+                    case FIRE_SPELL -> R.drawable.rune_yellow;
+                    case WIND_SPELL -> R.drawable.rune_cian;
+                    case EARTH_SPELL -> R.drawable.rune_green;
+                    case WATER_SPELL -> R.drawable.rune_white;
+                    case UNRECOGNIZED -> throw new RuntimeException("Unrecognized spell type: " + SpellType.UNRECOGNIZED);
+                };
+
+                if (!insertedSpellImages.containsKey(imageId)) {
+                    insertedSpellImages.put(imageId, true);
+                    addSpellImage(imageId);
+                }
+            }
+        }
+        else {
+            // hiding recycler view, restoring 'N/A' text view
+            noUsedSpellsPresentText.setVisibility(View.VISIBLE);
+            spellsRecycler.setVisibility(View.GONE);
+        }
+    }
+
+    private void clearSpellImages() {
+        adapter.notifyItemRangeRemoved(0, adapter.getItemCount());
+        usedSpellImageIds.clear();
+    }
+
+    private void addSpellImage(Integer spellImageId) {
+        int position = usedSpellImageIds.size();
+        usedSpellImageIds.add(spellImageId);
+        adapter.notifyItemInserted(position);
     }
 
     private void setSpectateOnClickListener(Button actionButton) {

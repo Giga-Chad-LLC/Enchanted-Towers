@@ -21,7 +21,7 @@
                 android:layout_margin="22dp"
                 android:orientation="vertical">
 
-                <!-- Row 1 -->
+                <!-- Row 1: Owner -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
 
                 </LinearLayout>
 
-                <!-- Row 2 -->
+                <!-- Row 2: Mage level -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -71,7 +71,7 @@
 
                 </LinearLayout>
 
-                <!-- Row 3 -->
+                <!-- Row 3: Elements -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -80,24 +80,39 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:layout_weight="1"
                         android:text="Elements:"
                         android:textSize="20sp" />
 
-                    <TextView
-                        android:id="@+id/used_elements"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="right"
-                        android:text=""
-                        android:textSize="20sp" />
+                        android:layout_gravity="center_vertical"
+                        android:gravity="end"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/no_used_spells_present"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="N/A"
+                            android:textSize="20sp" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/used_spells_recycler_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="end|center_horizontal" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-                <!-- Row 4 -->
+                <!-- Row 4: Walls -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
