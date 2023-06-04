@@ -7,10 +7,8 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.util.Random;
-
-import enchantedtowers.game_logic.CurvesMatchingMetric;
-import enchantedtowers.game_logic.HausdorffMetric;
+import enchantedtowers.game_logic.algorithm.CurvesMatchingMetric;
+import enchantedtowers.game_logic.algorithm.HausdorffMetric;
 
 public class CurvesMetricUnitTest {
     @Test

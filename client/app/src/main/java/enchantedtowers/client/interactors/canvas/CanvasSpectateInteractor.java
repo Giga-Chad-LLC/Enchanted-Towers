@@ -247,7 +247,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     description.getSpellTemplateOffset().getX(),
                     description.getSpellTemplateOffset().getY()
             );
-            Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
+            Spell templateSpell = SpellBook.getSpellTemplateById(description.getSpellTemplateId());
 
             if (templateSpell != null) {
                 templateSpell.setOffset(templateOffset);
@@ -297,7 +297,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         var description = value.getSpellDescription();
         var templateOffset = description.getSpellTemplateOffset();
         var templateType = description.getSpellType();
-        Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
+        Spell templateSpell = SpellBook.getSpellTemplateById(description.getSpellTemplateId());
         templateSpell.setOffset(new Vector2(
                 templateOffset.getX(),
                 templateOffset.getY()

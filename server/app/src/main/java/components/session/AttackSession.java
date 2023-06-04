@@ -4,9 +4,9 @@ import components.time.Timeout;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
-import enchantedtowers.game_logic.CanvasState;
+import enchantedtowers.game_logic.canvas.CanvasState;
 import enchantedtowers.game_models.TemplateDescription;
-import enchantedtowers.game_logic.SpellDrawingDescription;
+import enchantedtowers.game_logic.canvas.SpellDrawingDescription;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
 

@@ -2,7 +2,7 @@ package components.session;
 
 import components.time.Timeout;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
-import enchantedtowers.game_logic.CanvasState;
+import enchantedtowers.game_logic.canvas.CanvasState;
 import enchantedtowers.game_models.TemplateDescription;
 import io.grpc.stub.StreamObserver;
 

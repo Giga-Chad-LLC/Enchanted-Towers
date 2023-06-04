@@ -1,4 +1,4 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.json;
 
 
 import org.json.JSONArray;

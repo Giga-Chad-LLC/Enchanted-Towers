@@ -1,6 +1,8 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.algorithm;
 
 import enchantedtowers.common.utils.proto.common.SpellType;
+import enchantedtowers.game_logic.algorithm.CurvesMatchingMetric;
+import enchantedtowers.game_logic.algorithm.HausdorffMetric;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.utils.Utils;
@@ -14,7 +16,7 @@ import java.util.Optional;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Vector2;
 
-public class SpellsPatternMatchingAlgorithm {
+public class SpellsMatchingAlgorithm {
     private static final float SPELL_SIMILARITY_THRESHOLD = 0.80f;
 
     static public Optional<TemplateDescription> getMatchedTemplateWithHausdorffMetric(

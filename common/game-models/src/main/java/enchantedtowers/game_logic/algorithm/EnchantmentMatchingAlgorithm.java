@@ -1,4 +1,4 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.algorithm;
 
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.Enchantment;

@@ -20,8 +20,8 @@ import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
-import enchantedtowers.game_logic.EnchantmentMatchingAlgorithm;
-import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_logic.algorithm.EnchantmentMatchingAlgorithm;
+import enchantedtowers.game_logic.algorithm.SpellsMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
@@ -289,7 +289,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             logger.info("finishSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                     session.getCurrentSpellPoints(),
                     offset,
                     session.getCurrentSpellType()

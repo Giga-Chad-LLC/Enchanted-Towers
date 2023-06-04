@@ -1,4 +1,4 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.canvas;
 
 import enchantedtowers.game_models.TemplateDescription;
 import java.util.ArrayList;

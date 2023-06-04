@@ -1,6 +1,5 @@
 package services;
 
-import components.session.AttackSession;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
@@ -13,7 +12,7 @@ import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
-import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_logic.algorithm.SpellsMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
@@ -185,7 +184,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             logger.info("addSpell: run hausdorff and return id of matched template and offset");
 
             Optional<TemplateDescription> matchedTemplateDescriptionOpt =
-                    SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+                    SpellsMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                         spellPoints,
                         offset,
                         request.getSpell().getSpellType()
