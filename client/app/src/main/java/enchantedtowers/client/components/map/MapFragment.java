@@ -18,8 +18,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.location.LocationListenerCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
@@ -164,23 +166,41 @@ public class MapFragment extends Fragment {
 
     private void registerOnMarkerClickListener() {
         this.googleMap.get().setOnMarkerClickListener(marker -> {
+            // zoom in camera to marker position
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(marker.getPosition())
+                    .zoom(8)
+                    .build();
 
-            Integer towerId = (Integer) marker.getTag();
+            Runnable showTowerStatsDialog = () -> {
+                // show tower stats dialog
+                Integer towerId = (Integer) marker.getTag();
+                if (towerId != null) {
+                    logger.info("Tower id stored in marker tag: '" + towerId + "'");
 
-            if (towerId != null) {
-                logger.info("Tower id stored in marker tag: '" + towerId + "'");
+                    // TODO: dialogs must be dismissed
+                    var dialog = TowerStatisticsDialogFragment.newInstance(towerId);
+                    dialog.show(getParentFragmentManager(), dialog.getTag());
+                }
+                else {
+                    logger.warning("Clicked marker does not store tower id");
+                }
+            };
 
-                // TODO: dialogs must be dismissed
-                var dialog = TowerStatisticsDialogFragment.newInstance(towerId);
-                dialog.show(getParentFragmentManager(), dialog.getTag());
-                /*Intent intent = new Intent(getActivity(), CanvasActivity.class);
-                startActivity(intent);*/
-            }
-            else {
-                logger.warning("Clicked marker does not store tower id");
-            }
+            this.googleMap.get()
+                    .animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), new GoogleMap.CancelableCallback() {
+                @Override
+                public void onCancel() {
+                    showTowerStatsDialog.run();
+                }
 
-            return false;
+                @Override
+                public void onFinish() {
+                    showTowerStatsDialog.run();
+                }
+            });
+
+            return true;
         });
     }
 
