@@ -39,9 +39,9 @@ public class ProtectionWallGridDialog extends Dialog {
         recyclerView.setAdapter(adapter);
     }
 
-    public void addImage(int towerId, int protectionWallId, Integer imageId, String title) {
+    public void addImage(int towerId, int protectionWallId, Integer imageId) {
         int position = items.size();
-        items.add(new ProtectionWallData(towerId, protectionWallId, imageId, title));
+        items.add(new ProtectionWallData(towerId, protectionWallId, imageId));
         adapter.notifyItemInserted(position);
     }
 

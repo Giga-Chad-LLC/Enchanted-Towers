@@ -474,16 +474,14 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
         for (var wall : tower.getProtectionWalls()) {
             int imageId = R.drawable.protection_wall_frame_empty;
-            String title = "Non-enchanted";
 
             if (wall.isEnchanted()) {
                 // choose random image from available ones
                 int index = ThreadLocalRandom.current().nextInt(availableEnchantedWallsImages.size());
                 imageId = availableEnchantedWallsImages.get(index);
-                title = "Enchanted";
             }
 
-            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId, title);
+            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId);
         }
 
         actionButton.setOnClickListener(view -> protectionWallDialog.show());

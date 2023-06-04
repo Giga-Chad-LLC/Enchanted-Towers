@@ -39,7 +39,6 @@ public class ProtectionWallGridAdapter extends RecyclerView.Adapter<ProtectionWa
         ProtectionWallData data = items.get(position);
 
         holder.imageView.setImageResource(data.getImageId());
-        holder.titleTextView.setText(data.getTitle());
 
         // register click event listener
         holder.imageView.setOnClickListener(v -> callback.call(data));
@@ -52,12 +51,10 @@ public class ProtectionWallGridAdapter extends RecyclerView.Adapter<ProtectionWa
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        TextView titleTextView;
 
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.protection_wall_image_view);
-            titleTextView = itemView.findViewById(R.id.protection_wall_title);
         }
     }
 }

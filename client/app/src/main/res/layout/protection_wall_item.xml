@@ -13,12 +13,4 @@
         android:adjustViewBounds="true"
          />
 
-    <TextView
-        android:id="@+id/protection_wall_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/protection_wall_image_view"
-        android:layout_centerHorizontal="true"
-        android:textAlignment="center" />
-
 </RelativeLayout>
