@@ -177,7 +177,6 @@ public class MapFragment extends Fragment {
                 Integer towerId = (Integer) marker.getTag();
                 if (towerId != null) {
                     logger.info("Tower id stored in marker tag: '" + towerId + "'");
-
                     // TODO: dialogs must be dismissed
                     var dialog = TowerStatisticsDialogFragment.newInstance(towerId);
                     dialog.show(getParentFragmentManager(), dialog.getTag());
