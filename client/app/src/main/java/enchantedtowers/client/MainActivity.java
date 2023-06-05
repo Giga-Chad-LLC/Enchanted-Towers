@@ -7,7 +7,16 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONException;
 import org.opencv.android.OpenCVLoader;
+
+import java.io.IOException;
+import java.util.List;
+
+import enchantedtowers.client.components.fs.AndroidFileReader;
+import enchantedtowers.game_logic.json.DefendSpellsTemplatesProvider;
+import enchantedtowers.game_logic.json.SpellsTemplatesProvider;
+import enchantedtowers.game_models.SpellBook;
 
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -15,6 +24,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // initialize spell book
+        if (!SpellBook.isInstantiated()) {
+            try {
+                String jsonConfig = AndroidFileReader.readRawFile(getBaseContext(), R.raw.canvas_templates_config);
+                List<SpellsTemplatesProvider.SpellTemplateData> spellsData = SpellsTemplatesProvider.parseSpellsJson(jsonConfig);
+                List<DefendSpellsTemplatesProvider.DefendSpellTemplateData> defendSpellsData = DefendSpellsTemplatesProvider.parseDefendSpellsJson(jsonConfig);
+                SpellBook.instantiate(spellsData, defendSpellsData);
+            } catch (JSONException | IOException e) {
+                Log.e("JSON-CONFIG", e.getMessage());
+                System.err.println(e.getMessage());
+            }
+        }
+
+        // initialize opencv
         if (!OpenCVLoader.initDebug()) {
             Log.e("OpenCV", "Unable to load OpenCV!");
         }

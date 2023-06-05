@@ -1,41 +1,19 @@
 package enchantedtowers.client;
 
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.List;
 
 import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
 import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasProtectorFragment;
 import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
-import enchantedtowers.client.components.fs.AndroidFileReader;
-import enchantedtowers.game_logic.json.DefendSpellsTemplatesProvider;
-import enchantedtowers.game_logic.json.SpellsTemplatesProvider;
-import enchantedtowers.game_models.SpellBook;
 
 public class CanvasActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_canvas);
-
-        if (!SpellBook.isInstantiated()) {
-            try {
-                String jsonConfig = AndroidFileReader.readRawFile(getBaseContext(), R.raw.canvas_templates_config);
-                List<SpellsTemplatesProvider.SpellTemplateData> spellsData = SpellsTemplatesProvider.parseSpellsJson(jsonConfig);
-                List<DefendSpellsTemplatesProvider.DefendSpellTemplateData> defendSpellsData = DefendSpellsTemplatesProvider.parseDefendSpellsJson(jsonConfig);
-                SpellBook.instantiate(spellsData, defendSpellsData);
-            } catch (JSONException | IOException e) {
-                Log.e("JSON-CONFIG", e.getMessage());
-                System.err.println(e.getMessage());
-            }
-        }
 
         System.out.println("Load canvas fragment to the canvas activity");
         // create fragment
