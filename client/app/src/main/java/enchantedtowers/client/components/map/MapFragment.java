@@ -241,6 +241,7 @@ public class MapFragment extends Fragment {
         myLocationButton.setOnClickListener(view -> drawInteractor.zoomToPlayerPosition(googleMap.get()));
     }
 
+
     // helper methods
 
     private void createGPSEnableAlertDialog() {

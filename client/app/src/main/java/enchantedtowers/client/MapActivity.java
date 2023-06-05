@@ -10,6 +10,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import java.util.Optional;
+
+import enchantedtowers.client.components.dialogs.LocationRequestPermissionRationaleDialog;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.utils.ClientUtils;
@@ -21,6 +24,8 @@ public class MapActivity extends BaseActivity {
             Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
+    private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,15 +33,11 @@ public class MapActivity extends BaseActivity {
 
         ActivityResultLauncher<String[]> locationPermissionLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                    Boolean fineLocationPermissionGranted = result.getOrDefault(
-                            Manifest.permission.ACCESS_FINE_LOCATION, false);
+                    boolean fineLocationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
+                            Manifest.permission.ACCESS_FINE_LOCATION, false));
 
-                    Boolean coarseLocationPermissionGranted = result.getOrDefault(
-                            Manifest.permission.ACCESS_COARSE_LOCATION,false);
-
-                    // TODO: change Boolean to boolean, possible?
-                    assert fineLocationPermissionGranted != null;
-                    assert coarseLocationPermissionGranted != null;
+                    boolean coarseLocationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
+                            Manifest.permission.ACCESS_COARSE_LOCATION, false));
 
                     if (fineLocationPermissionGranted && coarseLocationPermissionGranted) {
                         Toast.makeText(this,
@@ -45,11 +46,11 @@ public class MapActivity extends BaseActivity {
                     }
                     else if (coarseLocationPermissionGranted) {
                         Toast.makeText(this,
-                                "Access of coarse location granted. Content might be limited", Toast.LENGTH_LONG).show();
+                                "Access of coarse location granted. Content might be limited.", Toast.LENGTH_LONG).show();
                         mountGoogleMapsFragment();
                     }
                     else {
-                        Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Content might be limited. Please, grant access of location.", Toast.LENGTH_LONG).show();
                     }
                 }
         );
@@ -68,26 +69,10 @@ public class MapActivity extends BaseActivity {
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {
-        // show rationale
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        final String rationale = """
-                                Access to device location is required for the application to function properly,
-                                e.g. to show your precise location on a map and determine distances between towers.
-                                
-                                Please, grant the device location permission to the application to gain full-fledged user experience.
-                                """;
-        builder.setMessage(rationale);
-
-        builder.setPositiveButton("Continue", (dialog, which) -> {
-            locationPermissionLauncher.launch(locationPermissions);
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
-        });
-
-        builder.create().show();
+        Runnable positiveCallback = () -> locationPermissionLauncher.launch(locationPermissions);
+        Runnable negativeCallback = () -> Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
+        dialog = Optional.of(LocationRequestPermissionRationaleDialog.newInstance(this, positiveCallback, negativeCallback));
+        dialog.get().show();
     }
 
     private void mountGoogleMapsFragment() {
@@ -99,5 +84,13 @@ public class MapActivity extends BaseActivity {
                 .beginTransaction()
                 .add(R.id.map_frame_layout, mapFragment)
                 .commit();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (dialog.isPresent() && dialog.get().isShowing()) {
+            dialog.get().dismiss();
+        }
+        super.onDestroy();
     }
 }
