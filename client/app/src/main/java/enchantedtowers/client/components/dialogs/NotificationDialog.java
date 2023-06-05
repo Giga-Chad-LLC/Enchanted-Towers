@@ -2,6 +2,7 @@ package enchantedtowers.client.components.dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -42,6 +43,8 @@ public class NotificationDialog extends Dialog {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.notification_dialog);
+
+        getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
         TextView titleView = findViewById(R.id.notification_title);
         TextView descriptionView = findViewById(R.id.notification_description);
