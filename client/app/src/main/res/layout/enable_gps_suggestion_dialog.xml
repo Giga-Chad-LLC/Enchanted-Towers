@@ -23,7 +23,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="@string/location_request_permission_rationale"/>
+                android:text="@string/enable_gps_suggestion"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -34,18 +34,18 @@
                 android:layout_marginTop="30dp">
 
                 <Button
-                    android:id="@+id/rationale_positive_button"
+                    android:id="@+id/gps_positive_button"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:minWidth="0dp"
-                    android:text="Continue"
+                    android:text="Enable"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <Button
-                    android:id="@+id/rationale_negative_button"
+                    android:id="@+id/gps_negative_button"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:layout_weight="1"

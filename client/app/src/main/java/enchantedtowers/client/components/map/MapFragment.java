@@ -15,7 +15,6 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.location.LocationListenerCompat;
 import androidx.fragment.app.Fragment;
 
@@ -23,7 +22,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.ArrayList;
@@ -34,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.dialogs.EnableGPSSuggestionDialog;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
@@ -62,7 +61,7 @@ public class MapFragment extends Fragment {
     }
 
     private Optional<GoogleMap> googleMap = Optional.empty();
-    private Optional<AlertDialog> GPSAlertDialog = Optional.empty();
+    private Optional<EnableGPSSuggestionDialog> GPSDialog = Optional.empty();
     private Optional<LocationListener> locationUpdatesListener = Optional.empty();
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
     private final List<TowerUpdateSubscription> onTowerUpdateSubscriptions = new ArrayList<>();
@@ -245,28 +244,22 @@ public class MapFragment extends Fragment {
     // helper methods
 
     private void createGPSEnableAlertDialog() {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(requireContext());
-        alertDialogBuilder.setMessage("GPS is disabled. GPS is required to let application function properly.\n" +
-                "Would you mind enabling it?");
-
-        alertDialogBuilder.setPositiveButton("Enable GPS", (dialog, which) -> {
+        Runnable positiveCallback = () -> {
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
-        });
+        };
+        Runnable negativeCallback = () ->
+                Toast.makeText(requireContext(), "GPS required for proper application functioning", Toast.LENGTH_LONG);
 
-        alertDialogBuilder.setNegativeButton("Cancel", (dialog, which) -> {
-            // Nothing
-        });
-
-        this.GPSAlertDialog = Optional.of(alertDialogBuilder.create());
+        GPSDialog = Optional.of(EnableGPSSuggestionDialog.newInstance(requireContext(), positiveCallback, negativeCallback));
     }
 
     private void showGPSEnableDialogIfAllowed() {
-        if (GPSAlertDialog.isPresent() && !GPSAlertDialog.get().isShowing()) {
-            GPSAlertDialog.get().show();
+        if (GPSDialog.isPresent() && !GPSDialog.get().isShowing()) {
+            GPSDialog.get().show();
         }
         else {
-            logger.log(Level.WARNING, "GPSAlertDialog either is null or is showing");
+            logger.log(Level.WARNING, "GPS dialog either is null or is showing");
         }
     }
 
@@ -303,6 +296,11 @@ public class MapFragment extends Fragment {
 
         // clearing map
         googleMap.ifPresent(GoogleMap::clear);
+
+        // dismissing GPS dialog
+        if (GPSDialog.isPresent() && GPSDialog.get().isShowing()) {
+            GPSDialog.get().dismiss();
+        }
 
         super.onDestroy();
     }
