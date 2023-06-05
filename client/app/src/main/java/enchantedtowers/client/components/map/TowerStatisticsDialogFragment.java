@@ -472,6 +472,19 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private void setTrySetupProtectionWallOnClickListener(Button actionButton) {
         actionButton.setText("Set up protection wall");
 
+        // clear previously added data
+        protectionWallDialog.clear();
+
+        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+        for (var wall : tower.getProtectionWalls()) {
+            int imageId = determineProtectionWallImageId(wall);
+            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId);
+        }
+
+        actionButton.setOnClickListener(view -> protectionWallDialog.show());
+    }
+
+    private int determineProtectionWallImageId(ProtectionWall wall) {
         List<Integer> availableEnchantedWallsImages = List.of(
                 R.drawable.protection_wall_frame_1,
                 R.drawable.protection_wall_frame_2,
@@ -480,23 +493,17 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 R.drawable.protection_wall_frame_5
         );
 
-        // clear previously added data
-        protectionWallDialog.clear();
-
-        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
-        for (var wall : tower.getProtectionWalls()) {
-            int imageId = R.drawable.protection_wall_frame_empty;
-
-            if (wall.isEnchanted()) {
-                // choose random image from available ones
-                int index = ThreadLocalRandom.current().nextInt(availableEnchantedWallsImages.size());
-                imageId = availableEnchantedWallsImages.get(index);
-            }
-
-            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId);
+        if (wall.isBroken()) {
+            return R.drawable.broken_protection_wall_frame;
         }
-
-        actionButton.setOnClickListener(view -> protectionWallDialog.show());
+        else if (wall.isEnchanted()) {
+            // choose random image from available ones
+            int index = ThreadLocalRandom.current().nextInt(availableEnchantedWallsImages.size());
+            return availableEnchantedWallsImages.get(index);
+        }
+        else {
+            return R.drawable.protection_wall_frame_empty;
+        }
     }
 
     @Override
