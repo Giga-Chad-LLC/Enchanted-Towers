@@ -1,6 +1,7 @@
 package enchantedtowers.client.components.map;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -116,6 +118,15 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         TowersRegistryManager.getInstance().subscribeOnTowerUpdates(towerId, onTowerUpdateSubscription.get());
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        // remove white background of underneath bottom sheet to make border radius be visible
+        super.onViewCreated(view, savedInstanceState);
+        if (getView() != null) {
+            ((View) getView().getParent()).setBackgroundColor(Color.TRANSPARENT);
+        }
     }
 
     private void onTowerUpdateCallback(View view, Tower updatedTower) {
