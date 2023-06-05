@@ -29,6 +29,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -36,6 +37,7 @@
                         android:textSize="20sp" />
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Small"
                         android:id="@+id/owner_id"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -54,6 +56,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -61,6 +64,7 @@
                         android:textSize="20sp" />
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Small"
                         android:id="@+id/mage_level"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -80,6 +84,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
@@ -95,6 +100,7 @@
                         android:orientation="horizontal">
 
                         <TextView
+                            style="@style/MedievalStyle.TextAppearance.Small"
                             android:id="@+id/no_used_spells_present"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -119,6 +125,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -126,6 +133,7 @@
                         android:textSize="20sp" />
 
                     <TextView
+                        style="@style/MedievalStyle.TextAppearance.Small"
                         android:id="@+id/walls_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -144,7 +152,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="20dp"
                 android:text="" />
 
         </LinearLayout>

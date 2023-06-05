@@ -2,6 +2,7 @@ package enchantedtowers.client.components.dialogs;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,7 +58,9 @@ public class ProtectionWallActionsDialog extends BottomSheetDialogFragment {
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.protection_wall_actions_dialog, container, false);
+        View view = inflater
+                .cloneInContext(new ContextThemeWrapper(requireActivity(), R.style.Theme_MedievalStyle))
+                .inflate(R.layout.protection_wall_actions_dialog, container, false);
 
         Button viewProtectionWallEnchantmentButton = view.findViewById(R.id.view_protection_wall_enchantment_button);
         Button destroyProtectionWallEnchantmentButton = view.findViewById(R.id.destroy_protection_wall_enchantment_button);

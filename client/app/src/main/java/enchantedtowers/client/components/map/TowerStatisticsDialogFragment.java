@@ -2,15 +2,14 @@ package enchantedtowers.client.components.map;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -94,8 +93,10 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
-        View view = inflater.inflate(R.layout.fragment_tower_statistics_dialog, container, false);
+        // applying custom theme to override default styles
+        View view = inflater
+                .cloneInContext(new ContextThemeWrapper(requireActivity(), R.style.Theme_MedievalStyle))
+                .inflate(R.layout.fragment_tower_statistics_dialog, container, false);
 
         // create protection walls dialog
         protectionWallDialog = ProtectionWallGridDialog.newInstance(requireContext(), this::onProtectionWallClick);

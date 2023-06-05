@@ -5,7 +5,9 @@
         <!-- Button style -->
         <item name="buttonStyle">@style/MedievalStyle.Button</item>
         <!-- Text style -->
-        <item name="android:textAppearance">@style/MedievalStyle.TextAppearance</item>
+        <item name="android:textAppearanceLarge">@style/MedievalStyle.TextAppearance.Large</item>
+        <item name="android:textAppearanceMedium">@style/MedievalStyle.TextAppearance.Medium</item>
+        <item name="android:textAppearanceSmall">@style/MedievalStyle.TextAppearance.Small</item>
         <!-- EditText style -->
         <item name="editTextStyle">@style/MedievalStyle.EditText</item>
         <!-- NoActionBar -->
@@ -16,8 +18,20 @@
 
 
     <!-- Text style -->
-    <style name="MedievalStyle.TextAppearance" parent="TextAppearance.AppCompat">
-        <item name="android:fontFamily">@font/brawler</item>
+    <style name="MedievalStyle.TextAppearance.Large" parent="TextAppearance.AppCompat.Large">
+        <item name="android:fontFamily">@font/brawler_bold</item>
+        <item name="android:textSize">40sp</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+    <style name="MedievalStyle.TextAppearance.Medium" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:fontFamily">@font/brawler_regular</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+    <style name="MedievalStyle.TextAppearance.Small" parent="TextAppearance.AppCompat.Small">
+        <item name="android:fontFamily">@font/brawler_regular</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">#000000</item>
     </style>
 
     <!-- Button style -->
