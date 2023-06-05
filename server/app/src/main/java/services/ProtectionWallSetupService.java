@@ -15,7 +15,7 @@ import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrp
 import enchantedtowers.game_logic.algorithm.SpellsMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
@@ -183,7 +183,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             logger.info("addSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<TemplateDescription> matchedTemplateDescriptionOpt =
+            Optional<SpellTemplateDescription> matchedTemplateDescriptionOpt =
                     SpellsMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                         spellPoints,
                         offset,
@@ -192,7 +192,7 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
 
             // add match spell into canvas state
             if (matchedTemplateDescriptionOpt.isPresent()) {
-                TemplateDescription template = matchedTemplateDescriptionOpt.get();
+                SpellTemplateDescription template = matchedTemplateDescriptionOpt.get();
                 ProtectionWallSession session = sessionManager.getSessionById(request.getSessionId()).get();
 
                 // adding matched template into session canvas state

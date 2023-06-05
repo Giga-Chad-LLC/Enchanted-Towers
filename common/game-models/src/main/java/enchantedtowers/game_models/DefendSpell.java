@@ -1,9 +1,11 @@
 package enchantedtowers.game_models;
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,8 +24,33 @@ public class DefendSpell {
         setCurveUnion(lines);
     }
 
+    public DefendSpell(DefendSpell that) {
+        curvesUnion = that.curvesUnion.copy();
+
+        lines = new ArrayList<>();
+        for (var line : that.lines) {
+            lines.add(new ArrayList<>(line));
+        }
+    }
+
     public List<List<Vector2>> getPoints() {
         return Collections.unmodifiableList(lines);
+    }
+
+    public Envelope getBoundary() {
+        return curvesUnion.getEnvelopeInternal();
+    }
+
+    public Geometry getScaledCurve(double scaleX, double scaleY, double originX, double originY) {
+        Geometry geometry = curvesUnion.copy();
+        geometry.apply(
+                AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)
+        );
+        return geometry;
+    }
+
+    public Geometry getCurveUnionCopy() {
+        return curvesUnion.copy();
     }
 
     private void setCurveUnion(List<List<Vector2>> points) {

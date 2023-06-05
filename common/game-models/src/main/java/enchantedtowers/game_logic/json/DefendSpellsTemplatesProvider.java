@@ -47,8 +47,9 @@ public class DefendSpellsTemplatesProvider {
                     List<Vector2> currentPointsArray = new ArrayList<>();
 
                     for (int k = 0; k < pointArray.length(); ++k) {
-                        double x = pointArray.getDouble(0);
-                        double y = pointArray.getDouble(1);
+                        JSONArray point = pointArray.getJSONArray(k);
+                        double x = point.getDouble(0);
+                        double y = point.getDouble(1);
 
                         currentPointsArray.add(new Vector2(x, y));
                     }

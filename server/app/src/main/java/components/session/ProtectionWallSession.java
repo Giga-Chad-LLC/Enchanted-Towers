@@ -3,7 +3,7 @@ package components.session;
 import components.time.Timeout;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.game_logic.canvas.CanvasState;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import io.grpc.stub.StreamObserver;
 
 import java.util.List;
@@ -67,7 +67,7 @@ public class ProtectionWallSession {
         return playerResponseObserver;
     }
 
-    public void addTemplateToCanvasState(TemplateDescription template) {
+    public void addTemplateToCanvasState(SpellTemplateDescription template) {
         canvasState.addTemplate(template);
     }
 
@@ -75,7 +75,7 @@ public class ProtectionWallSession {
         canvasState.clear();
     }
 
-    public List<TemplateDescription> getTemplateDescriptions() {
+    public List<SpellTemplateDescription> getTemplateDescriptions() {
         return canvasState.getTemplates();
     }
 }

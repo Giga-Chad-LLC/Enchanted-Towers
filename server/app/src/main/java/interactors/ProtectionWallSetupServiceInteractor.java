@@ -2,7 +2,7 @@ package interactors;
 
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 
@@ -40,8 +40,8 @@ public class ProtectionWallSetupServiceInteractor {
         tower.setLastProtectionWallModificationTimestamp(timestamp);
     }
 
-    public void createNewEnchantmentForProtectionWall(List<TemplateDescription> templateDescriptions, int protectionWallId) {
-        Enchantment enchantment = new Enchantment(templateDescriptions);
+    public void createNewEnchantmentForProtectionWall(List<SpellTemplateDescription> spellTemplateDescriptions, int protectionWallId) {
+        Enchantment enchantment = new Enchantment(spellTemplateDescriptions);
         ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
         wall.setEnchantment(enchantment);
     }

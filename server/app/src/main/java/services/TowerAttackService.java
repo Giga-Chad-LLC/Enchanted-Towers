@@ -24,7 +24,7 @@ import enchantedtowers.game_logic.algorithm.EnchantmentMatchingAlgorithm;
 import enchantedtowers.game_logic.algorithm.SpellsMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
@@ -289,7 +289,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             logger.info("finishSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+            Optional<SpellTemplateDescription> matchedTemplateDescriptionOpt = SpellsMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                     session.getCurrentSpellPoints(),
                     offset,
                     session.getCurrentSpellType()
@@ -316,12 +316,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 }
             }
             else {
-                TemplateDescription templateDescription = matchedTemplateDescriptionOpt.get();
+                SpellTemplateDescription spellTemplateDescription = matchedTemplateDescriptionOpt.get();
 
                 // send data to attacker
-                final int templateId = templateDescription.id();
-                final double x = templateDescription.offset().x;
-                final double y = templateDescription.offset().y;
+                final int templateId = spellTemplateDescription.id();
+                final double x = spellTemplateDescription.offset().x;
+                final double y = spellTemplateDescription.offset().y;
 
                 // Build template offset
                 responseBuilder.getSpellDescriptionBuilder().getSpellTemplateOffsetBuilder()
@@ -336,7 +336,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                         .build();
 
                 // save the template to the canvas state
-                session.addTemplateToCanvasState(templateDescription);
+                session.addTemplateToCanvasState(spellTemplateDescription);
 
                 // send data to all spectators
                 final SpellType spellType = session.getCurrentSpellType();
@@ -413,7 +413,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     /**
-     * Compares player's drawn enchantment (which is the list of {@link TemplateDescription}) with the actual enchantment stored inside {@link ProtectionWall} of {@link Tower} that is being under attack. Comparison is being made by calling {@link EnchantmentMatchingAlgorithm#getEnchantmentMatchStatsWithHausdorffMetric} method.
+     * Compares player's drawn enchantment (which is the list of {@link SpellTemplateDescription}) with the actual enchantment stored inside {@link ProtectionWall} of {@link Tower} that is being under attack. Comparison is being made by calling {@link EnchantmentMatchingAlgorithm#getEnchantmentMatchStatsWithHausdorffMetric} method.
      */
     @Override
     public synchronized void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {

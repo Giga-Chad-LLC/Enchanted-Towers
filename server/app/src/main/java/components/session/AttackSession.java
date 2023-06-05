@@ -5,7 +5,7 @@ import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.canvas.CanvasState;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_logic.canvas.SpellDrawingDescription;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
@@ -156,7 +156,7 @@ public class AttackSession {
         currentSpellDescription.addPoint(point);
     }
 
-    public void addTemplateToCanvasState(TemplateDescription template) {
+    public void addTemplateToCanvasState(SpellTemplateDescription template) {
         canvasState.addTemplate(template);
     }
 
@@ -165,7 +165,7 @@ public class AttackSession {
         currentSpellDescription.reset();
     }
 
-    public List<TemplateDescription> getDrawnSpellsDescriptions() {
+    public List<SpellTemplateDescription> getDrawnSpellsDescriptions() {
         return canvasState.getTemplates();
     }
 

@@ -59,6 +59,14 @@ public class SpellBook {
         return null;
     }
 
+    static public DefendSpell getDefendSpellTemplateById(int id) {
+        if (defendSpellsTemplates.containsKey(id)) {
+            return new DefendSpell(defendSpellsTemplates.get(id));
+        }
+
+        return null;
+    }
+
     static public Map<Integer, Spell> getSpellTemplates() {
         return Collections.unmodifiableMap(spellTemplates);
     }

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import org.opencv.android.Utils;
@@ -47,6 +48,10 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.game_logic.algorithm.DefendSpellMatchingAlgorithm;
+import enchantedtowers.game_models.DefendSpellTemplateDescription;
+import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.utils.Vector2;
 
 public class CastDefendSpellActivity extends AppCompatActivity {
 
@@ -104,32 +109,51 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         Mat edgesImageMat = new Mat();
         // TODO: learn how to setup good thresholds
         double highThreshold = 180.0;
-        double lowThreshold = 0.6 * highThreshold;
+        double lowThreshold = 0.8 * highThreshold;
         Imgproc.Canny(grayscaleImageMat, edgesImageMat, lowThreshold, highThreshold);
         grayscaleImageMat.release();
+
+        // Filtering noises
+        int kernelSize = 3; // Adjust the kernel size as per your requirement
+        Mat blurredImage = new Mat();
+        double sigmaX = 1.0; // Standard deviation in the X direction
+        double sigmaY = 0.0; // Standard deviation in the Y direction (same as sigmaX)
+        Imgproc.GaussianBlur(edgesImageMat, blurredImage, new Size(kernelSize, kernelSize), sigmaX, sigmaY);
+//        Imgproc.medianBlur(edgesImageMat, blurredImage, kernelSize);
+        edgesImageMat.release();
 
         // Run morphological operations
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
         Mat smallKernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(2, 2));
-        Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_CLOSE, kernel);
-        Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_OPEN, smallKernel);
+        Imgproc.morphologyEx(blurredImage, blurredImage, Imgproc.MORPH_CLOSE, kernel);
+        Imgproc.morphologyEx(blurredImage, blurredImage, Imgproc.MORPH_OPEN, smallKernel);
         // Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_OPEN, kernel);
 
         // get contours from the image
-        List<MatOfPoint> contours = new ArrayList<>();
+        List<MatOfPoint> opencvContours = new ArrayList<>();
         Mat hierarchy = new Mat();
         // TODO: learn about different types of modes and algorithms of finding contours
-        Imgproc.findContours(edgesImageMat, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(blurredImage, opencvContours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         hierarchy.release(); // don't need it yet, I guess
+
+        // cast contours to a better data structure
+        List<List<Vector2>> contours = getContoursList(opencvContours);
+        List<List<Vector2>> normalizedContours = enchantedtowers.game_models.utils.Utils.getNormalizedLines(contours);
+        // logger.info("Contours: " + contours);
 
         // Show found contours on the image
         Bitmap edgesBitmap = Bitmap.createBitmap(capturedImage.getWidth(), capturedImage.getHeight(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(edgesImageMat, edgesBitmap);
-        Bitmap resultingBitmap = blitContoursToBitmap(edgesBitmap, contours);
+        Utils.matToBitmap(blurredImage, edgesBitmap);
+        Bitmap resultingBitmap = blitContoursToBitmap(edgesBitmap, normalizedContours);
+        resultingBitmap = blitContoursToBitmap(resultingBitmap, SpellBook.getDefendSpellTemplateById(1).getPoints());
+        resultingBitmap = blitContoursToBitmap(resultingBitmap, SpellBook.getDefendSpellTemplateById(2).getPoints());
 
-        edgesImageMat.release();
+        blurredImage.release();
 
         imageView.setImageBitmap(resultingBitmap);
+
+        // run pattern matching
+        Optional<DefendSpellTemplateDescription> matchDescription = DefendSpellMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(contours);
 
         // remove temporary image file
         logger.info("Remove created temp image from filesystem");
@@ -137,7 +161,33 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         capturedImageUri = null;
     }
 
-    private Bitmap blitContoursToBitmap(Bitmap targetBitmap, List<MatOfPoint> contours) {
+    private List<List<Vector2>> getContoursList(List<MatOfPoint> contours) {
+        List<List<Vector2>> result = new ArrayList<>();
+
+        for (MatOfPoint contour : contours) {
+            List<Point> opencvPoints = contour.toList();
+            if (opencvPoints.isEmpty()) {
+                continue;
+            }
+
+            List<Vector2> line = new ArrayList<>();
+
+            for (Point p : opencvPoints) {
+                line.add(new Vector2(p.x, p.y));
+            }
+
+            // Close the contour if necessary
+            if (contour.size().height > 2) {
+                line.add(new Vector2(line.get(0).x, line.get(0).y));
+            }
+
+            result.add(line);
+        }
+
+        return result;
+    }
+
+    private Bitmap blitContoursToBitmap(Bitmap targetBitmap, List<List<Vector2>> contours) {
         // Create a new canvas from the target bitmap
         Bitmap mutableBitmap = targetBitmap.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(mutableBitmap);
@@ -151,24 +201,19 @@ public class CastDefendSpellActivity extends AppCompatActivity {
 
         // Iterate over the contours and draw them on the canvas
         Path path = new Path();
-        for (MatOfPoint contour : contours) {
+        for (List<Vector2> contour : contours) {
             // Convert the contour to a list of points
-            List<Point> opencvPoints = contour.toList();
+            // List<Point> opencvPoints = contour.toList();
             // logger.info("Path: length=" + opencvPoints.size() + ", points=" + opencvPoints);
 
             // Create a path and move to the first point
-            Point firstPoint = opencvPoints.get(0);
+            Vector2 firstPoint = contour.get(0);
             path.moveTo((float) firstPoint.x, (float) firstPoint.y);
 
             // Draw lines connecting the subsequent points
-            for (int i = 1; i < opencvPoints.size(); i++) {
-                Point point = opencvPoints.get(i);
+            for (int i = 1; i < contour.size(); i++) {
+                Vector2 point = contour.get(i);
                 path.lineTo((float) point.x, (float) point.y);
-            }
-
-            // Close the contour if necessary
-            if (contour.size().height > 2) {
-                path.close();
             }
 
             // Draw the contour on the canvas
@@ -254,7 +299,6 @@ public class CastDefendSpellActivity extends AppCompatActivity {
             ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to start camera. Try restarting the game.", Toast.LENGTH_LONG);
         }
     }
-
 
     private Uri createTempImageFile() {
         File imageFile;

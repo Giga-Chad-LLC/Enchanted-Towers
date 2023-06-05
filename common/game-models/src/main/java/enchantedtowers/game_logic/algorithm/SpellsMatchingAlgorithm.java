@@ -1,10 +1,8 @@
 package enchantedtowers.game_logic.algorithm;
 
 import enchantedtowers.common.utils.proto.common.SpellType;
-import enchantedtowers.game_logic.algorithm.CurvesMatchingMetric;
-import enchantedtowers.game_logic.algorithm.HausdorffMetric;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.utils.Utils;
 import java.util.List;
 import org.locationtech.jts.geom.Envelope;
@@ -19,7 +17,7 @@ import enchantedtowers.game_models.utils.Vector2;
 public class SpellsMatchingAlgorithm {
     private static final float SPELL_SIMILARITY_THRESHOLD = 0.80f;
 
-    static public Optional<TemplateDescription> getMatchedTemplateWithHausdorffMetric(
+    static public Optional<SpellTemplateDescription> getMatchedTemplateWithHausdorffMetric(
         List<Vector2> spellPoints, Vector2 offset, SpellType spellType) {
         if (Utils.isValidPath(spellPoints)) {
             Spell pattern = new Spell(
@@ -39,8 +37,8 @@ public class SpellsMatchingAlgorithm {
     }
 
     static private <Metric extends CurvesMatchingMetric>
-    Optional<TemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
-                                                     Spell pattern, SpellType patternSpellType, Metric metric) {
+    Optional<SpellTemplateDescription> getMatchedTemplate(Map<Integer, Spell> templates,
+                                                          Spell pattern, SpellType patternSpellType, Metric metric) {
         Envelope patternBounds = pattern.getBoundary();
 
         Envelope templateBounds = new Envelope();
@@ -88,6 +86,6 @@ public class SpellsMatchingAlgorithm {
                 patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2
         );
 
-        return Optional.of(new TemplateDescription(matchedTemplateId, patternSpellType, matchedTemplateOffset));
+        return Optional.of(new SpellTemplateDescription(matchedTemplateId, patternSpellType, matchedTemplateOffset));
     }
 }
