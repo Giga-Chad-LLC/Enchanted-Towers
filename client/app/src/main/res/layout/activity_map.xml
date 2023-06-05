@@ -22,6 +22,16 @@
             android:scaleType="fitXY"
             android:src="@drawable/map_top_vignettes" />
 
+        <Button
+            android:id="@+id/custom_my_location_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="15dp"
+            android:layout_marginEnd="15dp"
+            android:background="@drawable/my_location_button"
+            android:clickable="true" />
+
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -102,7 +103,7 @@ public class MapFragment extends Fragment {
 
             // registering click listeners on "MyLocation" button, location point and markers
             registerOnMyLocationButtonClickListener();
-            registerOnMyLocationClickListener();
+            registerOnCustomMyLocationButtonClickListener();
             registerOnMarkerClickListener();
 
             // enabling user location and registering location updates listener
@@ -150,20 +151,10 @@ public class MapFragment extends Fragment {
 
     private void enableUserLocationAndRegisterLocationUpdatesListener() {
         if (PermissionManager.checkLocationPermission(requireContext())) {
-            googleMap.get().setMyLocationEnabled(true);
-
+            // disable location props to remove blue dot to replace it with custom player icon and custom MyLocationButton
+            googleMap.get().getUiSettings().setMyLocationButtonEnabled(false);
+            googleMap.get().setMyLocationEnabled(false);
             registerOnLocationUpdatesListener();
-
-            // draw circle around last known location
-            {
-                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-                if (lastKnownLocation != null) {
-                    var playerLocation = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-                    drawInteractor.drawCircleAroundPoint(playerLocation, googleMap.get());
-                }
-            }
         }
         else {
             logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
@@ -179,9 +170,8 @@ public class MapFragment extends Fragment {
                 new LocationListenerCompat() {
                     @Override
                     public void onLocationChanged(@NonNull Location location) {
-                        logger.log(Level.INFO, "New location: " + location);
-                        var playerLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                        drawInteractor.drawCircleAroundPoint(playerLocation, googleMap.get());
+                        logger.info("New player location: " + location);
+                        drawInteractor.updatePlayerIconPosition(location, googleMap.get());
                     }
 
                     @Override
@@ -246,13 +236,9 @@ public class MapFragment extends Fragment {
         googleMap.get().setOnMyLocationButtonClickListener(() -> false);
     }
 
-    private void registerOnMyLocationClickListener() {
-        Objects.requireNonNull(googleMap);
-        googleMap.get().setOnMyLocationClickListener(location -> {
-            String message = "Current location: " + location;
-            logger.log(Level.INFO, message);
-            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-        });
+    private void registerOnCustomMyLocationButtonClickListener() {
+        Button myLocationButton = requireActivity().findViewById(R.id.custom_my_location_button);
+        myLocationButton.setOnClickListener(view -> drawInteractor.zoomToPlayerPosition(googleMap.get()));
     }
 
     // helper methods
