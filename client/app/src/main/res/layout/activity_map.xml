@@ -7,8 +7,21 @@
     tools:context=".MapActivity">
 
     <FrameLayout
-        android:id="@+id/map_frame_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/map_frame_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:scaleType="fitXY"
+            android:src="@drawable/map_top_vignettes" />
+
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
