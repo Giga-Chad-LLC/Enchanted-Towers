@@ -118,14 +118,20 @@ public class DrawTowersOnMapInteractor {
 
     private int determineTowerIconId(Tower tower) {
         int playerId = ClientStorage.getInstance().getPlayerId().get();
+        boolean isPlayerOwner = tower.getOwnerId().isPresent() && tower.getOwnerId().get() == playerId;
 
         if (tower.isAbandoned()) {
             return R.drawable.abandoned_tower_icon;
         }
-        if (tower.getOwnerId().isPresent() && tower.getOwnerId().get() == playerId) {
+        else if (isPlayerOwner && tower.isUnderAttack()) {
+            return R.drawable.owner_tower_under_attack_icon;
+        }
+        else if (isPlayerOwner) {
             return R.drawable.owner_tower_icon;
         }
-        return R.drawable.enemy_tower_icon;
+        else {
+            return R.drawable.enemy_tower_icon;
+        }
     }
 
 }
