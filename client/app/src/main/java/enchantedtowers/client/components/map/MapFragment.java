@@ -60,6 +60,7 @@ public class MapFragment extends Fragment {
         }
     }
 
+
     private Optional<GoogleMap> googleMap = Optional.empty();
     private Optional<EnableGPSSuggestionDialog> GPSDialog = Optional.empty();
     private Optional<LocationListener> locationUpdatesListener = Optional.empty();
