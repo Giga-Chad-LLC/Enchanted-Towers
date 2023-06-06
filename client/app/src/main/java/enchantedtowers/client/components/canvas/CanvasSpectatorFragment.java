@@ -23,7 +23,7 @@ public class CanvasSpectatorFragment extends CanvasFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflateFragment(R.layout.fragment_canvas, inflater, container);
+        View rootView = inflateFragment(R.layout.fragment_canvas_attack, inflater, container);
         initSpectatorLayout(rootView);
         return rootView;
     }
@@ -39,10 +39,10 @@ public class CanvasSpectatorFragment extends CanvasFragment {
     }
 
     private void initSpectatorLayout(View rootView) {
-        ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
+        /*ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
 
         addButtonToConstraintLayout(cl, R.id.showPreviousAttackerButton, "Previous", false, 20, 0);
-        addButtonToConstraintLayout(cl, R.id.showNextAttackerButton, "Next", true, 20, 0);
+        addButtonToConstraintLayout(cl, R.id.showNextAttackerButton, "Next", true, 20, 0);*/
     }
 
     private void initSpectatorFunctionality(View rootView) {

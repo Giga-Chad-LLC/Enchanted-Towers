@@ -5,12 +5,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
+import enchantedtowers.client.interactors.canvas.CanvasInteractor;
+import enchantedtowers.client.interactors.canvas.CanvasProtectionInteractor;
+import enchantedtowers.common.utils.proto.common.SpellType;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -21,7 +31,7 @@ public class CanvasFragment extends Fragment {
     protected CanvasWidget canvasWidget = null;
 
     public CanvasFragment() {
-        super(R.layout.fragment_canvas);
+        super(R.layout.fragment_canvas_attack);
     }
 
     public static CanvasFragment newInstance() {
@@ -30,7 +40,7 @@ public class CanvasFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflateFragment(R.layout.fragment_canvas, inflater, container);
+        return inflateFragment(R.layout.fragment_canvas_attack, inflater, container);
     }
 
     /**
