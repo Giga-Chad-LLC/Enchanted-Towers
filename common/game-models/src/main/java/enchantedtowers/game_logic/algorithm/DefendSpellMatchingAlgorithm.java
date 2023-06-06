@@ -8,17 +8,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.DefendSpellTemplateDescription;
-import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.utils.Utils;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class DefendSpellMatchingAlgorithm {
-    private static final float DEFEND_SPELL_SIMILARITY_THRESHOLD = 0.80f;
+    private static final float DEFEND_SPELL_SIMILARITY_THRESHOLD = 0.70f;
     private final static Logger logger = Logger.getLogger(DefendSpellMatchingAlgorithm.class.getName());
 
     static public Optional<DefendSpellTemplateDescription> getMatchedTemplateWithHausdorffMetric(

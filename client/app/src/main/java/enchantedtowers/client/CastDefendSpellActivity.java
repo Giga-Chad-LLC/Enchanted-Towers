@@ -37,21 +37,26 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.game_logic.algorithm.DefendSpellMatchingAlgorithm;
+import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.DefendSpellTemplateDescription;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
+import kotlin.Triple;
 
 public class CastDefendSpellActivity extends AppCompatActivity {
 
@@ -72,13 +77,14 @@ public class CastDefendSpellActivity extends AppCompatActivity {
             return;
         }
 
-        // The photo was taken successfully
+        // Loading image from temp file
         logger.info("Loading captured image bitmap in launcher, uri=" + capturedImageUri);
         Bitmap capturedImage = null;
 
         try {
             Bitmap savedOnDeviceImage = MediaStore.Images.Media.getBitmap(getContentResolver(), capturedImageUri);
-            capturedImage = rotateImageIfRequired(getBaseContext(), savedOnDeviceImage, capturedImageUri);
+            Bitmap rotatedImage = rotateImageIfRequired(getBaseContext(), savedOnDeviceImage, capturedImageUri);
+            capturedImage = cropImageAroundBorders(rotatedImage, 60, 60);
         } catch (IOException e) {
             ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to show create image", Toast.LENGTH_LONG);
             logger.warning("Error while loading saved image: " + e.getMessage());
@@ -91,64 +97,42 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         Utils.bitmapToMat(capturedImage, imageMat);
 
         // Convert to greyscale
-        Mat grayscaleImageMat = new Mat();
-        Imgproc.cvtColor(imageMat, grayscaleImageMat, Imgproc.COLOR_RGB2GRAY);
+        Mat grayscaleImageMat = convertToGrayScale(imageMat);
         imageMat.release();
 
-        // Apply histogram equalization or adaptive histogram equalization
-//        Mat highContrastImageMat = new Mat();
-//        Imgproc.equalizeHist(grayscaleImageMat, highContrastImageMat);
-//        grayscaleImageMat.release();
-
-        // Apply contrast-limited adaptive histogram equalization (CLAHE) for more localized enhancement
-//        Mat highContrastImageMat = new Mat();
-//        Imgproc.createCLAHE(1.0, new Size(50, 50)).apply(grayscaleImageMat, highContrastImageMat);
-//        grayscaleImageMat.release();
-
         // retrieve edges of the image
-        Mat edgesImageMat = new Mat();
-        // TODO: learn how to setup good thresholds
         double highThreshold = 180.0;
-        double lowThreshold = 0.8 * highThreshold;
-        Imgproc.Canny(grayscaleImageMat, edgesImageMat, lowThreshold, highThreshold);
+        double lowThreshold = 0.85 * highThreshold;
+        Mat edgesImageMat = retrieveEdges(grayscaleImageMat, highThreshold, lowThreshold);
         grayscaleImageMat.release();
 
         // Filtering noises
-        int kernelSize = 3; // Adjust the kernel size as per your requirement
-        Mat blurredImage = new Mat();
-        double sigmaX = 1.0; // Standard deviation in the X direction
-        double sigmaY = 0.0; // Standard deviation in the Y direction (same as sigmaX)
-        Imgproc.GaussianBlur(edgesImageMat, blurredImage, new Size(kernelSize, kernelSize), sigmaX, sigmaY);
-//        Imgproc.medianBlur(edgesImageMat, blurredImage, kernelSize);
+        Mat blurredImage = blurImage(edgesImageMat, 3, 2.0, 0.0);
         edgesImageMat.release();
 
         // Run morphological operations
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
-        Mat smallKernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(2, 2));
-        Imgproc.morphologyEx(blurredImage, blurredImage, Imgproc.MORPH_CLOSE, kernel);
-        Imgproc.morphologyEx(blurredImage, blurredImage, Imgproc.MORPH_OPEN, smallKernel);
-        // Imgproc.morphologyEx(edgesImageMat, edgesImageMat, Imgproc.MORPH_OPEN, kernel);
+        applyMorphologyOperations(blurredImage, List.of(
+                new Triple<>(Imgproc.MORPH_CLOSE, Imgproc.MORPH_RECT, new Size(5, 5)),
+                new Triple<>(Imgproc.MORPH_OPEN, Imgproc.MORPH_ELLIPSE, new Size(2, 2))
+        ));
 
         // get contours from the image
-        List<MatOfPoint> opencvContours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        // TODO: learn about different types of modes and algorithms of finding contours
-        Imgproc.findContours(blurredImage, opencvContours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        hierarchy.release(); // don't need it yet, I guess
-
-        // cast contours to a better data structure
-        List<List<Vector2>> contours = getContoursList(opencvContours);
-        List<List<Vector2>> normalizedContours = enchantedtowers.game_models.utils.Utils.getNormalizedLines(contours);
-        // logger.info("Contours: " + contours);
+        List<List<Vector2>> contours = retrieveContours(blurredImage);
 
         // Show found contours on the image
         Bitmap edgesBitmap = Bitmap.createBitmap(capturedImage.getWidth(), capturedImage.getHeight(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(blurredImage, edgesBitmap);
-        Bitmap resultingBitmap = blitContoursToBitmap(edgesBitmap, normalizedContours);
-        resultingBitmap = blitContoursToBitmap(resultingBitmap, SpellBook.getDefendSpellTemplateById(1).getPoints());
-        resultingBitmap = blitContoursToBitmap(resultingBitmap, SpellBook.getDefendSpellTemplateById(2).getPoints());
-
         blurredImage.release();
+
+        Bitmap resultingBitmap = blitContoursToBitmap(
+                edgesBitmap,
+                enchantedtowers.game_models.utils.Utils.getNormalizedLines(contours)
+        );
+        // blit saved templates for debug purposes
+        for (var entry : SpellBook.getDefendSpellsTemplates().entrySet()) {
+            DefendSpell defendSpell = entry.getValue();
+            resultingBitmap = blitContoursToBitmap(resultingBitmap, defendSpell.getPoints());
+        }
 
         imageView.setImageBitmap(resultingBitmap);
 
@@ -156,12 +140,75 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         Optional<DefendSpellTemplateDescription> matchDescription = DefendSpellMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(contours);
 
         // remove temporary image file
-        logger.info("Remove created temp image from filesystem");
         deleteTempImageFile(capturedImageUri);
         capturedImageUri = null;
     }
 
-    private List<List<Vector2>> getContoursList(List<MatOfPoint> contours) {
+    private Mat convertToGrayScale(Mat imageMat) {
+        Mat grayscaleImageMat = new Mat();
+        Imgproc.cvtColor(imageMat, grayscaleImageMat, Imgproc.COLOR_RGB2GRAY);
+        return grayscaleImageMat;
+    }
+
+    private Mat retrieveEdges(Mat imageMat, double highThreshold, double lowThreshold) {
+        // TODO: learn how to setup good thresholds
+        Mat edgesImageMat = new Mat();
+        Imgproc.Canny(imageMat, edgesImageMat, lowThreshold, highThreshold);
+        return edgesImageMat;
+    }
+
+    private Mat blurImage(Mat imageMat, int kernelSize, double sigmaX, double sigmaY) {
+        Mat blurredImage = new Mat();
+        Imgproc.GaussianBlur(imageMat, blurredImage, new Size(kernelSize, kernelSize), sigmaX, sigmaY);
+        return blurredImage;
+    }
+
+    private void applyMorphologyOperations(Mat imageMat, List<Triple<Integer, Integer, Size>> operations) {
+        for (var operation : operations) {
+            int operationType = operation.getFirst();
+            int kernelStructure = operation.getSecond();
+            Size kernelSize = operation.getThird();
+
+            Mat kernel = Imgproc.getStructuringElement(kernelStructure, kernelSize);
+            Imgproc.morphologyEx(imageMat, imageMat, operationType, kernel);
+        }
+    }
+
+    private List<List<Vector2>> retrieveContours(Mat imageMat) {
+        List<MatOfPoint> opencvContours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        // TODO: learn about different types of modes and algorithms of finding contours
+        Imgproc.findContours(imageMat, opencvContours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        hierarchy.release(); // don't need it yet, I guess
+
+        // cast contours to a better data structure
+        return getContoursAsList(opencvContours);
+    }
+
+    /**
+     * Crop image from the sides in order to minimize noises
+     * @return cropped image bitmap
+     */
+    private Bitmap cropImageAroundBorders(Bitmap bitmap, int x, int y) {
+        Mat imageMat = new Mat();
+        Utils.bitmapToMat(bitmap, imageMat);
+
+        // do the cropping
+        int cropWidth = imageMat.width() - 2 * x;
+        int cropHeight = imageMat.height() - 2 * y;
+        Rect roi = new Rect(x, y, cropWidth, cropHeight);
+        Mat croppedImageMat = new Mat(imageMat, roi);
+        imageMat.release();
+
+        // Convert the cropped Mat back to a Bitmap
+        Bitmap croppedBitmap = Bitmap.createBitmap(croppedImageMat.cols(), croppedImageMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(croppedImageMat, croppedBitmap);
+        croppedImageMat.release();
+
+        return croppedBitmap;
+    }
+
+    private List<List<Vector2>> getContoursAsList(List<MatOfPoint> contours) {
         List<List<Vector2>> result = new ArrayList<>();
 
         for (MatOfPoint contour : contours) {
@@ -202,10 +249,6 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         // Iterate over the contours and draw them on the canvas
         Path path = new Path();
         for (List<Vector2> contour : contours) {
-            // Convert the contour to a list of points
-            // List<Point> opencvPoints = contour.toList();
-            // logger.info("Path: length=" + opencvPoints.size() + ", points=" + opencvPoints);
-
             // Create a path and move to the first point
             Vector2 firstPoint = contour.get(0);
             path.moveTo((float) firstPoint.x, (float) firstPoint.y);
@@ -264,7 +307,6 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         return rotatedImg;
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -293,7 +335,6 @@ public class CastDefendSpellActivity extends AppCompatActivity {
 
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedImageUri);
             cameraLauncher.launch(takePictureIntent);
-            // deleteTempImageFile(imageUri);
         }
         else {
             ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to start camera. Try restarting the game.", Toast.LENGTH_LONG);
@@ -365,5 +406,4 @@ public class CastDefendSpellActivity extends AppCompatActivity {
             }
         }
     }
-
 }
