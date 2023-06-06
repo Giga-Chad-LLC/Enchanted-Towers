@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,9 +22,7 @@ public class CanvasViewingFragment extends CanvasFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflateFragment(R.layout.fragment_canvas_view_enchantment, inflater, container);
-        initViewingLayout(rootView);
-        return rootView;
+        return inflateFragment(R.layout.fragment_canvas_view_enchantment, inflater, container);
     }
 
     @Override
@@ -33,6 +30,7 @@ public class CanvasViewingFragment extends CanvasFragment {
         super.onViewCreated(rootView, savedInstanceState);
         initViewerFunctionality(rootView);
     }
+
     private void initViewerFunctionality(View rootView) {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
 
@@ -47,10 +45,5 @@ public class CanvasViewingFragment extends CanvasFragment {
         canvasWidget.setInteractors(List.of(
                 new CanvasDrawStateInteractor()
         ));
-    }
-
-    private void initViewingLayout(View rootView) {
-        Button leaveButton = rootView.findViewById(R.id.leave_canvas_button);
-        leaveButton.setOnClickListener(v -> requireActivity().onBackPressed());
     }
 }

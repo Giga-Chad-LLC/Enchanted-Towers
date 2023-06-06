@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.util.Arrays;
 
@@ -23,9 +22,7 @@ public class CanvasSpectatorFragment extends CanvasFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflateFragment(R.layout.fragment_canvas_attack, inflater, container);
-        initSpectatorLayout(rootView);
-        return rootView;
+        return inflateFragment(R.layout.fragment_canvas_spectate, inflater, container);
     }
 
     @Override
@@ -38,13 +35,6 @@ public class CanvasSpectatorFragment extends CanvasFragment {
         canvasWidget.onToggleSpectatingAttacker(requestType);
     }
 
-    private void initSpectatorLayout(View rootView) {
-        /*ConstraintLayout cl = rootView.findViewById(R.id.fragmentControlsLayout);
-
-        addButtonToConstraintLayout(cl, R.id.showPreviousAttackerButton, "Previous", false, 20, 0);
-        addButtonToConstraintLayout(cl, R.id.showNextAttackerButton, "Next", true, 20, 0);*/
-    }
-
     private void initSpectatorFunctionality(View rootView) {
         canvasWidget = rootView.findViewById(R.id.canvasView);
         canvasWidget.setInteractors(Arrays.asList(
@@ -52,19 +42,13 @@ public class CanvasSpectatorFragment extends CanvasFragment {
                 new CanvasSpectateInteractor(canvasWidget.getState(), canvasWidget)
         ));
 
-        if (rootView.findViewById(R.id.showPreviousAttackerButton) != null) {
-            registerOnClickActionOnView(
-                    rootView,
-                    R.id.showPreviousAttackerButton,
-                    () -> this.toggleSpectatingAttacker(ToggleAttackerRequest.RequestType.SHOW_PREV_ATTACKER)
-            );
-        }
-        if (rootView.findViewById(R.id.showNextAttackerButton) != null) {
-            registerOnClickActionOnView(
-                    rootView,
-                    R.id.showNextAttackerButton,
-                    () -> this.toggleSpectatingAttacker(ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER)
-            );
-        }
+        View showPreviousAttackerButton = rootView.findViewById(R.id.previous_attacker_button_icon);
+        View showNextAttackerButton = rootView.findViewById(R.id.next_attacker_button_icon);
+
+        showPreviousAttackerButton.setOnClickListener(v ->
+                this.toggleSpectatingAttacker(ToggleAttackerRequest.RequestType.SHOW_PREV_ATTACKER));
+
+        showNextAttackerButton.setOnClickListener(v ->
+                this.toggleSpectatingAttacker(ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER));
     }
 }

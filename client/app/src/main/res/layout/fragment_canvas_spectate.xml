@@ -17,7 +17,7 @@
             android:adjustViewBounds="true"
             android:maxHeight="210dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/scenery_attack_with_undamaged_tower" />
+            android:src="@drawable/scenery_spectate_with_swords_on_tower" />
 
         <TextView
             style="@style/MedievalStyle.TextAppearance.Small"
@@ -53,11 +53,11 @@
                 android:clickable="true" />
 
             <Button
-                android:id="@+id/open_spellbook_button"
+                android:id="@+id/apply_defend_spell_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/open_spellbook_button_icon"
+                android:background="@drawable/apply_defend_spell_button_icon"
                 android:clickable="true" />
 
         </LinearLayout>
@@ -81,39 +81,45 @@
                 android:layout_gravity="bottom|end"
                 android:background="#FFD5A4" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|start"
-                android:layout_marginStart="12dp"
-                android:layout_marginBottom="12dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/clear_canvas_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/clear_canvas_button_icon"
-                    android:clickable="true" />
-
-                <Button
-                    android:id="@+id/submit_enchantment_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginLeft="12dp"
-                    android:background="@drawable/submit_enchantment_button_icon"
-                    android:clickable="true" />
-
-            </LinearLayout>
-
         </FrameLayout>
 
-        <include
-            layout="@layout/spells_selection_panel"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:layout_marginBottom="15dp" />
+            android:gravity="center"
+            android:layout_marginBottom="15dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/previous_attacker_button_icon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/previous_attacker_button_icon" />
+
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:id="@+id/attacker_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="220dp"
+                android:layout_marginStart="30dp"
+                android:layout_marginEnd="30dp"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:text="Spectating Aboba"/>
+
+            <ImageView
+                android:id="@+id/next_attacker_button_icon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/next_attacker_button_icon"/>
+
+
+        </LinearLayout>
+
 
     </FrameLayout>
 

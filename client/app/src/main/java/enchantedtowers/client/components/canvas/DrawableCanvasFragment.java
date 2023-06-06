@@ -74,19 +74,22 @@ public class DrawableCanvasFragment extends CanvasFragment {
         canvasWidget.setInteractors(interactors);
         canvasWidget.setSpellType(getSelectedSpellType());
 
-        Button leaveButton = rootView.findViewById(R.id.leave_canvas_button);
         Button openSpellbookButton = rootView.findViewById(R.id.open_spellbook_button);
         Button clearCanvasButton = rootView.findViewById(R.id.clear_canvas_button);
         Button submitCanvasButton = rootView.findViewById(R.id.submit_enchantment_button);
 
-        leaveButton.setOnClickListener(v -> requireActivity().onBackPressed());
         openSpellbookButton.setOnClickListener(v -> {
             // TODO: open spellbook
         });
+
         clearCanvasButton.setOnClickListener(v -> clearCanvas());
         submitCanvasButton.setOnClickListener(v -> submitCanvas());
 
         // setting up element icons click listeners
+        initElementIconsFunctionality(rootView);
+    }
+
+    private void initElementIconsFunctionality(View rootView) {
         ImageView fireElementIcon = rootView.findViewById(R.id.fire_element_panel_icon);
         ImageView windElementIcon = rootView.findViewById(R.id.wind_element_panel_icon);
         ImageView earthElementIcon = rootView.findViewById(R.id.earth_element_panel_icon);
