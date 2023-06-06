@@ -18,7 +18,7 @@
             android:adjustViewBounds="true"
             android:maxHeight="220dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/scenery_install_protection_wall" />
+            android:src="@drawable/scenery_owner_tower" />
 
         <TextView
             style="@style/MedievalStyle.TextAppearance.Small"
@@ -112,6 +112,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
 </LinearLayout>
