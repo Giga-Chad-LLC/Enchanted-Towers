@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.location.LocationListenerCompat;
@@ -23,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +66,7 @@ public class MapFragment extends Fragment {
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
     private final List<TowerUpdateSubscription> onTowerUpdateSubscriptions = new ArrayList<>();
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+    private View fragmentMapView;
 
 
     public MapFragment() {}
@@ -85,6 +86,7 @@ public class MapFragment extends Fragment {
                              Bundle savedInstanceState) {
         // inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        this.fragmentMapView = view;
 
         // initialize map fragment
         SupportMapFragment supportMapFragment =
@@ -113,7 +115,8 @@ public class MapFragment extends Fragment {
                 @Override
                 public void onError(Throwable t) {
                     // TODO: show error notification
-                    ClientUtils.showToastOnUIThread(requireActivity(), t.getMessage(), Toast.LENGTH_LONG);
+                    logger.severe("Error requesting towers: " + t.getMessage());
+                    ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
                 }
 
                 @Override
@@ -156,7 +159,9 @@ public class MapFragment extends Fragment {
             registerOnLocationUpdatesListener();
         }
         else {
-            logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
+            ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
+
+            logger.warning("None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
         }
     }
 
@@ -175,7 +180,7 @@ public class MapFragment extends Fragment {
 
                     @Override
                     public void onProviderDisabled(@NonNull String provider) {
-                        logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
+                        logger.warning("Provider '" + provider + "' disabled");
                         showGPSEnableDialogIfAllowed();
                     }
                 }
@@ -189,7 +194,8 @@ public class MapFragment extends Fragment {
                 LocationManager.GPS_PROVIDER,
                 minTimeIntervalBetweenUpdatesMs,
                 minDistanceBetweenUpdateMeters,
-                locationUpdatesListener.get());
+                locationUpdatesListener.get()
+        );
     }
 
     private void registerOnMarkerClickListener() {
@@ -248,8 +254,7 @@ public class MapFragment extends Fragment {
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         };
-        Runnable negativeCallback = () ->
-                Toast.makeText(requireContext(), "GPS required for proper application functioning", Toast.LENGTH_LONG);
+        Runnable negativeCallback = () -> ClientUtils.showSnackbar(fragmentMapView, "GPS required for proper application functioning", Snackbar.LENGTH_LONG);
 
         GPSDialog = Optional.of(EnableGPSSuggestionDialog.newInstance(requireContext(), positiveCallback, negativeCallback));
     }
@@ -259,7 +264,7 @@ public class MapFragment extends Fragment {
             GPSDialog.get().show();
         }
         else {
-            logger.log(Level.WARNING, "GPS dialog either is null or is showing");
+            logger.warning("GPS dialog either is null or is showing");
         }
     }
 
@@ -269,10 +274,11 @@ public class MapFragment extends Fragment {
                 MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
 
         if (mapStyleAppliedSuccessfully) {
-            logger.log(Level.INFO, "Map style applied successfully");
+            logger.info("Map style applied successfully");
         }
         else {
-            logger.log(Level.WARNING, "Map style applying failed");
+            ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred: cannot apply custom map styles", Snackbar.LENGTH_LONG);
+            logger.warning("Map style applying failed");
         }
     }
 
