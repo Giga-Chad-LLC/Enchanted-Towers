@@ -108,7 +108,7 @@ public class Tower {
 
     public boolean isAbandoned() {
         synchronized (lock) {
-            return ownerId.isPresent();
+            return !ownerId.isPresent();
         }
     }
 

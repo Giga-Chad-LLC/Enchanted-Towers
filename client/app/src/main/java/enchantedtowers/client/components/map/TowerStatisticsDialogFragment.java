@@ -1,16 +1,17 @@
 package enchantedtowers.client.components.map;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -94,8 +95,10 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
-        View view = inflater.inflate(R.layout.fragment_tower_statistics_dialog, container, false);
+        // applying custom theme to override default styles
+        View view = inflater
+                .cloneInContext(new ContextThemeWrapper(requireActivity(), R.style.Theme_MedievalStyle))
+                .inflate(R.layout.fragment_tower_statistics_dialog, container, false);
 
         // create protection walls dialog
         protectionWallDialog = ProtectionWallGridDialog.newInstance(requireContext(), this::onProtectionWallClick);
@@ -115,6 +118,15 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         TowersRegistryManager.getInstance().subscribeOnTowerUpdates(towerId, onTowerUpdateSubscription.get());
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        // remove white background of underneath bottom sheet to make border radius be visible
+        super.onViewCreated(view, savedInstanceState);
+        if (getView() != null) {
+            ((View) getView().getParent()).setBackgroundColor(Color.TRANSPARENT);
+        }
     }
 
     private void onTowerUpdateCallback(View view, Tower updatedTower) {
@@ -460,6 +472,19 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     private void setTrySetupProtectionWallOnClickListener(Button actionButton) {
         actionButton.setText("Set up protection wall");
 
+        // clear previously added data
+        protectionWallDialog.clear();
+
+        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+        for (var wall : tower.getProtectionWalls()) {
+            int imageId = determineProtectionWallImageId(wall);
+            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId);
+        }
+
+        actionButton.setOnClickListener(view -> protectionWallDialog.show());
+    }
+
+    private int determineProtectionWallImageId(ProtectionWall wall) {
         List<Integer> availableEnchantedWallsImages = List.of(
                 R.drawable.protection_wall_frame_1,
                 R.drawable.protection_wall_frame_2,
@@ -468,23 +493,17 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
                 R.drawable.protection_wall_frame_5
         );
 
-        // clear previously added data
-        protectionWallDialog.clear();
-
-        Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
-        for (var wall : tower.getProtectionWalls()) {
-            int imageId = R.drawable.protection_wall_frame_empty;
-
-            if (wall.isEnchanted()) {
-                // choose random image from available ones
-                int index = ThreadLocalRandom.current().nextInt(availableEnchantedWallsImages.size());
-                imageId = availableEnchantedWallsImages.get(index);
-            }
-
-            protectionWallDialog.addImage(tower.getId(), wall.getId(), imageId);
+        if (wall.isBroken()) {
+            return R.drawable.broken_protection_wall_frame;
         }
-
-        actionButton.setOnClickListener(view -> protectionWallDialog.show());
+        else if (wall.isEnchanted()) {
+            // choose random image from available ones
+            int index = ThreadLocalRandom.current().nextInt(availableEnchantedWallsImages.size());
+            return availableEnchantedWallsImages.get(index);
+        }
+        else {
+            return R.drawable.protection_wall_frame_empty;
+        }
     }
 
     @Override

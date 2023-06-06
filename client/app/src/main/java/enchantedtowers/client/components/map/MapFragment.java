@@ -11,10 +11,9 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.location.LocationListenerCompat;
 import androidx.fragment.app.Fragment;
 
@@ -22,29 +21,52 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.material.snackbar.Snackbar;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.dialogs.EnableGPSSuggestionDialog;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
-import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
+import enchantedtowers.game_models.Tower;
 
 
 public class MapFragment extends Fragment {
+    private static class TowerUpdateSubscription {
+        private final int towerId;
+        private final TowersRegistryManager.Subscription callback;
+
+        TowerUpdateSubscription(int towerId, TowersRegistryManager.Subscription callback) {
+            this.towerId = towerId;
+            this.callback = callback;
+        }
+
+        public int towerId() {
+            return towerId;
+        }
+
+        public TowersRegistryManager.Subscription callback() {
+            return callback;
+        }
+    }
+
     private Optional<GoogleMap> googleMap = Optional.empty();
-    private Optional<AlertDialog> GPSAlertDialog = Optional.empty();
+    private Optional<EnableGPSSuggestionDialog> GPSDialog = Optional.empty();
     private Optional<LocationListener> locationUpdatesListener = Optional.empty();
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
+    private final List<TowerUpdateSubscription> onTowerUpdateSubscriptions = new ArrayList<>();
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+    private View fragmentMapView;
 
 
     public MapFragment() {}
@@ -64,6 +86,7 @@ public class MapFragment extends Fragment {
                              Bundle savedInstanceState) {
         // inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        this.fragmentMapView = view;
 
         // initialize map fragment
         SupportMapFragment supportMapFragment =
@@ -81,7 +104,7 @@ public class MapFragment extends Fragment {
 
             // registering click listeners on "MyLocation" button, location point and markers
             registerOnMyLocationButtonClickListener();
-            registerOnMyLocationClickListener();
+            registerOnCustomMyLocationButtonClickListener();
             registerOnMarkerClickListener();
 
             // enabling user location and registering location updates listener
@@ -92,7 +115,8 @@ public class MapFragment extends Fragment {
                 @Override
                 public void onError(Throwable t) {
                     // TODO: show error notification
-                    ClientUtils.showToastOnUIThread(requireActivity(), t.getMessage(), Toast.LENGTH_LONG);
+                    logger.severe("Error requesting towers: " + t.getMessage());
+                    ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
                 }
 
                 @Override
@@ -101,6 +125,9 @@ public class MapFragment extends Fragment {
                     requireActivity().runOnUiThread(() -> {
                         logger.info("Drawing " + TowersRegistry.getInstance().getTowers().size() + " towers on map");
                         drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
+
+                        // register for tower updates
+                        registerTowersUpdatesSubscriptions();
                     });
                 }
             });
@@ -109,25 +136,32 @@ public class MapFragment extends Fragment {
         return view;
     }
 
+    private void registerTowersUpdatesSubscriptions() {
+        List<Tower> towers = TowersRegistry.getInstance().getTowers();
+
+        for (var tower : towers) {
+            int towerId = tower.getId();
+            logger.info("Register subscription for updates of tower with id " + tower.getId());
+
+            TowerUpdateSubscription subscription = new TowerUpdateSubscription(towerId,
+                    updatedTower -> googleMap.ifPresent(map -> requireActivity().runOnUiThread(() -> drawInteractor.updateMarkerAssociatedWithTower(map, updatedTower))));
+
+            onTowerUpdateSubscriptions.add(subscription);
+            TowersRegistryManager.getInstance().subscribeOnTowerUpdates(towerId, subscription.callback());
+        }
+    }
+
     private void enableUserLocationAndRegisterLocationUpdatesListener() {
         if (PermissionManager.checkLocationPermission(requireContext())) {
-            googleMap.get().setMyLocationEnabled(true);
-
+            // disable location props to remove blue dot to replace it with custom player icon and custom MyLocationButton
+            googleMap.get().getUiSettings().setMyLocationButtonEnabled(false);
+            googleMap.get().setMyLocationEnabled(false);
             registerOnLocationUpdatesListener();
-
-            // draw circle around last known location
-            {
-                LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
-                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-                if (lastKnownLocation != null) {
-                    var playerLocation = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-                    drawInteractor.drawCircleAroundPoint(playerLocation, googleMap.get());
-                }
-            }
         }
         else {
-            logger.log(Level.WARNING, "None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
+            ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
+
+            logger.warning("None of ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION permissions granted. Cannot enable user location features on Google Maps");
         }
     }
 
@@ -140,14 +174,13 @@ public class MapFragment extends Fragment {
                 new LocationListenerCompat() {
                     @Override
                     public void onLocationChanged(@NonNull Location location) {
-                        logger.log(Level.INFO, "New location: " + location);
-                        var playerLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                        drawInteractor.drawCircleAroundPoint(playerLocation, googleMap.get());
+                        logger.info("New player location: " + location);
+                        drawInteractor.updatePlayerIconPosition(location, googleMap.get());
                     }
 
                     @Override
                     public void onProviderDisabled(@NonNull String provider) {
-                        logger.log(Level.WARNING, "Provider '" + provider + "' disabled");
+                        logger.warning("Provider '" + provider + "' disabled");
                         showGPSEnableDialogIfAllowed();
                     }
                 }
@@ -161,7 +194,8 @@ public class MapFragment extends Fragment {
                 LocationManager.GPS_PROVIDER,
                 minTimeIntervalBetweenUpdatesMs,
                 minDistanceBetweenUpdateMeters,
-                locationUpdatesListener.get());
+                locationUpdatesListener.get()
+        );
     }
 
     private void registerOnMarkerClickListener() {
@@ -177,7 +211,6 @@ public class MapFragment extends Fragment {
                 Integer towerId = (Integer) marker.getTag();
                 if (towerId != null) {
                     logger.info("Tower id stored in marker tag: '" + towerId + "'");
-
                     // TODO: dialogs must be dismissed
                     var dialog = TowerStatisticsDialogFragment.newInstance(towerId);
                     dialog.show(getParentFragmentManager(), dialog.getTag());
@@ -208,40 +241,30 @@ public class MapFragment extends Fragment {
         googleMap.get().setOnMyLocationButtonClickListener(() -> false);
     }
 
-    private void registerOnMyLocationClickListener() {
-        Objects.requireNonNull(googleMap);
-        googleMap.get().setOnMyLocationClickListener(location -> {
-            String message = "Current location: " + location;
-            logger.log(Level.INFO, message);
-            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
-        });
+    private void registerOnCustomMyLocationButtonClickListener() {
+        Button myLocationButton = requireActivity().findViewById(R.id.custom_my_location_button);
+        myLocationButton.setOnClickListener(view -> drawInteractor.zoomToPlayerPosition(googleMap.get()));
     }
+
 
     // helper methods
 
     private void createGPSEnableAlertDialog() {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(requireContext());
-        alertDialogBuilder.setMessage("GPS is disabled. GPS is required to let application function properly.\n" +
-                "Would you mind enabling it?");
-
-        alertDialogBuilder.setPositiveButton("Enable GPS", (dialog, which) -> {
+        Runnable positiveCallback = () -> {
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
-        });
+        };
+        Runnable negativeCallback = () -> ClientUtils.showSnackbar(fragmentMapView, "GPS required for proper application functioning", Snackbar.LENGTH_LONG);
 
-        alertDialogBuilder.setNegativeButton("Cancel", (dialog, which) -> {
-            // Nothing
-        });
-
-        this.GPSAlertDialog = Optional.of(alertDialogBuilder.create());
+        GPSDialog = Optional.of(EnableGPSSuggestionDialog.newInstance(requireContext(), positiveCallback, negativeCallback));
     }
 
     private void showGPSEnableDialogIfAllowed() {
-        if (GPSAlertDialog.isPresent() && !GPSAlertDialog.get().isShowing()) {
-            GPSAlertDialog.get().show();
+        if (GPSDialog.isPresent() && !GPSDialog.get().isShowing()) {
+            GPSDialog.get().show();
         }
         else {
-            logger.log(Level.WARNING, "GPSAlertDialog either is null or is showing");
+            logger.warning("GPS dialog either is null or is showing");
         }
     }
 
@@ -251,10 +274,11 @@ public class MapFragment extends Fragment {
                 MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style));
 
         if (mapStyleAppliedSuccessfully) {
-            logger.log(Level.INFO, "Map style applied successfully");
+            logger.info("Map style applied successfully");
         }
         else {
-            logger.log(Level.WARNING, "Map style applying failed");
+            ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred: cannot apply custom map styles", Snackbar.LENGTH_LONG);
+            logger.warning("Map style applying failed");
         }
     }
 
@@ -266,11 +290,23 @@ public class MapFragment extends Fragment {
             LocationManager locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
             locationManager.removeUpdates(locationUpdatesListener.get());
         }
+
+        // unregistering towers updates listeners
+        for (var subscription : onTowerUpdateSubscriptions) {
+            TowersRegistryManager.getInstance()
+                    .unsubscribeFromTowerUpdates(subscription.towerId(), subscription.callback());
+        }
+
         // shutting down towers manager
         TowersRegistryManager.getInstance().shutdown();
 
         // clearing map
         googleMap.ifPresent(GoogleMap::clear);
+
+        // dismissing GPS dialog
+        if (GPSDialog.isPresent() && GPSDialog.get().isShowing()) {
+            GPSDialog.get().dismiss();
+        }
 
         super.onDestroy();
     }
