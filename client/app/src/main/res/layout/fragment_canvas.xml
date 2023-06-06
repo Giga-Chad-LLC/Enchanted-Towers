@@ -1,29 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".components.canvas.CanvasFragment">
 
-    <enchantedtowers.client.components.canvas.CanvasWidget
-        android:id="@+id/canvasView"
-        android:layout_width="411dp"
-        android:layout_height="445dp"
-        android:background="#FFD5A4"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.666"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <enchantedtowers.client.components.canvas.CanvasWidget
+            android:id="@+id/canvasView"
+            android:layout_width="411dp"
+            android:layout_height="445dp"
+            android:background="#FFD5A4" />
+
+        <Button
+            android:id="@+id/clear_canvas_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="20dp"
+            android:layout_marginStart="20dp"
+            android:background="@drawable/clear_canvas_button_icon"
+            android:clickable="true" />
+
+        <Button
+            android:id="@+id/submit_enchantment_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="20dp"
+            android:layout_marginStart="88dp"
+            android:background="@drawable/submit_enchantment_button_icon"
+            android:clickable="true" />
+
+    </FrameLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/fragmentControlsLayout"
-        android:layout_width="412dp"
+        android:layout_width="match_parent"
         android:layout_height="156dp"
-        android:layout_marginTop="445dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
