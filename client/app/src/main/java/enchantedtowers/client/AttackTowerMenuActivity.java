@@ -40,8 +40,6 @@ public class AttackTowerMenuActivity extends AppCompatActivity {
         int port = ServerApiStorage.getInstance().getPort();
 
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        /*String target = host + ":" + port;
-         channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();*/
         towerAttackAsyncStub = TowerAttackServiceGrpc.newStub(channel);
         towerProtectAsyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 

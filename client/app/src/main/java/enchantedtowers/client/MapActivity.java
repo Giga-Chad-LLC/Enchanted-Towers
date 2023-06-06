@@ -2,13 +2,13 @@ package enchantedtowers.client;
 
 import android.Manifest;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.view.View;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Optional;
 
@@ -33,6 +33,8 @@ public class MapActivity extends BaseActivity {
 
         ActivityResultLauncher<String[]> locationPermissionLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                    View mapFrameLayout = findViewById(R.id.map_frame_layout);
+
                     boolean fineLocationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
                             Manifest.permission.ACCESS_FINE_LOCATION, false));
 
@@ -40,17 +42,15 @@ public class MapActivity extends BaseActivity {
                             Manifest.permission.ACCESS_COARSE_LOCATION, false));
 
                     if (fineLocationPermissionGranted && coarseLocationPermissionGranted) {
-                        Toast.makeText(this,
-                                "All required permissions granted. Thanks, enjoy the game!", Toast.LENGTH_LONG).show();
+                        ClientUtils.showSnackbar(mapFrameLayout, "All required permissions granted. Thanks, enjoy the game!", Snackbar.LENGTH_LONG);
                         mountGoogleMapsFragment();
                     }
                     else if (coarseLocationPermissionGranted) {
-                        Toast.makeText(this,
-                                "Access of coarse location granted. Content might be limited.", Toast.LENGTH_LONG).show();
+                        ClientUtils.showSnackbar(mapFrameLayout, "Access of coarse location granted. Content might be limited.", Snackbar.LENGTH_LONG);
                         mountGoogleMapsFragment();
                     }
                     else {
-                        Toast.makeText(this, "Content might be limited. Please, grant access of location.", Toast.LENGTH_LONG).show();
+                        ClientUtils.showSnackbar(mapFrameLayout, "Content might be limited. Please, grant access of location.", Snackbar.LENGTH_LONG);
                     }
                 }
         );
@@ -70,7 +70,9 @@ public class MapActivity extends BaseActivity {
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {
         Runnable positiveCallback = () -> locationPermissionLauncher.launch(locationPermissions);
-        Runnable negativeCallback = () -> Toast.makeText(this, "Content might be limited", Toast.LENGTH_LONG).show();
+        Runnable negativeCallback = () -> ClientUtils.showSnackbar(
+                findViewById(R.id.map_frame_layout), "Content might be limited", Snackbar.LENGTH_LONG);
+
         dialog = Optional.of(LocationRequestPermissionRationaleDialog.newInstance(this, positiveCallback, negativeCallback));
         dialog.get().show();
     }
