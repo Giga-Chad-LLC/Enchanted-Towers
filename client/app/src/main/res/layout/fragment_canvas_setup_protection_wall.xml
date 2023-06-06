@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".components.canvas.CanvasFragment">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/tower_scenery_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:maxHeight="210dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/scenery_owner_tower" />
+
+        <TextView
+            style="@style/MedievalStyle.TextAppearance.Small"
+            android:id="@+id/left_time_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/timer_background"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="09:23"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="top|start"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="12dp">
+
+            <Button
+                android:id="@+id/leave_canvas_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/leave_button_icon"
+                android:clickable="true" />
+
+            <Button
+                android:id="@+id/open_spellbook_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/open_spellbook_button_icon"
+                android:clickable="true" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <include layout="@layout/protector_canvas_stats" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <enchantedtowers.client.components.canvas.CanvasWidget
+                android:id="@+id/canvasView"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_gravity="bottom|end"
+                android:background="#FFD5A4" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/clear_canvas_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/clear_canvas_button_icon"
+                    android:clickable="true" />
+
+                <Button
+                    android:id="@+id/submit_enchantment_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginLeft="12dp"
+                    android:background="@drawable/submit_enchantment_button_icon"
+                    android:clickable="true" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <include
+            layout="@layout/spells_selection_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="15dp" />
+
+    </FrameLayout>
+
+
+</LinearLayout>
