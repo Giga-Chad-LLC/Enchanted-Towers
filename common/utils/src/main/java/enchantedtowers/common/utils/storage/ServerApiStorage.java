@@ -27,10 +27,10 @@ public class ServerApiStorage {
      * </ol>
      */
     private ServerApiStorage() {
-        serverHost = "localhost";
-        clientHost = "10.0.2.2"; // emulators
+        serverHost = "192.168.0.103";/*"localhost"*/;
+        clientHost = "192.168.0.103"/*"localhost"*//*"10.0.2.2"*/; // emulators
         // port is common for both client and server
-        port = 8080;
+        port = 50051/*8080*/;
     }
 
     public String getServerHost() {

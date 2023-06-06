@@ -15,6 +15,15 @@ dependencies {
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation("io.grpc:grpc-netty-shaded:${grpcVersion}")
 
+    //ORM
+    implementation 'org.hibernate:hibernate-core:6.2.4.Final'
+
+    //Postgres
+    implementation 'org.postgresql:postgresql:42.2.24'
+
+    //javax
+    implementation 'javax.persistence:javax.persistence-api:2.2'
+
     // json
     implementation 'org.json:json:20220320'
 
