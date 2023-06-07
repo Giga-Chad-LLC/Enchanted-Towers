@@ -37,6 +37,7 @@ import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -385,7 +386,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
             private boolean sessionExpired = false;
 
             @Override
-            public void onNext(SessionInfoResponse response) {
+            public void onNext(SessionStateInfoResponse response) {
                 if (response.hasError()) {
                     serverError = Optional.of(response.getError());
 
@@ -420,7 +421,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
             @Override
             public void onError(Throwable t) {
                 logger.warning("onError: " + t.getMessage());
-                tearDown("Error occurred: " + t.getMessage());
+                timer.ifPresent(CanvasSessionTimer::cancel);
             }
 
             @Override

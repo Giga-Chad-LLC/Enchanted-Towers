@@ -33,6 +33,7 @@ import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.MatchedSpellStatsResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -435,7 +436,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             private boolean sessionExpired = false;
 
             @Override
-            public void onNext(SessionInfoResponse response) {
+            public void onNext(SessionStateInfoResponse response) {
                 if (response.hasError()) {
                     serverError = Optional.of(response.getError());
 
@@ -469,7 +470,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             @Override
             public void onError(Throwable t) {
                 logger.warning("attackTowerById::onError: message='" + t.getMessage() + "'");
-                tearDown("Error occurred: " + t.getMessage());
+                timer.ifPresent(CanvasSessionTimer::cancel);
             }
 
             @Override

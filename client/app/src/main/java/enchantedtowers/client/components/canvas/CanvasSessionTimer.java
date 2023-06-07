@@ -16,14 +16,32 @@ public class CanvasSessionTimer {
     private final Activity activity;
     private final TextView timerView;
     private long leftTime_ms;
-    private final Timer timer;
+    private Timer timer;
 
     public CanvasSessionTimer(Activity activity, TextView timerView, long timeout_ms) {
         this.activity = activity;
         this.timerView = timerView;
         this.leftTime_ms = timeout_ms;
         this.timer = new Timer();
+        startTimer();
+        logger.info("Timer " + timer + " started for " + timeout_ms + "ms with rate of " + TIMER_UPDATES_DELAY_MS + "ms");
+    }
 
+    public void restart(long leftTime_ms) {
+        logger.info("Restarting timer " + timer + " with duration " + leftTime_ms + "ms");
+        this.leftTime_ms = leftTime_ms;
+        timer.cancel();
+        // creating new timer since no actions may be called after cancellation
+        this.timer = new Timer();
+        startTimer();
+    }
+
+    public void cancel() {
+        logger.info("Canceling timer " + timer + "...");
+        timer.cancel();
+    }
+
+    private void startTimer() {
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 updateTimerView();
@@ -34,13 +52,6 @@ public class CanvasSessionTimer {
                 }
             }
         }, 0, TIMER_UPDATES_DELAY_MS);
-
-        logger.info("Timer " + timer + " started for " + timeout_ms + "ms with rate of " + TIMER_UPDATES_DELAY_MS + "ms");
-    }
-
-    public void cancel() {
-        logger.info("Canceling timer " + timer + "...");
-        timer.cancel();
     }
 
     private void updateTimerView() {

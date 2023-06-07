@@ -15,10 +15,6 @@ import "responses/common/current-canvas-state-response.proto";
 
 
 message SpectateTowerAttackResponse {
-//  message SelectSpellType {
-//    common.SpellType spellType = 1;
-//  }
-
   enum ResponseType {
     CURRENT_CANVAS_STATE = 0;
     SELECT_SPELL_TYPE = 1;
@@ -32,10 +28,11 @@ message SpectateTowerAttackResponse {
 
   // CURRENT_CANVAS_STATE
   response_models.CurrentCanvasStateResponse canvasState = 3;
+  int64 leftTime_ms = 4;
   // SELECT_SPELL_COLOR
-  common.SpellType spellType = 4;
+  common.SpellType spellType = 5;
   // DRAW_SPELL
-  common.Vector2 spellPoint = 5;
+  common.Vector2 spellPoint = 6;
   // FINISH_SPELL
-  common.SpellDescription spellDescription = 6;
+  common.SpellDescription spellDescription = 7;
 };

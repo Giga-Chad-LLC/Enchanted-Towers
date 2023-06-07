@@ -75,8 +75,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
      */
     @Override
-    public synchronized void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+    public synchronized void attackTowerById(TowerIdRequest request, StreamObserver<SessionStateInfoResponse> streamObserver) {
+        SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
 
         logger.info("attackTowerById: got playerId=" + request.getPlayerData().getPlayerId() +
                 ", towerId=" + request.getTowerId());
@@ -99,12 +99,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             // create cancel handler to hook the event of client closing the connection
             // in this case spectators must be disconnected and attack session must be removed
-            var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
+            var callObserver = (ServerCallStreamObserver<SessionStateInfoResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> onAttackerStreamCancellation(session));
 
             // setting session id into response
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_CREATED);
+            responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_CREATED);
             responseBuilder.getSessionBuilder()
                     .setSessionId(session.getId())
                     .setLeftTimeMs(session.getExpirationTimeoutMs())
@@ -571,6 +571,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             addSpellDescriptionsOfDrawnSpells(responseBuilder, session);
             // build canvas
             responseBuilder.getCanvasStateBuilder().build();
+            // setting remaining time
+            responseBuilder.setLeftTimeMs(session.getLeftExecutionTimeMs());
+
+            logger.info("Attack session with id " + session.getId() + " left execution time: " + session.getLeftExecutionTimeMs() + "ms");
 
             // adding spectator
             session.addSpectator(spectatingPlayerId, streamObserver);
@@ -618,7 +622,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             AttackSession newSession;
 
-            System.out.println("Getting getKthNeighbourOfSession of current sessionId=" + session.getId() + ", for towerId=" + session.getAttackedTowerId());
+            logger.info("Getting getKthNeighbourOfSession of current sessionId=" + session.getId() + ", for towerId=" + session.getAttackedTowerId());
 
             if (request.getRequestType() == ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER) {
                 newSession = sessionManager.getKthNeighbourOfSession(session.getAttackedTowerId(), session, 1);
@@ -627,7 +631,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 newSession = sessionManager.getKthNeighbourOfSession(session.getAttackedTowerId(), session, -1);
             }
 
-            responseBuilder.setSessionId(newSession.getId());
+            // forming response
+            responseBuilder.setSessionId(newSession.getId()).build();
             newSession.addSpectator(spectator.playerId(), spectator.streamObserver());
 
             // create response with canvas state
@@ -637,6 +642,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             addSpellDescriptionsOfDrawnSpells(canvasStateResponseBuilder, newSession);
             // build canvas
             canvasStateResponseBuilder.getCanvasStateBuilder().build();
+            // setting remaining time
+            canvasStateResponseBuilder.setLeftTimeMs(newSession.getLeftExecutionTimeMs());
 
             // send canvas state to spectator
             spectator.streamObserver().onNext(canvasStateResponseBuilder.build());
@@ -983,8 +990,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         disconnectSpectators(session);
 
         // sending response with session expiration to attacker and closing connection
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+        SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
+        responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_EXPIRED);
         responseBuilder.getExpirationBuilder().build();
 
         // closing connection with attacker

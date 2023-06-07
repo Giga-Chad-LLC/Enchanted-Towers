@@ -7,10 +7,24 @@ package response_models;
 
 // responses
 import "responses/common/server-error.proto";
+// common
 import "common/session-info.proto";
 
 
-message SessionInfoResponse {
+message SessionStateInfoResponse {
+  enum ResponseType {
+    SESSION_CREATED = 0;
+    SESSION_EXPIRED = 1;
+  };
+
+  message SessionExpirationInfo {
+    // maybe some data in the future (e.g. duration)
+  };
+
+  ResponseType type = 1;
   response_models.ServerError error = 2;
+  // SESSION_CREATED
   common.SessionInfo session = 3;
+  // SESSION_EXPIRED
+  SessionExpirationInfo expiration = 4;
 };

@@ -5,12 +5,18 @@ import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.widget.TextView;
 
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.MapActivity;
+import enchantedtowers.client.R;
+import enchantedtowers.client.components.canvas.CanvasFragment;
+import enchantedtowers.client.components.canvas.CanvasSessionTimer;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -18,8 +24,9 @@ import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
-import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
+import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
+import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -39,14 +46,17 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
+    private final CanvasFragment canvasFragment;
+    private Optional<CanvasSessionTimer> timer = Optional.empty();
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
 
     // TODO: watch for the race conditions in this class
     // TODO: consider scaling the points that we retrieve from server (solution: make canvas size fixed or send to the server the canvas size of attacker and recalculate real path size on spectators)
 
-    public CanvasSpectateInteractor(CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasSpectateInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
         this.brush = state.getBrushCopy();
+        this.canvasFragment = canvasFragment;
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
@@ -71,8 +81,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 .setPlayerId(playerId.get())
                 .build();
 
-        asyncStub
-                .spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
+        asyncStub.spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
+            private Optional<ServerError> serverError = Optional.empty();
+
             @Override
             public void onNext(SpectateTowerAttackResponse response) {
                 if (response.hasError()) {
@@ -83,36 +94,32 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         canvasWidget.postInvalidate();
                     }
                     else {
-                        // TODO: figure out if required to redirect to base activity here
-                        /*AndroidUtils.redirectToActivityAndPopHistory(
-                                (Activity) canvasWidget.getContext(),
-                                AttackTowerMenuActivity.class,
-                                response.getError().getMessage()
-                        );*/
+                        // general error occurred
+                        serverError = Optional.of(response.getError());
                     }
-                    return;
                 }
-
-                switch (response.getResponseType()) {
-                    case CURRENT_CANVAS_STATE -> {
-                        logger.info("Received CURRENT_CANVAS_STATE");
-                        onCurrentCanvasStateReceived(response, state, canvasWidget);
-                    }
-                    case SELECT_SPELL_TYPE -> {
-                        logger.info("Received SELECT_SPELL_TYPE");
-                        onSelectSpellTypeReceived(response);
-                    }
-                    case DRAW_SPELL -> {
-                        logger.info("Received DRAW_SPELL");
-                        onDrawSpellReceived(response, canvasWidget);
-                    }
-                    case FINISH_SPELL -> {
-                        logger.info("Received FINISH_SPELL");
-                        onFinishSpellReceived(response, state, canvasWidget);
-                    }
-                    case CLEAR_CANVAS -> {
-                        logger.info("Received CLEAR_CANVAS");
-                        onClearCanvasReceived(response, state, canvasWidget);
+                else {
+                    switch (response.getResponseType()) {
+                        case CURRENT_CANVAS_STATE -> {
+                            logger.info("Received CURRENT_CANVAS_STATE");
+                            onCurrentCanvasStateReceived(response, state, canvasWidget);
+                        }
+                        case SELECT_SPELL_TYPE -> {
+                            logger.info("Received SELECT_SPELL_TYPE");
+                            onSelectSpellTypeReceived(response);
+                        }
+                        case DRAW_SPELL -> {
+                            logger.info("Received DRAW_SPELL");
+                            onDrawSpellReceived(response, canvasWidget);
+                        }
+                        case FINISH_SPELL -> {
+                            logger.info("Received FINISH_SPELL");
+                            onFinishSpellReceived(response, state, canvasWidget);
+                        }
+                        case CLEAR_CANVAS -> {
+                            logger.info("Received CLEAR_CANVAS");
+                            onClearCanvasReceived(response, state, canvasWidget);
+                        }
                     }
                 }
             }
@@ -122,21 +129,19 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 logger.warning("spectateTowerBySessionId::onError: " + t.getMessage());
                 // TODO: figure out how to prevent double redirect (when clicked "back" button we redirect,
                 //  but also server generates onError event, so double redirecting occurs, which we don't want
-                /*AndroidUtils.redirectToActivityAndPopHistory(
-                        (Activity) canvasWidget.getContext(),
-                        AttackTowerMenuActivity.class,
-                        t.getMessage()
-                );*/
+                timer.ifPresent(CanvasSessionTimer::cancel);
             }
 
             @Override
             public void onCompleted() {
                 logger.info("spectateTowerBySessionId::onCompleted");
-                ClientUtils.redirectToActivityAndPopHistory(
-                        (Activity) canvasWidget.getContext(),
-                        MapActivity.class,
-                        null
-                );
+                String message = serverError.map(ServerError::getMessage).orElse("Spectating ended");
+                tearDown(message);
+            }
+
+            private void tearDown(String message) {
+                timer.ifPresent(CanvasSessionTimer::cancel);
+                ClientUtils.redirectToActivityAndPopHistory((Activity) canvasWidget.getContext(), MapActivity.class, message);
             }
         });
     }
@@ -159,40 +164,41 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
 
         ToggleAttackerRequest.Builder requestBuilder = ToggleAttackerRequest.newBuilder();
-        requestBuilder
-                .setSessionId(sessionId.get())
+        requestBuilder.setSessionId(sessionId.get())
                 .setRequestType(requestType);
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId.get())
                 .build();
 
         asyncStub.toggleAttacker(requestBuilder.build(), new StreamObserver<>() {
-            // TODO: think of meaningful handlers here
-            @Override
-            public void onNext(SessionIdResponse value) {
-                StringBuilder messageBuilder = new StringBuilder();
+            private Optional<ServerError> serverError = Optional.empty();
 
-                if (value.hasError()) {
-                    messageBuilder.append("toggleAttacker::onReceived: error='").append(value.getError().getMessage()).append("'");
+            @Override
+            public void onNext(SessionIdResponse response) {
+                if (response.hasError()) {
+                    logger.warning("toggleAttacker::onError: message=" + response.getError().getMessage());
+                    serverError = Optional.of(response.getError());
                 }
                 else {
-                    messageBuilder.append("toggleAttacker::onReceived: newSessionId=").append(value.getSessionId());
-                    ClientStorage.getInstance().setSessionId(value.getSessionId());
+                    // setting new session
+                    ClientStorage.getInstance().setSessionId(response.getSessionId());
                 }
-
-                logger.info(messageBuilder.toString());
             }
 
             @Override
             public void onError(Throwable t) {
                 logger.warning("toggleAttacker::onError: message='" + t.getMessage() + "'");
+                ClientUtils.showSnackbar(canvasFragment.requireView(), "Error occurred: " + t.getMessage(), Snackbar.LENGTH_LONG);
             }
 
             @Override
             public void onCompleted() {
                 logger.info("toggleAttacker::onCompleted");
+                serverError.ifPresent(error ->
+                        ClientUtils.showSnackbar(canvasFragment.requireView(), "Error occurred: " + error.getMessage(), Snackbar.LENGTH_LONG));
             }
         });
+
         return true;
     }
 
@@ -207,13 +213,13 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
     }
 
-    private void onCurrentCanvasStateReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+    private void onCurrentCanvasStateReceived(SpectateTowerAttackResponse response, CanvasState state, CanvasWidget canvasWidget) {
         // clear current state
         state.clear();
         currentPath.reset();
 
         // append new drawings to the state
-        var canvasHistory = value.getCanvasState();
+        var canvasHistory = response.getCanvasState();
 
         // fill current spell state
         if (canvasHistory.hasCurrentSpellState()) {
@@ -233,9 +239,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
             // TODO: add mutex (in order to prevent data race with onDraw method)
             // set class members values
-            brush.setColor(
-                ClientUtils.getColorIdBySpellType(currentSpellType)
-            );
+            brush.setColor(ClientUtils.getColorIdBySpellType(currentSpellType));
             currentPath.set(newSpellPath);
         }
 
@@ -265,6 +269,26 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         // trigger the rendering
         canvasWidget.postInvalidate();
+
+        // restarting canvas timer with left session time
+        restartTimer(response.getLeftTimeMs());
+    }
+
+    /**
+     * Restarts previously created timer on canvas view or creates new one.
+     */
+    private void restartTimer(long leftTime_ms) {
+        logger.info("Left execution time: " + leftTime_ms + "ms");
+        if (timer.isPresent()) {
+            logger.info("Restarting timer...");
+            timer.get().restart(leftTime_ms);
+        }
+        else {
+            logger.warning("Timer does not exist. Creating new timer...");
+            TextView leftTimeView = canvasFragment.requireActivity().findViewById(R.id.left_time_timer);
+            timer = Optional.of(
+                    new CanvasSessionTimer(canvasFragment.requireActivity(), leftTimeView, leftTime_ms));
+        }
     }
 
     private void onSelectSpellTypeReceived(SpectateTowerAttackResponse value) {

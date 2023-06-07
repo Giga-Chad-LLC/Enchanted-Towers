@@ -39,7 +39,7 @@ public class CanvasSpectatorFragment extends CanvasFragment {
         canvasWidget = rootView.findViewById(R.id.canvasView);
         canvasWidget.setInteractors(Arrays.asList(
                 new CanvasDrawStateInteractor(),
-                new CanvasSpectateInteractor(canvasWidget.getState(), canvasWidget)
+                new CanvasSpectateInteractor(this, canvasWidget.getState(), canvasWidget)
         ));
 
         View showPreviousAttackerButton = rootView.findViewById(R.id.previous_attacker_button_icon);
