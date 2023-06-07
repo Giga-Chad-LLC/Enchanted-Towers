@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.MotionEvent;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -17,9 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.MapActivity;
+import enchantedtowers.client.R;
+import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
+import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.SpellType;
@@ -30,8 +34,10 @@ import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -262,14 +268,16 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
+    private final CanvasFragment canvasFragment;
     private ProtectionEventWorker worker;
 
     private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub asyncStub;
     private final ManagedChannel channel;
 
-    public CanvasProtectionInteractor(CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasProtectionInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
+        this.canvasFragment = canvasFragment;
 
         // configuring async client stub
         String host = ServerApiStorage.getInstance().getClientHost();
@@ -278,6 +286,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 
         callAsyncEnterProtectionWall(canvasWidget);
+        setProtectorCanvasStats();
     }
 
     @Override
@@ -410,6 +419,31 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         });
     }
 
+    private void setProtectorCanvasStats() {
+        // TODO: set mana value
+
+        TextView protectionWallIdElement = canvasFragment.requireActivity().findViewById(R.id.protection_wall_id);
+
+        if (protectionWallIdElement != null) {
+            int towerId = ClientStorage.getInstance().getTowerId().get();
+            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+
+            int enchantedProtectionWallsCount = (int) tower
+                    .getProtectionWalls().stream()
+                    .filter(ProtectionWall::isEnchanted)
+                    .count();
+            int totalProtectionWallsCount = tower.getProtectionWalls().size();
+
+            String content = String.format(protectionWallIdElement
+                            .getContext()
+                            .getString(R.string.protection_wall_count), enchantedProtectionWallsCount + 1, totalProtectionWallsCount);
+
+            protectionWallIdElement.setText(content);
+        }
+        else {
+            logger.warning("View with id R.id.protection_wall_id cannot be found on canvas fragment");
+        }
+    }
 
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {

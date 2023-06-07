@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="right"
-            android:text=""
+            android:text="@string/protection_wall_count"
             android:textSize="18sp" />
 
     </LinearLayout>
