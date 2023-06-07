@@ -41,8 +41,6 @@ public class AttackTowerMenuActivity extends AppCompatActivity implements Messag
         int port = ServerApiStorage.getInstance().getPort();
 
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        /*String target = host + ":" + port;
-         channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();*/
         towerAttackAsyncStub = TowerAttackServiceGrpc.newStub(channel);
         towerProtectAsyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 
@@ -118,7 +116,7 @@ public class AttackTowerMenuActivity extends AppCompatActivity implements Messag
     protected void onDestroy() {
         channel.shutdownNow();
         try {
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -293,7 +291,6 @@ public class AttackTowerMenuActivity extends AppCompatActivity implements Messag
                             ClientUtils.showToastOnUIThread(AttackTowerMenuActivity.this, message, Toast.LENGTH_LONG);
                         }
                         else {
-                            // TODO: remove sessionId, it will be retrieved later in corresponding interactor
                             System.out.println("tryProtectTowerById::Received response: success=" + response.getSuccess());
                             // TODO: part with setting playerId will be done on login/register activity when the authentication will be done
                             ClientStorage.getInstance().setPlayerId(playerId);

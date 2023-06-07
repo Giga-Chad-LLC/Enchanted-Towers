@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_package = "enchantedtowers.common.utils.proto.common";
 option java_multiple_files = true;
 
-package response_models;
+package common;
 
 // responses
 import "common/vector2.proto";
 import "common/spell-type.proto";
 
-message SpellDescriptionResponse {
+message SpellDescription {
   common.SpellType spellType = 1;
   int32 spellTemplateId = 2;
   common.Vector2 spellTemplateOffset = 3;

@@ -1,60 +1,124 @@
 package interactors;
 
-import java.util.List;
-import java.util.ArrayList;
-
-// game-models
-import enchantedtowers.common.utils.proto.requests.PlayerCoordinatesRequest;
-import enchantedtowers.game_models.Tower;
-
-// proto
+import components.registry.TowersRegistry;
+import enchantedtowers.common.utils.proto.common.SpellDescription;
+import enchantedtowers.common.utils.proto.responses.EnchantmentResponse;
+import enchantedtowers.common.utils.proto.responses.ProtectionWallResponse;
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
+import enchantedtowers.game_models.ProtectionWall;
+import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.utils.Vector2;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
-// TODO: create ResponseInteractor interface and implement it
+
 public class CreateTowersResponseInteractor {
-    private final List<Tower> storedTowers;
+    public TowersAggregationResponse createResponseWithAllTowers() {
+        List<Tower> towers = TowersRegistry.getInstance().getTowers();
+        List<TowerResponse> towerResponses = new ArrayList<>();
 
-    final static double MAX_DISTANCE = 2000;
-    public CreateTowersResponseInteractor() {
-        storedTowers = new ArrayList<>();
-        storedTowers.add(new Tower(0, new Vector2(1, 1)));
-        storedTowers.add(new Tower(1, new Vector2(2, 3)));
-        storedTowers.add(new Tower(2, new Vector2(5, 12)));
-    }
-
-    private static boolean isInsideRequiredArea(double x, double x0, double y, double y0) {
-        double dx = x - x0;
-        double dy = y - y0;
-        return dx * dx + dy * dy <= MAX_DISTANCE * MAX_DISTANCE;
-    }
-
-    public TowersAggregationResponse execute(PlayerCoordinatesRequest request) {
-        double playerX = request.getX();
-        double playerY = request.getY();
-
-        List<TowerResponse> towers = new ArrayList<>();
-
-        for (Tower tower : storedTowers) {
-            Vector2 position = tower.getPosition();
-
-            if (isInsideRequiredArea(playerX, position.x, playerY, position.y)) {
-                TowerResponse towerResponse = TowerResponse.newBuilder()
-                        .setX(position.x)
-                        .setY(position.y)
-                        .build();
-
-                towers.add(towerResponse);
-            }
+        for (Tower tower : towers) {
+            TowerResponse response = createTowerResponse(tower);
+            towerResponses.add(response);
         }
 
-        TowersAggregationResponse response = TowersAggregationResponse
+        return TowersAggregationResponse
                 .newBuilder()
-                .addAllTowers(towers)
+                .addAllTowers(towerResponses)
+                .build();
+    }
+
+    public TowersAggregationResponse createResponseWithTowersWithIds(List<Integer> towerIds) {
+        List<TowerResponse> towerResponses = new ArrayList<>();
+
+        for (int id : towerIds) {
+            Optional<Tower> tower = TowersRegistry.getInstance().getTowerById(id);
+            if (tower.isEmpty()) {
+                throw new NoSuchElementException("Tower with id " + id + " not found");
+            }
+            TowerResponse response = createTowerResponse(tower.get());
+            towerResponses.add(response);
+        }
+
+        return TowersAggregationResponse
+                .newBuilder()
+                .addAllTowers(towerResponses)
+                .build();
+    }
+
+    private TowerResponse createTowerResponse(Tower tower) {
+        Vector2 position = tower.getPosition();
+
+        var towerPosition = enchantedtowers.common.utils.proto.common.Vector2.newBuilder()
+                .setX(position.x)
+                .setY(position.y)
                 .build();
 
-        return response;
+        TowerResponse.Builder towerResponseBuilder = TowerResponse.newBuilder()
+                .setTowerId(tower.getId())
+                .setPosition(towerPosition)
+                .setIsUnderProtectionWallsInstallation(tower.isUnderProtectionWallsInstallation())
+                .setIsUnderCaptureLock(tower.isUnderCaptureLock())
+                .setIsUnderAttack(tower.isUnderAttack());
+
+        tower.getOwnerId().ifPresent(towerResponseBuilder::setOwnerId);
+        tower.getLastProtectionWallModificationTimestamp().ifPresent(
+                timestamp -> towerResponseBuilder.setLastProtectionWallModificationTimestampMs(timestamp.toEpochMilli()));
+
+        // adding protection walls
+        List<ProtectionWallResponse> protectionWalls = createProtectionWallResponses(tower);
+        towerResponseBuilder.addAllProtectionWalls(protectionWalls);
+
+        return towerResponseBuilder.build();
+    }
+
+    private List<ProtectionWallResponse> createProtectionWallResponses(Tower tower) {
+        List<ProtectionWallResponse> protectionWalls = new ArrayList<>();
+
+        for (var wall : tower.getProtectionWalls()) {
+            ProtectionWallResponse.WallState state = ProtectionWallResponse.WallState.newBuilder()
+                    .setBroken(wall.isBroken())
+                    .setEnchanted(wall.isEnchanted())
+                    .build();
+
+            ProtectionWallResponse.Builder responseBuilder = ProtectionWallResponse.newBuilder()
+                    .setId(wall.getId())
+                    .setState(state);
+
+            // creating enchantment response if protection wall is enchanted
+            if (wall.isEnchanted()) {
+                EnchantmentResponse enchantment = createEnchantmentResponse(wall);
+                responseBuilder.setEnchantment(enchantment);
+            }
+
+            protectionWalls.add(responseBuilder.build());
+        }
+
+        return protectionWalls;
+    }
+
+    private EnchantmentResponse createEnchantmentResponse(ProtectionWall wall) {
+        List<SpellDescription> spells = new ArrayList<>();
+
+        for (var template : wall.getEnchantment().get().getTemplateDescriptions()) {
+            var offset = enchantedtowers.common.utils.proto.common.Vector2.newBuilder()
+                    .setX(template.offset().x)
+                    .setY(template.offset().y)
+                    .build();
+
+            SpellDescription spell = SpellDescription.newBuilder()
+                    .setSpellTemplateId(template.id())
+                    .setSpellType(template.spellType())
+                    .setSpellTemplateOffset(offset)
+                    .build();
+
+            spells.add(spell);
+        }
+
+        return EnchantmentResponse.newBuilder().addAllSpells(spells).build();
     }
 }

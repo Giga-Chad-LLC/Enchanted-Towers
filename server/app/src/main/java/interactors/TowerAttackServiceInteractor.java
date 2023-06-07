@@ -4,7 +4,7 @@ import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
-import enchantedtowers.game_models.registry.TowersRegistry;
+import components.registry.TowersRegistry;
 
 import java.util.List;
 
@@ -23,6 +23,11 @@ public class TowerAttackServiceInteractor {
         this.tower.setUnderAttack(false);
     }
 
+    public boolean isProtectionWallEnchanted(int protectionWallId) {
+        ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
+        return wall.isEnchanted();
+    }
+
     public int getEnchantedProtectionWallId() {
         return tower.getEnchantedProtectionWall().getId();
     }
@@ -34,5 +39,10 @@ public class TowerAttackServiceInteractor {
 
     public Enchantment enchantmentOf(List<SpellTemplateDescription> spellTemplateDescriptions) {
         return new Enchantment(spellTemplateDescriptions);
+    }
+
+    public void destroyProtectionWallWithId(int protectionWallId) {
+        ProtectionWall wall = tower.getProtectionWallById(protectionWallId).get();
+        wall.destroyEnchantment();
     }
 }

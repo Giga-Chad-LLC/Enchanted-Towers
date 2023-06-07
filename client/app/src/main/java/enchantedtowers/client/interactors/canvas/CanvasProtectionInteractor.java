@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.AttackTowerMenuActivity;
+import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -68,7 +68,9 @@ class ProtectionEventWorker extends Thread {
             requestBuilder.setRequestType(ProtectionWallRequest.RequestType.ADD_SPELL);
 
             var storage = ClientStorage.getInstance();
-            assert(storage.getPlayerId().isPresent() && storage.getSessionId().isPresent());
+            // TODO: may throw if drawing starts quick! check that is the matter
+            assert(storage.getPlayerId().isPresent());
+            assert(storage.getSessionId().isPresent());
 
             // set session id
             requestBuilder.setSessionId(storage.getSessionId().get());
@@ -88,7 +90,6 @@ class ProtectionEventWorker extends Thread {
             }
 
             // set spell color
-
             requestBuilder.getSpellBuilder()
                     .addAllPoints(protoPoints)
                     .setOffset(protoOffset)
@@ -141,6 +142,7 @@ class ProtectionEventWorker extends Thread {
         int port = ServerApiStorage.getInstance().getPort();
 
         logger.info("Creating blocking stub");
+        // TODO: throws error if channel is not shutdown, shutdown channel on destroy
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
@@ -230,13 +232,13 @@ class ProtectionEventWorker extends Thread {
                 logger.warning("CanvasProtectionInteractor error while blocking stub '" + e.getMessage() + "'");
 
                 // redirect to base activity
-                Intent intent = new Intent(canvasWidget.getContext(), AttackTowerMenuActivity.class);
+                Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 intent.putExtra("showToastOnStart", true);
                 intent.putExtra("toastMessage", e.getMessage());
 
-                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + AttackTowerMenuActivity.class + ", intent=" + intent);
+                logger.info("redirect to base activity: from=" + canvasWidget.getContext() + ", to=" + MapActivity.class + ", intent=" + intent);
 
                 canvasWidget.getContext().startActivity(intent);
             }
@@ -270,12 +272,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         brush = state.getBrushCopy();
 
         // configuring async client stub
-        {
-            String host = ServerApiStorage.getInstance().getClientHost();
-            int port = ServerApiStorage.getInstance().getPort();
-            channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-            asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
-        }
+        String host = ServerApiStorage.getInstance().getClientHost();
+        int port = ServerApiStorage.getInstance().getPort();
+        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+        asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 
         callAsyncEnterProtectionWall(canvasWidget);
     }
@@ -287,6 +287,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onClearCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         logger.info("onClearCanvas");
 
         if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithClearCanvasRequest())) {
@@ -302,6 +306,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onSubmitCanvas(CanvasState state) {
+        if (worker == null) {
+            return false;
+        }
+
         if (!worker.enqueueEvent(ProtectionEventWorker.Event.createEventWithCompleteEnchantmentRequest())) {
             logger.warning("'Add spell' event lost");
         }
@@ -311,6 +319,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
     @Override
     public boolean onTouchEvent(CanvasState state, float x, float y, int motionEventType) {
+        if (worker == null) {
+            return false;
+        }
+
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
             case MotionEvent.ACTION_UP -> onActionUpFinishPathAndSubstitute(state, x, y);
@@ -330,7 +342,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         logger.info("Shutting down grpc channel...");
         channel.shutdownNow();
         try {
-            channel.awaitTermination(300, TimeUnit.MILLISECONDS);
+            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -382,18 +394,16 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: leave attack session
+                // TODO: leave protect session
                 logger.warning("onError: " + t.getMessage());
             }
 
             @Override
             public void onCompleted() {
-                // TODO: leave attack session
                 logger.warning("onCompleted: finished");
-
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(),
-                        AttackTowerMenuActivity.class,
+                        MapActivity.class,
                         "Protection wall was set successfully!"
                 );
             }

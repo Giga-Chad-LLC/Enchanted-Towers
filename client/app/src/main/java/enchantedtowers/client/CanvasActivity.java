@@ -8,6 +8,7 @@ import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
 import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasProtectorFragment;
 import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
+import enchantedtowers.client.components.canvas.CanvasViewingFragment;
 
 public class CanvasActivity extends AppCompatActivity {
     @Override
@@ -30,6 +31,10 @@ public class CanvasActivity extends AppCompatActivity {
             } else if (extras.getBoolean("isProtecting", false)) {
                 System.out.println("Protecting on canvas");
                 canvasFragment = CanvasProtectorFragment.newInstance();
+            }
+            else if (extras.getBoolean("isViewing", false)) {
+                System.out.println("Viewing on canvas");
+                canvasFragment = CanvasViewingFragment.newInstance();
             }
             else {
                 System.out.println("No actions on canvas");

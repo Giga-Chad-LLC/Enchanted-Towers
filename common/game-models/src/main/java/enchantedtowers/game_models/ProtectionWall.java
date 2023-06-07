@@ -3,7 +3,7 @@ package enchantedtowers.game_models;
 import java.util.Optional;
 
 public class ProtectionWall {
-    private static class WallState {
+    public static class WallState {
         private boolean broken;
         private boolean enchanted;
 
@@ -39,21 +39,42 @@ public class ProtectionWall {
         this.enchantment = Optional.empty();
     }
 
+    ProtectionWall(int id, WallState state, Optional<Enchantment> enchantment) {
+        this.id = id;
+        this.state = state;
+        this.enchantment = enchantment;
+    }
+    static public ProtectionWall of(int id, WallState state, Optional<Enchantment> enchantment) {
+        return new ProtectionWall(id, state, enchantment);
+    }
+
     public int getId() {
         return id;
     }
 
-    public boolean hasEnchantment() {
-        return enchantment.isPresent();
-    }
-
     public void setEnchantment(Enchantment enchantment) {
-        this.enchantment = Optional.of(enchantment);
-        this.state.setBroken(false);
         this.state.setEnchanted(true);
+        this.state.setBroken(false);
+        this.enchantment = Optional.of(enchantment);
     }
 
+    /**
+     * Method removes wall's {@link Enchantment}. The removal is meant to have been made by an owner, not by an attacker.
+     * In order to <b>destroy</b> the protection use {@link ProtectionWall#destroyEnchantment}.
+     */
     public void removeEnchantment() {
+        this.state.setEnchanted(false);
+        this.state.setBroken(false);
+        this.enchantment = Optional.empty();
+    }
+
+    /**
+     * Method destroys wall's {@link Enchantment}. The removal is meant to have been made by an attacker, not by an owner.
+     * In order to <b>remove</b> the protection use {@link ProtectionWall#removeEnchantment}.
+     */
+    public void destroyEnchantment() {
+        this.state.setEnchanted(false);
+        this.state.setBroken(true);
         this.enchantment = Optional.empty();
     }
 

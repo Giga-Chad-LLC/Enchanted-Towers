@@ -13,6 +13,7 @@ public class ServerApiStorage {
     final String serverHost;
     final String clientHost;
     final int port;
+    final int channelTerminationAwaitingTimeout = 300; // ms
     final int clientRequestTimeout = 5000; // ms
 
     /**
@@ -47,5 +48,9 @@ public class ServerApiStorage {
 
     public int getClientRequestTimeout() {
         return clientRequestTimeout;
+    }
+
+    public int getChannelTerminationAwaitingTimeout() {
+        return channelTerminationAwaitingTimeout;
     }
 }
