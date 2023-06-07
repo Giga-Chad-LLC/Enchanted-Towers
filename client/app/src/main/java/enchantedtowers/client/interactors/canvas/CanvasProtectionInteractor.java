@@ -277,7 +277,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     private final CanvasFragment canvasFragment;
     private ProtectionEventWorker worker;
 
-    private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
+    private static final Logger logger = Logger.getLogger(CanvasProtectionInteractor.class.getName());
     private final ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub asyncStub;
     private final ManagedChannel channel;
 
@@ -388,10 +388,9 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
             public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
                     serverError = Optional.of(response.getError());
-                    // TODO: leave protect session
-                    logger.warning("enterProtectionWallCreationSession::onNext: error='" + response.getError().getMessage() + "'");
-                    // TODO: test that it works
-                    // ClientUtils.showSnackbar(canvasFragment.requireView(), response.getError().getMessage(), Snackbar.LENGTH_LONG);
+
+                    logger.warning("enterProtectionWallCreationSession::onNext: error='" +
+                            response.getError().getMessage() + "'");
                     ClientUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
                 }
                 else {
@@ -406,7 +405,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
                             this.timer = Optional.of(
                                     new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
 
-                            logger.info("Start worker");
+                            logger.info("Starting worker...");
                             worker = new ProtectionEventWorker(canvasWidget);
                             worker.start();
                         }
@@ -431,12 +430,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
                     tearDown("Error occurred: " + serverError.get().getMessage());
                 }
                 else {
-                    String message = sessionExpired ?
-                            "Protection wall creation session expired!" :
+                    String message = sessionExpired ? "Protection wall creation session expired!" :
                             "Protection wall was set successfully!";
                     tearDown(message);
                 }
-
             }
 
             private void tearDown(String message) {

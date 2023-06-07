@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  * <p>Caller must provide thread-safe execution of the methods.</p>
  */
 public class AttackSession {
-    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 60 * 1000; // 60s
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 30 * 1000; // 60s
 
     private final int id;
     private final int attackingPlayerId;
@@ -52,6 +52,10 @@ public class AttackSession {
                 SESSION_EXPIRATION_TIMEOUT_MS,
                 () -> onSessionExpiredCallback.accept(this.id)
         );
+    }
+
+    public long getExpirationTimeoutMs() {
+        return SESSION_EXPIRATION_TIMEOUT_MS;
     }
 
     public void cancelExpirationTimeout() {

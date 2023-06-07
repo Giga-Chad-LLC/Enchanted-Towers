@@ -6,7 +6,10 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.MotionEvent;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +18,9 @@ import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.MapActivity;
+import enchantedtowers.client.R;
+import enchantedtowers.client.components.canvas.CanvasFragment;
+import enchantedtowers.client.components.canvas.CanvasSessionTimer;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -25,6 +31,7 @@ import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.MatchedSpellStatsResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
@@ -319,13 +326,15 @@ public class CanvasAttackInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final Paint brush;
     private AttackEventWorker worker;
+    private final CanvasFragment canvasFragment;
 
     private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private final ManagedChannel channel;
 
-    public CanvasAttackInteractor(CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasAttackInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
+        this.canvasFragment = canvasFragment;
 
         // configuring async client stub
         {
@@ -336,6 +345,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         }
 
         callAsyncAttackTowerById(canvasWidget);
+        setAttackerCanvasStats();
     }
 
     @Override
@@ -403,6 +413,10 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         return true;
     }
 
+    private void setAttackerCanvasStats() {
+        // TODO: show player mana
+    }
+
     private void callAsyncAttackTowerById(CanvasWidget canvasWidget) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         // creating request
@@ -416,17 +430,17 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         }
 
         asyncStub.attackTowerById(requestBuilder.build(), new StreamObserver<>() {
-            private String errorMessage = null;
-            private boolean errorReceived = false;
+            private Optional<CanvasSessionTimer> timer = Optional.empty();
+            private Optional<ServerError> serverError = Optional.empty();
+            private boolean sessionExpired = false;
 
             @Override
             public void onNext(SessionInfoResponse response) {
-
                 if (response.hasError()) {
-                    // TODO: leave attack session
-                    errorReceived = true;
-                    errorMessage = response.getError().getMessage();
+                    serverError = Optional.of(response.getError());
+
                     logger.warning("attackTowerById::onNext: error='" + response.getError().getMessage() + "'");
+                    ClientUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
                 }
                 else {
                     logger.info("attackTowerById::onNext: type=" + response.getType());
@@ -436,13 +450,17 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
 
-                            logger.info("Start worker");
+                            TextView timeView = canvasFragment.requireActivity().findViewById(R.id.left_time_timer);
+                            this.timer = Optional.of(
+                                    new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
+
+                            logger.info("Starting worker...");
                             worker = new AttackEventWorker(canvasWidget);
                             worker.start();
                         }
                         case SESSION_EXPIRED -> {
+                            sessionExpired = true;
                             logger.info("Attack session expired!");
-                            // TODO: leave attack session
                         }
                     }
                 }
@@ -450,18 +468,27 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: leave attack session
                 logger.warning("attackTowerById::onError: message='" + t.getMessage() + "'");
+                tearDown("Error occurred: " + t.getMessage());
             }
 
             @Override
             public void onCompleted() {
-                logger.warning("attackTowerById::onCompleted: finished");
+                logger.info("attackTowerById::onCompleted: finished");
+                if (serverError.isPresent()) {
+                    tearDown("Error occurred: " + serverError.get().getMessage());
+                }
+                else {
+                    String message = sessionExpired ? "Attack session expired!" :
+                            "Protection wall was destroyed successfully!";
+                    tearDown(message);
+                }
+            }
+
+            private void tearDown(String message) {
+                timer.ifPresent(CanvasSessionTimer::cancel);
                 ClientUtils.redirectToActivityAndPopHistory(
-                        (Activity) canvasWidget.getContext(),
-                        MapActivity.class,
-                        (errorReceived ? errorMessage : "Attack session ended")
-                );
+                        (Activity) canvasWidget.getContext(), MapActivity.class, message);
             }
         });
     }

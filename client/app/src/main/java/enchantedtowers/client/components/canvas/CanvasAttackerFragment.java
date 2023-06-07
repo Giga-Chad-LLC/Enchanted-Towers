@@ -34,7 +34,7 @@ public class CanvasAttackerFragment extends DrawableCanvasFragment {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
         initDrawingFunctionality(rootView, List.of(
                 new CanvasDrawStateInteractor(),
-                new CanvasAttackInteractor(canvasWidget.getState(), canvasWidget)
+                new CanvasAttackInteractor(this, canvasWidget.getState(), canvasWidget)
         ));
     }
 }

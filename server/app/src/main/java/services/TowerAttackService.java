@@ -107,6 +107,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_CREATED);
             responseBuilder.getSessionBuilder()
                     .setSessionId(session.getId())
+                    .setLeftTimeMs(session.getExpirationTimeoutMs())
                     .build();
 
             streamObserver.onNext(responseBuilder.build());
