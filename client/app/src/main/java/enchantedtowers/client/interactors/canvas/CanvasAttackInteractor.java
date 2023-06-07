@@ -432,7 +432,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                     logger.info("attackTowerById::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
-                        case SESSION_ID -> {
+                        case SESSION_CREATED -> {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
 

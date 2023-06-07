@@ -3,6 +3,7 @@
     <string name="abandoned">Abandoned</string>
     <string name="username">%s</string>
     <string name="protection_wall_count">%d/%d</string>
+    <string name="time_format_mm_ss">%02d:%02d</string>
     <string name="location_request_permission_rationale">Access to device location is required for the application to function properly, e.g. to show your precise location on a map and determine distances between towers.\n\nPlease, grant the device location permission to the application to gain full-fledged user experience.
     </string>
     <string name="enable_gps_suggestion">GPS is disabled. GPS is required to let application function properly.\n\nWould you mind enabling it?</string>

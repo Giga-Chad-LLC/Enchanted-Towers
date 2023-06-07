@@ -11,12 +11,13 @@ import "responses/common/server-error.proto";
 
 message SessionInfoResponse {
   enum ResponseType {
-    SESSION_ID = 0;
+    SESSION_CREATED = 0;
     SESSION_EXPIRED = 1;
   };
 
   message SessionInfo {
     int32 sessionId = 1;
+    int64 leftTime_ms = 2;
   };
 
   message SessionExpirationInfo {
@@ -25,8 +26,8 @@ message SessionInfoResponse {
 
   ResponseType type = 1;
   response_models.ServerError error = 2;
-  // ATTACK_SESSION_ID
+  // SESSION_CREATED
   SessionInfo session = 3;
-  // ATTACK_SESSION_EXPIRED
+  // SESSION_EXPIRED
   SessionExpirationInfo expiration = 4;
 };

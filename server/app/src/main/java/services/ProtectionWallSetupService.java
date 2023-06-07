@@ -150,9 +150,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> onProtectionWallCreatorStreamCancellation(session));
 
-            // send session id to client
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
-            responseBuilder.getSessionBuilder().setSessionId(sessionId);
+            // send session data to client
+            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_CREATED);
+            responseBuilder.getSessionBuilder()
+                    .setSessionId(sessionId)
+                    .setLeftTimeMs(session.getExpirationTimeoutMs())
+                    .build();
 
             streamObserver.onNext(responseBuilder.build());
 

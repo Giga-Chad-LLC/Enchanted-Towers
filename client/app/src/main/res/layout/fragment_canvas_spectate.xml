@@ -35,7 +35,7 @@
             android:paddingBottom="4dp"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            android:text="09:23"/>
+            android:text="00:00"/>
 
         <LinearLayout
             android:layout_width="wrap_content"

@@ -104,7 +104,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             callObserver.setOnCancelHandler(() -> onAttackerStreamCancellation(session));
 
             // setting session id into response
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
+            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_CREATED);
             responseBuilder.getSessionBuilder()
                     .setSessionId(session.getId())
                     .build();

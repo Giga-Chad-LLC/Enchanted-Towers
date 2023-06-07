@@ -9,8 +9,12 @@ import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +24,7 @@ import java.util.logging.Logger;
 import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.canvas.CanvasFragment;
+import enchantedtowers.client.components.canvas.CanvasSessionTimer;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -30,6 +35,7 @@ import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
@@ -374,28 +380,39 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
         // make async call here
         asyncStub.enterProtectionWallCreationSession(requestBuilder.build(), new StreamObserver<>() {
+            private Optional<CanvasSessionTimer> timer = Optional.empty();
+            private Optional<ServerError> serverError = Optional.empty();
+            private boolean sessionExpired = false;
+
             @Override
             public void onNext(SessionInfoResponse response) {
                 if (response.hasError()) {
+                    serverError = Optional.of(response.getError());
                     // TODO: leave protect session
                     logger.warning("enterProtectionWallCreationSession::onNext: error='" + response.getError().getMessage() + "'");
+                    // TODO: test that it works
+                    // ClientUtils.showSnackbar(canvasFragment.requireView(), response.getError().getMessage(), Snackbar.LENGTH_LONG);
                     ClientUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
                 }
                 else {
                     logger.info("enterProtectionWallCreationSession::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
-                        case SESSION_ID -> {
+                        case SESSION_CREATED -> {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
+
+                            TextView timeView = canvasFragment.requireActivity().findViewById(R.id.left_time_timer);
+                            this.timer = Optional.of(
+                                    new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
 
                             logger.info("Start worker");
                             worker = new ProtectionEventWorker(canvasWidget);
                             worker.start();
                         }
                         case SESSION_EXPIRED -> {
+                            sessionExpired = true;
                             logger.info("Protect wall session expired!");
-                            // TODO: leave protect session
                         }
                     }
                 }
@@ -403,25 +420,35 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: leave protect session
                 logger.warning("onError: " + t.getMessage());
+                tearDown("Error occurred: " + t.getMessage());
             }
 
             @Override
             public void onCompleted() {
-                logger.warning("onCompleted: finished");
+                logger.info("onCompleted: finished");
+                if (serverError.isPresent()) {
+                    tearDown("Error occurred: " + serverError.get().getMessage());
+                }
+                else {
+                    String message = sessionExpired ?
+                            "Protection wall creation session expired!" :
+                            "Protection wall was set successfully!";
+                    tearDown(message);
+                }
+
+            }
+
+            private void tearDown(String message) {
+                timer.ifPresent(CanvasSessionTimer::cancel);
                 ClientUtils.redirectToActivityAndPopHistory(
-                        (Activity) canvasWidget.getContext(),
-                        MapActivity.class,
-                        "Protection wall was set successfully!"
-                );
+                        (Activity) canvasWidget.getContext(), MapActivity.class, message);
             }
         });
     }
 
     private void setProtectorCanvasStats() {
         // TODO: set mana value
-
         TextView protectionWallIdElement = canvasFragment.requireActivity().findViewById(R.id.protection_wall_id);
 
         if (protectionWallIdElement != null) {
