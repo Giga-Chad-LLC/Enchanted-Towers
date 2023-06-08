@@ -9,6 +9,7 @@ import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.util.List;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;
 
 
@@ -17,19 +18,24 @@ public class Spell {
     private Geometry curve;
     // specifies offset for drawing path
     private final Vector2 offset = new Vector2(0, 0);
+    // specifies type of magic element
+    private final SpellType spellType;
 
     public Spell(Spell that) {
         curve = that.curve.copy();
         setOffset(that.offset);
+        spellType = that.spellType;
     }
 
-    public Spell(List<Vector2> points, Vector2 offset) {
+    public Spell(List<Vector2> points, Vector2 offset, SpellType spellType) {
         setPoints(points);
         setOffset(offset);
+        this.spellType = spellType;
     }
 
-    public Spell(List<Vector2> points) {
+    public Spell(List<Vector2> points, SpellType spellType) {
         setPoints(points);
+        this.spellType = spellType;
     }
 
     public Envelope getBoundary() {
@@ -47,6 +53,10 @@ public class Spell {
 
     public Vector2 getOffset() {
         return offset;
+    }
+
+    public SpellType getSpellType() {
+        return spellType;
     }
 
     public Geometry getCurveCopy() {

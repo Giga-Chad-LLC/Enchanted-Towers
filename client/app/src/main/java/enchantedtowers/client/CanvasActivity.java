@@ -25,18 +25,6 @@ public class CanvasActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_canvas);
 
-        if (!SpellBook.isInstantiated()) {
-            try {
-                List<EnchantmetTemplatesProvider.SpellTemplateData> data = EnchantmetTemplatesProvider.parseJson(
-                        AndroidFileReader.readRawFile(getBaseContext(), R.raw.canvas_templates_config)
-                );
-                SpellBook.instantiate(data);
-            } catch (JSONException | IOException e) {
-                Log.e("JSON-CONFIG", e.getMessage());
-                System.err.println(e.getMessage());
-            }
-        }
-
         System.out.println("Load canvas fragment to the canvas activity");
         // create fragment
         Bundle extras = getIntent().getExtras();

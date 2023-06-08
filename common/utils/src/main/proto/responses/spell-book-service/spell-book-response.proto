@@ -6,15 +6,11 @@ option java_multiple_files = true;
 package response_models;
 
 // common
-import "common/spell-type.proto";
-import "common/player-data.proto";
-import "common/spell-stat.proto";
+import "common/spell-description.proto";
 // responses
 import "responses/common/server-error.proto";
 
-
-message MatchedSpellStatsResponse {
+message SpellBookResponse {
   response_models.ServerError error = 1;
-  repeated common.SpellStat stats = 2;
-  bool protectionWallDestroyed = 3;
+  string jsonData = 2;
 };

@@ -31,7 +31,7 @@ public class SpellBook {
         for (var template : data) {
             templates.put(
                     template.getId(),
-                    new Spell(template.getPoints())
+                    new Spell(template.getPoints(), template.getSpellType())
             );
         }
     }
@@ -46,6 +46,24 @@ public class SpellBook {
 
     static public Map<Integer, Spell> getTemplates() {
         return Collections.unmodifiableMap(templates);
+    }
+
+    static public Map<Integer, Spell> getTemplatesBySpellType(SpellType type) {
+        Map <Integer, Spell> result = new HashMap<>();
+
+        for (var template : templates.entrySet()) {
+            int spellId = template.getKey();
+            Spell spell = template.getValue();
+
+            if (spell.getSpellType() == type) {
+                result.put(
+                        spellId,
+                        spell
+                );
+            }
+        }
+
+        return Collections.unmodifiableMap(result);
     }
 
     static public List<SpellType> getAllSpellTypes() {
