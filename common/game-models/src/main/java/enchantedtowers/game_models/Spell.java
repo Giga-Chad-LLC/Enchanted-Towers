@@ -71,6 +71,17 @@ public class Spell {
         return geometry;
     }
 
+    public Spell getScaledSpell(double scaleX, double scaleY, double originX, double originY) {
+        Geometry geometry = curve.copy();
+        geometry.apply(
+                AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)
+        );
+
+        List<Vector2> scaledPoints = getPointsList(geometry);
+
+        return new Spell(scaledPoints, offset, spellType);
+    }
+
     public void setOffset(Vector2 offset) {
         this.offset.x = offset.x;
         this.offset.y = offset.y;
@@ -99,9 +110,13 @@ public class Spell {
         curve = factory.createLineString(coordinates);
     }
 
-    public List<Vector2> getPointsList() {
+    public List<Vector2> getPoints() {
+        return getPointsList(curve);
+    }
+
+    private List<Vector2> getPointsList(Geometry geometry) {
         List<Vector2> pointsList = new ArrayList<>();
-        Coordinate[] points = curve.getCoordinates();
+        Coordinate[] points = geometry.getCoordinates();
 
         for (Coordinate point : points) {
             pointsList.add(new Vector2(
@@ -112,4 +127,6 @@ public class Spell {
 
         return pointsList;
     }
+
+
 }

@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.dialogs.LocationRequestPermissionRationaleDialog;
+import enchantedtowers.client.components.dialogs.SpellbookDialogFragment;
 import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
@@ -118,6 +119,9 @@ public class MapActivity extends BaseActivity {
                 System.err.println(e.getMessage());
             }
         }
+
+        SpellbookDialogFragment dialog = SpellbookDialogFragment.newInstance();
+        dialog.show(getSupportFragmentManager(), dialog.getTag());
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {
