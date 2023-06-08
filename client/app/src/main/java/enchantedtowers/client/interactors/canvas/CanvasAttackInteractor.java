@@ -9,11 +9,14 @@ import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.DoubleConsumer;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.AttackTowerMenuActivity;
@@ -52,6 +55,7 @@ class AttackEventWorker extends Thread {
     private final TowerAttackServiceGrpc.TowerAttackServiceBlockingStub blockingStub;
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
     private final CanvasWidget canvasWidget;
+    private final CanvasAttackInteractor interactor;
 
     // Event class
     public static class Event {
@@ -186,8 +190,9 @@ class AttackEventWorker extends Thread {
         }
     }
 
-    public AttackEventWorker(CanvasWidget canvasWidget) {
+    public AttackEventWorker(CanvasAttackInteractor interactor, CanvasWidget canvasWidget) {
         this.canvasWidget = canvasWidget;
+        this.interactor = interactor;
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
@@ -277,7 +282,8 @@ class AttackEventWorker extends Thread {
 
                             logger.info("Got response from compareDrawnSpells: error=" + response.hasError() + ", message='" + response.getError().getMessage() + "', protection wall destroyed=" + response.getProtectionWallDestroyed());
 
-                            // TODO: show matches stats
+                            // showing matches stats
+                            interactor.setAttackerCastMatches(response.getStatsList());
 
                             // protection wall destroyed -> redirect to MapActivity
                             if (response.getProtectionWallDestroyed()) {
@@ -346,7 +352,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         }
 
         callAsyncAttackTowerById(canvasWidget);
-        setAttackerCanvasStats();
+        // TODO: show player mana
     }
 
     @Override
@@ -414,9 +420,27 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         return true;
     }
 
-    private void setAttackerCanvasStats() {
-        // TODO: show player mana
+    public void setAttackerCastMatches(List<MatchedSpellStatsResponse.SpellStat> spellStats) {
+        TextView fireMatch = canvasFragment.requireActivity().findViewById(R.id.fire_cast_match_percent);
+        TextView windMatch = canvasFragment.requireActivity().findViewById(R.id.wind_cast_match_percent);
+        TextView earthMatch = canvasFragment.requireActivity().findViewById(R.id.earth_cast_match_percent);
+        TextView waterMatch = canvasFragment.requireActivity().findViewById(R.id.water_cast_match_percent);
+
+        canvasFragment.requireActivity().runOnUiThread(() -> {
+            for (var spellStat : spellStats) {
+                String percent = Math.round(spellStat.getMatch() * 100) + "%";
+                switch (spellStat.getSpellType()) {
+                    case FIRE_SPELL -> fireMatch.setText(percent);
+                    case WIND_SPELL -> windMatch.setText(percent);
+                    case EARTH_SPELL -> earthMatch.setText(percent);
+                    case WATER_SPELL -> waterMatch.setText(percent);
+                    case UNRECOGNIZED -> logger.warning("Unrecognized spell type encountered: " + spellStat.getSpellType());
+                }
+            }
+        });
     }
+
+
 
     private void callAsyncAttackTowerById(CanvasWidget canvasWidget) {
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
@@ -456,7 +480,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                                     new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
 
                             logger.info("Starting worker...");
-                            worker = new AttackEventWorker(canvasWidget);
+                            worker = new AttackEventWorker(CanvasAttackInteractor.this, canvasWidget);
                             worker.start();
                         }
                         case SESSION_EXPIRED -> {
