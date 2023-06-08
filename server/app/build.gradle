@@ -18,11 +18,14 @@ dependencies {
     //ORM
     implementation 'org.hibernate:hibernate-core:6.2.4.Final'
 
-    //Postgres
+    //postgres
     implementation 'org.postgresql:postgresql:42.2.24'
 
     //javax
     implementation 'javax.persistence:javax.persistence-api:2.2'
+
+    //bcrypt
+    implementation 'org.mindrot:jbcrypt:0.4'
 
     // json
     implementation 'org.json:json:20220320'
