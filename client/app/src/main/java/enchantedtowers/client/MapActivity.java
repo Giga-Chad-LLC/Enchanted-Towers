@@ -25,6 +25,7 @@ import enchantedtowers.client.components.dialogs.SpellbookDialogFragment;
 import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
+import enchantedtowers.client.components.providers.SpellBookProvider;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.SpellBookResponse;
@@ -46,7 +47,6 @@ public class MapActivity extends BaseActivity {
     private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
 
 
-    private SpellBookServiceGrpc.SpellBookServiceBlockingStub blockingStub;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,34 +91,7 @@ public class MapActivity extends BaseActivity {
 
 
         // initialize spell book
-        // TODO: move this logic to the start up of the application (when logging in)
-        if (!SpellBook.isInstantiated()) {
-            try {
-                String host = ServerApiStorage.getInstance().getClientHost();
-                int port = ServerApiStorage.getInstance().getPort();
-                ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
-                        .usePlaintext()
-                        .build();
-                blockingStub = SpellBookServiceGrpc.newBlockingStub(channel);
-                SpellBookResponse response = blockingStub
-                        .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                        .retrieveSpellBookAsJSON(Empty.newBuilder().build());
-
-                if (response.hasError()) {
-                    ClientUtils.showSnackbar(findViewById(android.R.id.content).getRootView(), response.getError().getMessage(), Snackbar.LENGTH_LONG);
-                    throw new FileNotFoundException("retrieveSpellBookAsJSON::Received error: " + response.getError().getMessage());
-                }
-
-                List<EnchantmetTemplatesProvider.SpellTemplateData> data = EnchantmetTemplatesProvider.parseJson(
-                    response.getJsonData()
-                );
-
-                SpellBook.instantiate(data);
-            } catch (JSONException | FileNotFoundException e) {
-                Log.e("JSON-CONFIG", e.getMessage());
-                System.err.println(e.getMessage());
-            }
-        }
+        SpellBookProvider.getInstance().provideSpellBook(this);
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {
