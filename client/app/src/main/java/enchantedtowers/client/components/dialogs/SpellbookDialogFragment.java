@@ -1,7 +1,6 @@
 package enchantedtowers.client.components.dialogs;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -66,6 +65,10 @@ public class SpellbookDialogFragment extends DialogFragment {
         Button closeButton = view.findViewById(R.id.close_spellbook_button);
         closeButton.setOnClickListener(v -> dismiss());
 
+        // clearing drawn spells
+        List.of(fireAdapterHolder.spells, windAdapterHolder.spells, earthAdapterHolder.spells, waterAdapterHolder.spells)
+                .forEach(List::clear);
+
         // fire
         setupRecyclerViewAdapter(view, R.id.fire_spells_recycler_view, SpellType.FIRE_SPELL, fireAdapterHolder);
         // wind
@@ -74,13 +77,6 @@ public class SpellbookDialogFragment extends DialogFragment {
         setupRecyclerViewAdapter(view, R.id.earth_spells_recycler_view, SpellType.EARTH_SPELL, earthAdapterHolder);
         // water
         setupRecyclerViewAdapter(view, R.id.water_spells_recycler_view, SpellType.WATER_SPELL, waterAdapterHolder);
-
-        /*RecyclerView recyclerView = view.findViewById(R.id.fire_spells_recycler_view);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 3));
-        recyclerView.setAdapter(fireAdapter);
-
-        fireSpells.addAll(SpellBook.getTemplates().values());
-        fireAdapter.notifyItemRangeInserted(0, fireAdapter.getItemCount());*/
 
         return view;
     }

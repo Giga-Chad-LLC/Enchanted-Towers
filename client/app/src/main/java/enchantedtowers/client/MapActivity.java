@@ -119,9 +119,6 @@ public class MapActivity extends BaseActivity {
                 System.err.println(e.getMessage());
             }
         }
-
-        SpellbookDialogFragment dialog = SpellbookDialogFragment.newInstance();
-        dialog.show(getSupportFragmentManager(), dialog.getTag());
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {

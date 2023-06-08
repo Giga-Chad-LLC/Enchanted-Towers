@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.dialogs.SpellbookDialogFragment;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.canvas.CanvasInteractor;
 import enchantedtowers.common.utils.proto.common.SpellType;
@@ -24,6 +25,7 @@ public class DrawableCanvasFragment extends CanvasFragment {
             this.selectedStateResourceId = selectedStateResourceId;
         }
     }
+    private final SpellbookDialogFragment spellbookDialog = SpellbookDialogFragment.newInstance();
     private final List<ImageData> elementIconsData = new ArrayList<>();
     private int currentCanvasBrushColor = 0;
     private final List<SpellType> spellTypes = ClientUtils.getSpellTypesList();
@@ -78,9 +80,7 @@ public class DrawableCanvasFragment extends CanvasFragment {
         Button clearCanvasButton = rootView.findViewById(R.id.clear_canvas_button);
         Button submitCanvasButton = rootView.findViewById(R.id.submit_enchantment_button);
 
-        openSpellbookButton.setOnClickListener(v -> {
-            // TODO: open spellbook
-        });
+        openSpellbookButton.setOnClickListener(v -> spellbookDialog.show(getParentFragmentManager(), spellbookDialog.getTag()));
 
         clearCanvasButton.setOnClickListener(v -> clearCanvas());
         submitCanvasButton.setOnClickListener(v -> submitCanvas());
@@ -109,5 +109,15 @@ public class DrawableCanvasFragment extends CanvasFragment {
         windElementIcon.setOnClickListener(v -> setColor(windImageData, ClientUtils.getSpellTypesList().indexOf(SpellType.WIND_SPELL)));
         earthElementIcon.setOnClickListener(v -> setColor(earthImageData, ClientUtils.getSpellTypesList().indexOf(SpellType.EARTH_SPELL)));
         waterElementIcon.setOnClickListener(v -> setColor(waterImageData, ClientUtils.getSpellTypesList().indexOf(SpellType.WATER_SPELL)));
+    }
+
+    @Override
+    public void onDestroy() {
+        var dialog = spellbookDialog.getDialog();
+        if (dialog != null && dialog.isShowing()) {
+            spellbookDialog.dismiss();
+        }
+
+        super.onDestroy();
     }
 }
