@@ -267,7 +267,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 templateSpell.setOffset(templateOffset);
 
                 state.addItem(new CanvasSpellDecorator(
-                        templateType,
                         templateSpell
                 ));
             }
@@ -374,7 +373,6 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         ));
 
         state.addItem(new CanvasSpellDecorator(
-                templateType,
                 templateSpell
         ));
 

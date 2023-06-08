@@ -34,7 +34,7 @@ public class CanvasViewingInteractor {
             }
 
             spell.setOffset(description.offset());
-            CanvasSpellDecorator drawable = new CanvasSpellDecorator(description.spellType(), spell);
+            CanvasSpellDecorator drawable = new CanvasSpellDecorator(spell);
 
             state.addItem(drawable);
         }

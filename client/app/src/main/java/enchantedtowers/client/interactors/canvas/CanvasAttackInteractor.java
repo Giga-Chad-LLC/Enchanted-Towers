@@ -260,7 +260,6 @@ class AttackEventWorker extends Thread {
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
                                     CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                            templateType,
                                             template
                                     );
 
