@@ -7,63 +7,63 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
-    @Column(name = "name")
+    private Integer id;
+    @Column(name = "name", length = 50)
     private String name;
-    @Column(name = "hashed_password")
+    @Column(name = "hashed_password", length = 100)
     private String hashedPassword;
-    @Column(name = "email")
+    @Column(name = "email", length = 100)
     private String email;
-    @Column(name = "jwt_access")
+    @Column(name = "jwt_access", length = 100)
     private String jwtAccess;
-    @Column(name = "jwt_refresh")
+    @Column(name = "jwt_refresh", length = 100)
     private String jwtRefresh;
 
-    Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    void setId (Long id) {
+    public void setId (Integer id) {
         this.id = id;
     }
 
-    String getHashedPassword() {
+    public String getHashedPassword() {
         return hashedPassword;
     }
 
-    void setHashedPassword (String hashedPassword) {
+    public void setHashedPassword (String hashedPassword) {
         this.hashedPassword = hashedPassword;
     }
 
-    String getEmail() {
+    public String getEmail() {
         return email;
     }
 
-    void setEmail (String email) {
+    public void setEmail (String email) {
         this.email = email;
     }
 
-    String getJwtAccess() {
+    public String getJwtAccess() {
         return jwtAccess;
     }
 
-    void setJwtAccess (String jwtAccess) {
+    public void setJwtAccess (String jwtAccess) {
         this.jwtAccess = jwtAccess;
     }
 
-    String getJwtRefresh() {
+    public String getJwtRefresh() {
         return jwtRefresh;
     }
 
-    void setJwtRefresh (String jwtRefresh) {
+    public void setJwtRefresh (String jwtRefresh) {
         this.jwtRefresh = jwtRefresh;
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
-    void setName (String name) {
+    public void setName (String name) {
         this.name = name;
     }
 }
