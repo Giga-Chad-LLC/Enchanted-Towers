@@ -1,4 +1,5 @@
 import components.fs.FileReader;
+import components.fs.ResourceProvider;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
@@ -6,6 +7,7 @@ import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.json.JSONException;
 import services.ProtectionWallSetupService;
+import services.SpellBookService;
 import services.TowerAttackService;
 import services.TowersService;
 
@@ -33,6 +35,7 @@ public class EnchantedTowersServer {
                 .addService(new ProtectionWallSetupService())
                 .addService(new TowerAttackService())
                 .addService(new TowersService())
+                .addService(new SpellBookService())
                 // .executor(executor) // making server be single threaded
                 .build()
                 .start();
@@ -88,7 +91,7 @@ public class EnchantedTowersServer {
      */
     public static void main(String[] args) throws IOException, InterruptedException {
         // reading spell templates from json file
-        URL url = EnchantedTowersServer.class.getClassLoader().getResource("canvas_templates_config.json");
+        URL url = EnchantedTowersServer.class.getClassLoader().getResource(ResourceProvider.spellBookJSONFilename);
         loadSpellTemplatesFromFile(url);
 
         // starting server

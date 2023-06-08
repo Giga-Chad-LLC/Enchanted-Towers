@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// common
+import "common/empty.proto";
+// responses
+import "responses/spell-book-service/spell-book-response.proto";
+
+
+service SpellBookService {
+  rpc RetrieveSpellBookAsJSON(common.Empty) returns (response_models.SpellBookResponse) {}
+}

@@ -2,7 +2,9 @@ package enchantedtowers.client;
 
 import android.Manifest;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -10,12 +12,30 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import org.json.JSONException;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.client.components.dialogs.LocationRequestPermissionRationaleDialog;
+import enchantedtowers.client.components.dialogs.SpellbookDialogFragment;
+import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
+import enchantedtowers.client.components.providers.SpellBookProvider;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.Empty;
+import enchantedtowers.common.utils.proto.responses.SpellBookResponse;
+import enchantedtowers.common.utils.proto.services.SpellBookServiceGrpc;
+import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
+import enchantedtowers.game_models.SpellBook;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 
 
 public class MapActivity extends BaseActivity {
@@ -25,6 +45,8 @@ public class MapActivity extends BaseActivity {
     };
 
     private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +88,10 @@ public class MapActivity extends BaseActivity {
                         locationPermissionLauncher.launch(locationPermissions);
                     }
                 });
+
+
+        // initialize spell book
+        SpellBookProvider.getInstance().provideSpellBook(this);
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {

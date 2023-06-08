@@ -198,13 +198,15 @@ class ProtectionEventWorker extends Thread {
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
                                     CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                            templateType,
                                             template
                                     );
 
                                     canvasWidget.getState().addItem(canvasMatchedEnchantment);
                                     canvasWidget.postInvalidate();
                                     System.out.println("Canvas widget state size: " + canvasWidget.getState().getItems().size());
+                                }
+                                else {
+                                    logger.warning("Matched template with id " + templateId + " not found");
                                 }
                             }
                         }
