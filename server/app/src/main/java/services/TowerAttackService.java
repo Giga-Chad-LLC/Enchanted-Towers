@@ -11,6 +11,7 @@ import components.session.AttackSessionManager;
 import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.common.SpellDescription;
+import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.LeaveAttackRequest;
 import enchantedtowers.common.utils.proto.requests.LeaveSpectatingRequest;
@@ -463,13 +464,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // clearing drawn spells
             session.clearDrawnSpellsDescriptions();
 
-            // notifying spectators to clear the canvas
-            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-            spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
-            for (var spectator : session.getSpectators()) {
-                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
-            }
-
             // checking whether player has succeeded to break the protection wall
             final boolean protectionWallDestroyed = isProtectionWallDestroyed(matches);
 
@@ -479,10 +473,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             if (protectionWallDestroyed) {
                 // destroy protection wall
                 interactor.destroyProtectionWallWithId(session.getProtectionWallId());
-
                 // notifying listeners of tower update
                 TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
-
                 responseBuilder.setProtectionWallDestroyed(true);
             }
             else {
@@ -490,13 +482,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             // add spell matching stats into response
-            List<MatchedSpellStatsResponse.SpellStat> spellStats = new ArrayList<>();
+            List<SpellStat> spellStats = new ArrayList<>();
 
             for (var entry : matches.entrySet()) {
                 SpellType type = entry.getKey();
                 double match = entry.getValue();
 
-                MatchedSpellStatsResponse.SpellStat stat = MatchedSpellStatsResponse.SpellStat.newBuilder()
+                SpellStat stat = SpellStat.newBuilder()
                         .setSpellType(type)
                         .setMatch(match)
                         .build();
@@ -505,6 +497,16 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             responseBuilder.addAllStats(spellStats);
+
+            // notifying spectators with matched spells
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            spectatorResponseBuilder.setResponseType(ResponseType.COMPARE_ENCHANTMENTS);
+            spectatorResponseBuilder.addAllSpellMatchStats(spellStats);
+            spectatorResponseBuilder.setProtectionWallDestroyed(protectionWallDestroyed);
+
+            for (var spectator : session.getSpectators()) {
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
         }
         else {
             // error occurred
@@ -933,17 +935,21 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     " registered in attack session with id " + session.getId() +
                     " cancelled stream. Destroying the corresponding attack session...");
 
-        // mark tower to not be under attack
-        TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
-        interactor.unsetTowerUnderAttackState();
+        // removing session from sessions list
+        sessionManager.remove(session);
+
+        // if no other attackers attack the same tower -> unset under attack state
+        if (sessionManager.getAnyAttackSessionByTowerId(session.getAttackedTowerId()).isEmpty()) {
+            // mark tower to not be under attack
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+            interactor.unsetTowerUnderAttackState();
+        }
 
         // disconnecting spectators
         disconnectSpectators(session);
 
         // notifying listeners of tower update
         TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
-
-        sessionManager.remove(session);
     }
 
     /**

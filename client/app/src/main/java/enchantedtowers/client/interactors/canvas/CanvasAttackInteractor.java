@@ -29,6 +29,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
@@ -420,7 +421,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         return true;
     }
 
-    public void setAttackerCastMatches(List<MatchedSpellStatsResponse.SpellStat> spellStats) {
+    public void setAttackerCastMatches(List<SpellStat> spellStats) {
         TextView fireMatch = canvasFragment.requireActivity().findViewById(R.id.fire_cast_match_percent);
         TextView windMatch = canvasFragment.requireActivity().findViewById(R.id.wind_cast_match_percent);
         TextView earthMatch = canvasFragment.requireActivity().findViewById(R.id.earth_cast_match_percent);

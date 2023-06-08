@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -22,11 +23,11 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionIdResponse;
-import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
@@ -60,11 +61,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
-        channel = Grpc.newChannelBuilderForAddress(
-                host,
-                port,
-                InsecureChannelCredentials.create()
-        ).build();
+
+        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
         asyncStub = TowerAttackServiceGrpc.newStub(channel);
 
         var playerId = ClientStorage.getInstance().getPlayerId();
@@ -83,6 +81,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
 
         asyncStub.spectateTowerBySessionId(requestBuilder.build(), new StreamObserver<>() {
             private Optional<ServerError> serverError = Optional.empty();
+            private boolean protectionWallDestroyed = false;
 
             @Override
             public void onNext(SpectateTowerAttackResponse response) {
@@ -118,7 +117,14 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                         }
                         case CLEAR_CANVAS -> {
                             logger.info("Received CLEAR_CANVAS");
-                            onClearCanvasReceived(response, state, canvasWidget);
+                            onClearCanvasReceived(state, canvasWidget);
+                        }
+                        case COMPARE_ENCHANTMENTS -> {
+                            logger.info("Received COMPARE_ENCHANTMENTS");
+                            protectionWallDestroyed = response.getProtectionWallDestroyed();
+                            onCompareEnchantmentsReceived(response);
+                            // clearing canvas
+                            onClearCanvasReceived(state, canvasWidget);
                         }
                     }
                 }
@@ -135,7 +141,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
             @Override
             public void onCompleted() {
                 logger.info("spectateTowerBySessionId::onCompleted");
-                String message = serverError.map(ServerError::getMessage).orElse("Spectating ended");
+                String message = serverError.map(ServerError::getMessage).orElse(
+                        protectionWallDestroyed ? "Protection wall destroyed by the attacker" : "Spectating session has ended");
                 tearDown(message);
             }
 
@@ -182,6 +189,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 else {
                     // setting new session
                     ClientStorage.getInstance().setSessionId(response.getSessionId());
+                    // clearing cast matches
+                    defaultAttackerCastMatches();
                 }
             }
 
@@ -291,13 +300,49 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         }
     }
 
-    private void onSelectSpellTypeReceived(SpectateTowerAttackResponse value) {
+    private void defaultAttackerCastMatches() {
+        List<TextView> views = List.of(
+                canvasFragment.requireActivity().findViewById(R.id.fire_cast_match_percent),
+                canvasFragment.requireActivity().findViewById(R.id.wind_cast_match_percent),
+                canvasFragment.requireActivity().findViewById(R.id.earth_cast_match_percent),
+                canvasFragment.requireActivity().findViewById(R.id.water_cast_match_percent)
+        );
+
+        canvasFragment.requireActivity().runOnUiThread(() -> {
+            for (var view : views) {
+                view.setText("N/A");
+            }
+        });
+    }
+
+    // TODO: method is copy-paste of CanvasAttackerInteractor.setAttackerCastMatches
+    private void onCompareEnchantmentsReceived(SpectateTowerAttackResponse response) {
+        TextView fireMatch = canvasFragment.requireActivity().findViewById(R.id.fire_cast_match_percent);
+        TextView windMatch = canvasFragment.requireActivity().findViewById(R.id.wind_cast_match_percent);
+        TextView earthMatch = canvasFragment.requireActivity().findViewById(R.id.earth_cast_match_percent);
+        TextView waterMatch = canvasFragment.requireActivity().findViewById(R.id.water_cast_match_percent);
+
+        canvasFragment.requireActivity().runOnUiThread(() -> {
+            for (var spellStat : response.getSpellMatchStatsList()) {
+                String percent = Math.round(spellStat.getMatch() * 100) + "%";
+                switch (spellStat.getSpellType()) {
+                    case FIRE_SPELL -> fireMatch.setText(percent);
+                    case WIND_SPELL -> windMatch.setText(percent);
+                    case EARTH_SPELL -> earthMatch.setText(percent);
+                    case WATER_SPELL -> waterMatch.setText(percent);
+                    case UNRECOGNIZED -> logger.warning("Unrecognized spell type encountered: " + spellStat.getSpellType());
+                }
+            }
+        });
+    }
+
+    private void onSelectSpellTypeReceived(SpectateTowerAttackResponse response) {
         // TODO: add mutex (in order to prevent data race with onDraw method)
         currentPath.reset();
         brush.setColor(
-            ClientUtils.getColorIdBySpellType(value.getSpellType())
+            ClientUtils.getColorIdBySpellType(response.getSpellType())
         );
-        logger.info("onSelectSpellTypeReceived: newSpellType=" + value.getSpellType() + ", newSpellColor=" + brush.getColor());
+        logger.info("onSelectSpellTypeReceived: newSpellType=" + response.getSpellType() + ", newSpellColor=" + brush.getColor());
     }
 
     private void onDrawSpellReceived(SpectateTowerAttackResponse value, CanvasWidget canvasWidget) {
@@ -313,13 +358,13 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         canvasWidget.postInvalidate();
     }
 
-    private void onFinishSpellReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+    private void onFinishSpellReceived(SpectateTowerAttackResponse response, CanvasState state, CanvasWidget canvasWidget) {
         // reset current drawing because attacked already finished it
         currentPath.reset();
 
         // here spell template was definitely found
         // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
-        var description = value.getSpellDescription();
+        var description = response.getSpellDescription();
         var templateOffset = description.getSpellTemplateOffset();
         var templateType = description.getSpellType();
         Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
@@ -336,7 +381,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         canvasWidget.invalidate();
     }
 
-    private void onClearCanvasReceived(SpectateTowerAttackResponse value, CanvasState state, CanvasWidget canvasWidget) {
+    private void onClearCanvasReceived(CanvasState state, CanvasWidget canvasWidget) {
         state.clear();
         currentPath.reset();
         // trigger rendering
