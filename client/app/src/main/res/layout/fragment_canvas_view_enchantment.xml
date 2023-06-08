@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".components.canvas.CanvasFragment">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/tower_scenery_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:maxHeight="350dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/scenery_owner_tower" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="top|start"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="12dp">
+
+            <Button
+                android:id="@+id/leave_canvas_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/leave_button_icon"
+                android:clickable="true" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <enchantedtowers.client.components.canvas.CanvasWidget
+        android:id="@+id/canvasView"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:background="#FFD5A4" />
+
+</LinearLayout>

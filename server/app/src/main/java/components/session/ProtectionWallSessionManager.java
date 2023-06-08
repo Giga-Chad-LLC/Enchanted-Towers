@@ -1,6 +1,7 @@
 package components.session;
 
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import io.grpc.stub.StreamObserver;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class ProtectionWallSessionManager {
     public ProtectionWallSession createSession(int playerId,
                                                int towerId,
                                                int protectionWallId,
-                                               StreamObserver<SessionInfoResponse> playerResponseObserver,
+                                               StreamObserver<SessionStateInfoResponse> playerResponseObserver,
                                                IntConsumer onSessionExpiredCallback) {
         var session = new ProtectionWallSession(
                     CURRENT_SESSION_ID++,

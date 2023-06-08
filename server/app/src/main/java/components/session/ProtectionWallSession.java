@@ -2,6 +2,7 @@ package components.session;
 
 import components.time.Timeout;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.game_logic.CanvasState;
 import enchantedtowers.game_models.TemplateDescription;
 import io.grpc.stub.StreamObserver;
@@ -11,13 +12,13 @@ import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
 public class ProtectionWallSession {
-    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 60 * 1000; // 60s
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 30 * 1000; // 60s
 
     private final int id;
     private final int playerId;
     private final int towerId;
     private final int protectionWallId;
-    private final StreamObserver<SessionInfoResponse> playerResponseObserver;
+    private final StreamObserver<SessionStateInfoResponse> playerResponseObserver;
     private final CanvasState canvasState = new CanvasState();
     private final Timeout sessionExpirationTimeout;
     private static final Logger logger = Logger.getLogger(ProtectionWallSession.class.getName());
@@ -27,7 +28,7 @@ public class ProtectionWallSession {
                           int playerId,
                           int towerId,
                           int protectionWallId,
-                          StreamObserver<SessionInfoResponse> playerResponseObserver,
+                          StreamObserver<SessionStateInfoResponse> playerResponseObserver,
                           IntConsumer onSessionExpiredCallback) {
         this.id = id;
         this.playerId = playerId;
@@ -41,6 +42,10 @@ public class ProtectionWallSession {
                 SESSION_EXPIRATION_TIMEOUT_MS,
                 () -> onSessionExpiredCallback.accept(this.id)
         );
+    }
+
+    public long getExpirationTimeoutMs() {
+        return SESSION_EXPIRATION_TIMEOUT_MS;
     }
 
     public void cancelExpirationTimeout() {
@@ -63,7 +68,7 @@ public class ProtectionWallSession {
         return protectionWallId;
     }
 
-    public StreamObserver<SessionInfoResponse> getPlayerResponseObserver() {
+    public StreamObserver<SessionStateInfoResponse> getPlayerResponseObserver() {
         return playerResponseObserver;
     }
 

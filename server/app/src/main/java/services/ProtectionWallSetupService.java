@@ -8,10 +8,7 @@ import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.ServerError;
-import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
-import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
+import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
@@ -122,8 +119,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      * Creates {@link ProtectionWallSession} associated with provided tower id and player id if the validation of request succeeds.
      */
     @Override
-    public synchronized void enterProtectionWallCreationSession(ProtectionWallIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+    public synchronized void enterProtectionWallCreationSession(ProtectionWallIdRequest request, StreamObserver<SessionStateInfoResponse> streamObserver) {
+        SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
 
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
 
@@ -146,13 +143,16 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             int sessionId = session.getId();
 
             // create cancel handler to hook the event of client closing the connection
-            var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
+            var callObserver = (ServerCallStreamObserver<SessionStateInfoResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> onProtectionWallCreatorStreamCancellation(session));
 
-            // send session id to client
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
-            responseBuilder.getSessionBuilder().setSessionId(sessionId);
+            // send session data to client
+            responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_CREATED);
+            responseBuilder.getSessionBuilder()
+                    .setSessionId(sessionId)
+                    .setLeftTimeMs(session.getExpirationTimeoutMs())
+                    .build();
 
             streamObserver.onNext(responseBuilder.build());
 
@@ -716,8 +716,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
 
             // sending response with session expiration and closing connection
-            SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+            SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
+            responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_EXPIRED);
             responseBuilder.getExpirationBuilder().build();
 
             var responseObserver = session.getPlayerResponseObserver();

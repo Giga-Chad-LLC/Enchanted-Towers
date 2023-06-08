@@ -129,6 +129,9 @@ public class DrawTowersOnMapInteractor {
         else if (isPlayerOwner) {
             return R.drawable.owner_tower_icon;
         }
+        else if (tower.isUnderAttack()) {
+            return R.drawable.enemy_tower_under_attack_icon;
+        }
         else {
             return R.drawable.enemy_tower_icon;
         }

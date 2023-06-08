@@ -7,22 +7,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
-import java.util.Arrays;
 import java.util.List;
 
 import enchantedtowers.client.R;
-import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.storage.ClientStorage;
-import enchantedtowers.client.interactors.canvas.CanvasAttackInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasViewingInteractor;
-import enchantedtowers.game_models.Enchantment;
-import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.Spell;
-import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.TemplateDescription;
 
 public class CanvasViewingFragment extends CanvasFragment {
     public static CanvasFragment newInstance() {
@@ -30,10 +21,16 @@ public class CanvasViewingFragment extends CanvasFragment {
     }
 
     @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflateFragment(R.layout.fragment_canvas_view_enchantment, inflater, container);
+    }
+
+    @Override
     public void onViewCreated(@NonNull View rootView, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
         initViewerFunctionality(rootView);
     }
+
     private void initViewerFunctionality(View rootView) {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
 

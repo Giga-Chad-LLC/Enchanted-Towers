@@ -7,26 +7,10 @@ package response_models;
 
 // responses
 import "responses/common/server-error.proto";
+import "common/session-info.proto";
 
 
 message SessionInfoResponse {
-  enum ResponseType {
-    SESSION_ID = 0;
-    SESSION_EXPIRED = 1;
-  };
-
-  message SessionInfo {
-    int32 sessionId = 1;
-  };
-
-  message SessionExpirationInfo {
-    // maybe some data in the future (e.g. duration)
-  };
-
-  ResponseType type = 1;
   response_models.ServerError error = 2;
-  // ATTACK_SESSION_ID
-  SessionInfo session = 3;
-  // ATTACK_SESSION_EXPIRED
-  SessionExpirationInfo expiration = 4;
+  common.SessionInfo session = 3;
 };
