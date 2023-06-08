@@ -18,11 +18,11 @@ public class SpellBook {
     );
 
 
-    static public boolean isInstantiated() {
+    static public synchronized boolean isInstantiated() {
         return isInstantiated;
     }
 
-    static public void instantiate(List<EnchantmetTemplatesProvider.SpellTemplateData> data) throws RuntimeException {
+    static public synchronized void instantiate(List<EnchantmetTemplatesProvider.SpellTemplateData> data) throws RuntimeException {
         if (isInstantiated) {
             throw new RuntimeException("EnchantmentBook singleton is already instantiated");
         }
@@ -36,7 +36,7 @@ public class SpellBook {
         }
     }
 
-    static public Spell getTemplateById(int id) {
+    static public synchronized Spell getTemplateById(int id) {
         if (templates.containsKey(id)) {
             return new Spell(templates.get(id));
         }
@@ -44,11 +44,11 @@ public class SpellBook {
         return null;
     }
 
-    static public Map<Integer, Spell> getTemplates() {
+    static public synchronized Map<Integer, Spell> getTemplates() {
         return Collections.unmodifiableMap(templates);
     }
 
-    static public Map<Integer, Spell> getTemplatesBySpellType(SpellType type) {
+    static public synchronized Map<Integer, Spell> getTemplatesBySpellType(SpellType type) {
         Map <Integer, Spell> result = new HashMap<>();
 
         for (var template : templates.entrySet()) {
@@ -66,7 +66,7 @@ public class SpellBook {
         return Collections.unmodifiableMap(result);
     }
 
-    static public List<SpellType> getAllSpellTypes() {
+    static public synchronized List<SpellType> getAllSpellTypes() {
         // list is already unmodifiable, see List.of(...)
         return allSpellTypes;
     }
