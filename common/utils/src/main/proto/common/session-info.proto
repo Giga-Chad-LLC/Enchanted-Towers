@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package common;
+
+
+message SessionInfo {
+  int32 sessionId = 1;
+  int64 leftTime_ms = 2;
+};

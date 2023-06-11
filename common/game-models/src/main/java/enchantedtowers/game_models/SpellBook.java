@@ -20,11 +20,11 @@ public class SpellBook {
     );
 
 
-    static public boolean isInstantiated() {
+    static public synchronized boolean isInstantiated() {
         return isInstantiated;
     }
 
-    static public void instantiate(
+    static public synchronized void instantiate(
             List<SpellsTemplatesProvider.SpellTemplateData> spellsTemplatesData,
             List<DefendSpellsTemplatesProvider.DefendSpellTemplateData> defendSpellsTemplatesData
     ) throws RuntimeException {
@@ -36,7 +36,7 @@ public class SpellBook {
         for (var spell : spellsTemplatesData) {
             spellTemplates.put(
                     spell.getId(),
-                    new Spell(spell.getPoints())
+                    new Spell(spell.getPoints(), spell.getSpellType())
             );
         }
 
@@ -51,15 +51,11 @@ public class SpellBook {
         isInstantiated = true;
     }
 
-    static public Spell getSpellTemplateById(int id) {
-        if (spellTemplates.containsKey(id)) {
-            return new Spell(spellTemplates.get(id));
-        }
-
-        return null;
+    static public synchronized Map<Integer, DefendSpell> getDefendSpellsTemplates() {
+        return Collections.unmodifiableMap(defendSpellsTemplates);
     }
 
-    static public DefendSpell getDefendSpellTemplateById(int id) {
+    static public synchronized DefendSpell getDefendSpellTemplateById(int id) {
         if (defendSpellsTemplates.containsKey(id)) {
             return new DefendSpell(defendSpellsTemplates.get(id));
         }
@@ -67,17 +63,39 @@ public class SpellBook {
         return null;
     }
 
-    static public Map<Integer, Spell> getSpellTemplates() {
+    static public synchronized Map<Integer, Spell> getSpellTemplates() {
         return Collections.unmodifiableMap(spellTemplates);
+    }
+
+    static public synchronized Spell getSpellTemplateById(int id) {
+        if (spellTemplates.containsKey(id)) {
+            return new Spell(spellTemplates.get(id));
+        }
+
+        return null;
+    }
+
+    static public synchronized Map<Integer, Spell> getSpellTemplatesBySpellType(SpellType type) {
+        Map <Integer, Spell> result = new HashMap<>();
+
+        for (var template : spellTemplates.entrySet()) {
+            int spellId = template.getKey();
+            Spell spell = template.getValue();
+
+            if (spell.getSpellType() == type) {
+                result.put(
+                        spellId,
+                        spell
+                );
+            }
+        }
+
+        return Collections.unmodifiableMap(result);
     }
 
     static public List<SpellType> getAllSpellTypes() {
         // list is already unmodifiable, see List.of(...) description
         return allSpellTypes;
-    }
-
-    static public Map<Integer, DefendSpell> getDefendSpellsTemplates() {
-        return Collections.unmodifiableMap(defendSpellsTemplates);
     }
 
     private SpellBook() {

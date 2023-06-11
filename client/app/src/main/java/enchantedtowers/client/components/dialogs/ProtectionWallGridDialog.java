@@ -3,16 +3,17 @@ package enchantedtowers.client.components.dialogs;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.adapters.ProtectionWallGridAdapter;
 import enchantedtowers.client.components.data.ProtectionWallData;
-import enchantedtowers.game_models.ProtectionWall;
 
 
 public class ProtectionWallGridDialog extends Dialog {

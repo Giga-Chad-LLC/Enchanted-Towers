@@ -9,6 +9,7 @@ import org.locationtech.jts.geom.util.AffineTransformation;
 
 import java.util.List;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;
 
 
@@ -17,19 +18,24 @@ public class Spell {
     private Geometry curve;
     // specifies offset for drawing path
     private final Vector2 offset = new Vector2(0, 0);
+    // specifies type of magic element
+    private final SpellType spellType;
 
     public Spell(Spell that) {
         curve = that.curve.copy();
         setOffset(that.offset);
+        spellType = that.spellType;
     }
 
-    public Spell(List<Vector2> points, Vector2 offset) {
+    public Spell(List<Vector2> points, Vector2 offset, SpellType spellType) {
         setPoints(points);
         setOffset(offset);
+        this.spellType = spellType;
     }
 
-    public Spell(List<Vector2> points) {
+    public Spell(List<Vector2> points, SpellType spellType) {
         setPoints(points);
+        this.spellType = spellType;
     }
 
     public Envelope getBoundary() {
@@ -49,6 +55,10 @@ public class Spell {
         return offset;
     }
 
+    public SpellType getSpellType() {
+        return spellType;
+    }
+
     public Geometry getCurveCopy() {
         return curve.copy();
     }
@@ -59,6 +69,17 @@ public class Spell {
                 AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)
         );
         return geometry;
+    }
+
+    public Spell getScaledSpell(double scaleX, double scaleY, double originX, double originY) {
+        Geometry geometry = curve.copy();
+        geometry.apply(
+                AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)
+        );
+
+        List<Vector2> scaledPoints = getPointsList(geometry);
+
+        return new Spell(scaledPoints, offset, spellType);
     }
 
     public void setOffset(Vector2 offset) {
@@ -89,9 +110,13 @@ public class Spell {
         curve = factory.createLineString(coordinates);
     }
 
-    public List<Vector2> getPointsList() {
+    public List<Vector2> getPoints() {
+        return getPointsList(curve);
+    }
+
+    private List<Vector2> getPointsList(Geometry geometry) {
         List<Vector2> pointsList = new ArrayList<>();
-        Coordinate[] points = curve.getCoordinates();
+        Coordinate[] points = geometry.getCoordinates();
 
         for (Coordinate point : points) {
             pointsList.add(new Vector2(
@@ -102,4 +127,6 @@ public class Spell {
 
         return pointsList;
     }
+
+
 }

@@ -39,7 +39,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
         Paint brush = state.getBrushCopy();
 
         for (Spell spell : templates.values()) {
-            new CanvasSpellDecorator(SpellType.UNRECOGNIZED, spell).draw(canvas, brush);
+            new CanvasSpellDecorator(spell).draw(canvas, brush);
         }
     }
 }

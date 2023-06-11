@@ -228,10 +228,10 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
 
             for (var description : TemplateDescriptions) {
                 Integer imageId = switch (description.spellType()) {
-                    case FIRE_SPELL -> R.drawable.rune_yellow;
-                    case WIND_SPELL -> R.drawable.rune_cian;
-                    case EARTH_SPELL -> R.drawable.rune_green;
-                    case WATER_SPELL -> R.drawable.rune_white;
+                    case FIRE_SPELL -> R.drawable.fire_icon;
+                    case WIND_SPELL -> R.drawable.wind_icon;
+                    case EARTH_SPELL -> R.drawable.earth_icon;
+                    case WATER_SPELL -> R.drawable.water_icon;
                     case UNRECOGNIZED -> throw new RuntimeException("Unrecognized spell type: " + SpellType.UNRECOGNIZED);
                 };
 

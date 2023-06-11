@@ -6,10 +6,15 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.MotionEvent;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -17,21 +22,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.MapActivity;
+import enchantedtowers.client.R;
+import enchantedtowers.client.components.canvas.CanvasFragment;
+import enchantedtowers.client.components.canvas.CanvasSessionTimer;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
+import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -185,13 +198,15 @@ class ProtectionEventWorker extends Thread {
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
                                     CanvasSpellDecorator canvasMatchedEnchantment = new CanvasSpellDecorator(
-                                            templateType,
                                             template
                                     );
 
                                     canvasWidget.getState().addItem(canvasMatchedEnchantment);
                                     canvasWidget.postInvalidate();
                                     System.out.println("Canvas widget state size: " + canvasWidget.getState().getItems().size());
+                                }
+                                else {
+                                    logger.warning("Matched template with id " + templateId + " not found");
                                 }
                             }
                         }
@@ -262,14 +277,16 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final List<Vector2> pathPoints = new ArrayList<>();
     private final Paint brush;
+    private final CanvasFragment canvasFragment;
     private ProtectionEventWorker worker;
 
-    private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
+    private static final Logger logger = Logger.getLogger(CanvasProtectionInteractor.class.getName());
     private final ProtectionWallSetupServiceGrpc.ProtectionWallSetupServiceStub asyncStub;
     private final ManagedChannel channel;
 
-    public CanvasProtectionInteractor(CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasProtectionInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
+        this.canvasFragment = canvasFragment;
 
         // configuring async client stub
         String host = ServerApiStorage.getInstance().getClientHost();
@@ -278,6 +295,7 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
 
         callAsyncEnterProtectionWall(canvasWidget);
+        setProtectorCanvasStats();
     }
 
     @Override
@@ -365,28 +383,38 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
         // make async call here
         asyncStub.enterProtectionWallCreationSession(requestBuilder.build(), new StreamObserver<>() {
+            private Optional<CanvasSessionTimer> timer = Optional.empty();
+            private Optional<ServerError> serverError = Optional.empty();
+            private boolean sessionExpired = false;
+
             @Override
-            public void onNext(SessionInfoResponse response) {
+            public void onNext(SessionStateInfoResponse response) {
                 if (response.hasError()) {
-                    // TODO: leave protect session
-                    logger.warning("enterProtectionWallCreationSession::onNext: error='" + response.getError().getMessage() + "'");
+                    serverError = Optional.of(response.getError());
+
+                    logger.warning("enterProtectionWallCreationSession::onNext: error='" +
+                            response.getError().getMessage() + "'");
                     ClientUtils.showToastOnUIThread((Activity) canvasWidget.getContext(), response.getError().getMessage(), Toast.LENGTH_LONG);
                 }
                 else {
                     logger.info("enterProtectionWallCreationSession::onNext: type=" + response.getType());
 
                     switch (response.getType()) {
-                        case SESSION_ID -> {
+                        case SESSION_CREATED -> {
                             int sessionId = response.getSession().getSessionId();
                             ClientStorage.getInstance().setSessionId(sessionId);
 
-                            logger.info("Start worker");
+                            TextView timeView = canvasFragment.requireActivity().findViewById(R.id.left_time_timer);
+                            this.timer = Optional.of(
+                                    new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
+
+                            logger.info("Starting worker...");
                             worker = new ProtectionEventWorker(canvasWidget);
                             worker.start();
                         }
                         case SESSION_EXPIRED -> {
+                            sessionExpired = true;
                             logger.info("Protect wall session expired!");
-                            // TODO: leave protect session
                         }
                     }
                 }
@@ -394,22 +422,55 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: leave protect session
                 logger.warning("onError: " + t.getMessage());
+                timer.ifPresent(CanvasSessionTimer::cancel);
             }
 
             @Override
             public void onCompleted() {
-                logger.warning("onCompleted: finished");
+                logger.info("onCompleted: finished");
+                if (serverError.isPresent()) {
+                    tearDown("Error occurred: " + serverError.get().getMessage());
+                }
+                else {
+                    String message = sessionExpired ? "Protection wall creation session expired!" :
+                            "Protection wall was set successfully!";
+                    tearDown(message);
+                }
+            }
+
+            private void tearDown(String message) {
+                timer.ifPresent(CanvasSessionTimer::cancel);
                 ClientUtils.redirectToActivityAndPopHistory(
-                        (Activity) canvasWidget.getContext(),
-                        MapActivity.class,
-                        "Protection wall was set successfully!"
-                );
+                        (Activity) canvasWidget.getContext(), MapActivity.class, message);
             }
         });
     }
 
+    private void setProtectorCanvasStats() {
+        // TODO: set mana value
+        TextView protectionWallIdElement = canvasFragment.requireActivity().findViewById(R.id.protection_wall_id);
+
+        if (protectionWallIdElement != null) {
+            int towerId = ClientStorage.getInstance().getTowerId().get();
+            Tower tower = TowersRegistry.getInstance().getTowerById(towerId).get();
+
+            int enchantedProtectionWallsCount = (int) tower
+                    .getProtectionWalls().stream()
+                    .filter(ProtectionWall::isEnchanted)
+                    .count();
+            int totalProtectionWallsCount = tower.getProtectionWalls().size();
+
+            String content = String.format(protectionWallIdElement
+                            .getContext()
+                            .getString(R.string.protection_wall_count), enchantedProtectionWallsCount + 1, totalProtectionWallsCount);
+
+            protectionWallIdElement.setText(content);
+        }
+        else {
+            logger.warning("View with id R.id.protection_wall_id cannot be found on canvas fragment");
+        }
+    }
 
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {

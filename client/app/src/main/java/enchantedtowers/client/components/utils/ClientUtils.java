@@ -9,6 +9,8 @@ import android.graphics.RectF;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -81,12 +83,16 @@ public class ClientUtils {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         if (message != null) {
-            intent.putExtra("showToastOnStart", true);
-            intent.putExtra("toastMessage", message);
+            setIntentMessage(intent, message);
         }
 
         System.out.println("redirectToBaseActivity(): from=" + from + ", to=" + to + ", intent=" + intent);
         from.startActivity(intent);
+    }
+
+    public static void setIntentMessage(@NonNull Intent intent, @NonNull String message) {
+        intent.putExtra("showToastOnStart", true);
+        intent.putExtra("toastMessage", message);
     }
 
     /**

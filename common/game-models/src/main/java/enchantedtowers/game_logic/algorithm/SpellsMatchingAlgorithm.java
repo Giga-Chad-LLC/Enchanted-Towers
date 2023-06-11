@@ -1,17 +1,17 @@
 package enchantedtowers.game_logic.algorithm;
 
-import enchantedtowers.common.utils.proto.common.SpellType;
-import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.SpellTemplateDescription;
-import enchantedtowers.game_models.utils.Utils;
-import java.util.List;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.Spell;
+import enchantedtowers.game_models.SpellBook;
+import enchantedtowers.game_models.SpellTemplateDescription;
+import enchantedtowers.game_models.utils.Utils;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class SpellsMatchingAlgorithm {
@@ -22,11 +22,12 @@ public class SpellsMatchingAlgorithm {
         if (Utils.isValidPath(spellPoints)) {
             Spell pattern = new Spell(
                 Utils.getNormalizedPoints(spellPoints, offset),
-                offset
+                offset,
+                spellType
             );
 
             return getMatchedTemplate(
-                SpellBook.getSpellTemplates(),
+                SpellBook.getSpellTemplatesBySpellType(spellType),
                 pattern,
                 spellType,
                 new HausdorffMetric()
@@ -77,10 +78,9 @@ public class SpellsMatchingAlgorithm {
 
         System.out.println("Matched template: " + matchedTemplateId);
 
-        Vector2 patternOffset = pattern.getOffset();
         // recalculate matched template boundaries
         templateBounds = templates.get(matchedTemplateId).getBoundary();
-
+        Vector2 patternOffset = pattern.getOffset();
         Vector2 matchedTemplateOffset = new Vector2(
                 patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,
                 patternOffset.y + (patternBounds.getHeight() - templateBounds.getHeight()) / 2

@@ -11,6 +11,7 @@ import components.session.AttackSessionManager;
 import components.time.Timeout;
 import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.common.SpellDescription;
+import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.LeaveAttackRequest;
 import enchantedtowers.common.utils.proto.requests.LeaveSpectatingRequest;
@@ -75,8 +76,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
      * This method creates attack session associated with provided player id and stores the client's <code>responseObserver</code> in {@link AttackSession} for later notifications of session events (e.g. session expiration). The response contains id of created attack session.
      */
     @Override
-    public synchronized void attackTowerById(TowerIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+    public synchronized void attackTowerById(TowerIdRequest request, StreamObserver<SessionStateInfoResponse> streamObserver) {
+        SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
 
         logger.info("attackTowerById: got playerId=" + request.getPlayerData().getPlayerId() +
                 ", towerId=" + request.getTowerId());
@@ -99,14 +100,15 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             // create cancel handler to hook the event of client closing the connection
             // in this case spectators must be disconnected and attack session must be removed
-            var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
+            var callObserver = (ServerCallStreamObserver<SessionStateInfoResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> onAttackerStreamCancellation(session));
 
             // setting session id into response
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
+            responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_CREATED);
             responseBuilder.getSessionBuilder()
                     .setSessionId(session.getId())
+                    .setLeftTimeMs(session.getExpirationTimeoutMs())
                     .build();
 
             streamObserver.onNext(responseBuilder.build());
@@ -462,13 +464,6 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             // clearing drawn spells
             session.clearDrawnSpellsDescriptions();
 
-            // notifying spectators to clear the canvas
-            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
-            spectatorResponseBuilder.setResponseType(ResponseType.CLEAR_CANVAS);
-            for (var spectator : session.getSpectators()) {
-                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
-            }
-
             // checking whether player has succeeded to break the protection wall
             final boolean protectionWallDestroyed = isProtectionWallDestroyed(matches);
 
@@ -478,10 +473,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             if (protectionWallDestroyed) {
                 // destroy protection wall
                 interactor.destroyProtectionWallWithId(session.getProtectionWallId());
-
                 // notifying listeners of tower update
                 TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
-
                 responseBuilder.setProtectionWallDestroyed(true);
             }
             else {
@@ -489,13 +482,13 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             // add spell matching stats into response
-            List<MatchedSpellStatsResponse.SpellStat> spellStats = new ArrayList<>();
+            List<SpellStat> spellStats = new ArrayList<>();
 
             for (var entry : matches.entrySet()) {
                 SpellType type = entry.getKey();
                 double match = entry.getValue();
 
-                MatchedSpellStatsResponse.SpellStat stat = MatchedSpellStatsResponse.SpellStat.newBuilder()
+                SpellStat stat = SpellStat.newBuilder()
                         .setSpellType(type)
                         .setMatch(match)
                         .build();
@@ -504,6 +497,16 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             }
 
             responseBuilder.addAllStats(spellStats);
+
+            // notifying spectators with matched spells
+            SpectateTowerAttackResponse.Builder spectatorResponseBuilder = SpectateTowerAttackResponse.newBuilder();
+            spectatorResponseBuilder.setResponseType(ResponseType.COMPARE_ENCHANTMENTS);
+            spectatorResponseBuilder.addAllSpellMatchStats(spellStats);
+            spectatorResponseBuilder.setProtectionWallDestroyed(protectionWallDestroyed);
+
+            for (var spectator : session.getSpectators()) {
+                spectator.streamObserver().onNext(spectatorResponseBuilder.build());
+            }
         }
         else {
             // error occurred
@@ -570,6 +573,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             addSpellDescriptionsOfDrawnSpells(responseBuilder, session);
             // build canvas
             responseBuilder.getCanvasStateBuilder().build();
+            // setting remaining time
+            responseBuilder.setLeftTimeMs(session.getLeftExecutionTimeMs());
+
+            logger.info("Attack session with id " + session.getId() + " left execution time: " + session.getLeftExecutionTimeMs() + "ms");
 
             // adding spectator
             session.addSpectator(spectatingPlayerId, streamObserver);
@@ -617,7 +624,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             AttackSession newSession;
 
-            System.out.println("Getting getKthNeighbourOfSession of current sessionId=" + session.getId() + ", for towerId=" + session.getAttackedTowerId());
+            logger.info("Getting getKthNeighbourOfSession of current sessionId=" + session.getId() + ", for towerId=" + session.getAttackedTowerId());
 
             if (request.getRequestType() == ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER) {
                 newSession = sessionManager.getKthNeighbourOfSession(session.getAttackedTowerId(), session, 1);
@@ -626,7 +633,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 newSession = sessionManager.getKthNeighbourOfSession(session.getAttackedTowerId(), session, -1);
             }
 
-            responseBuilder.setSessionId(newSession.getId());
+            // forming response
+            responseBuilder.setSessionId(newSession.getId()).build();
             newSession.addSpectator(spectator.playerId(), spectator.streamObserver());
 
             // create response with canvas state
@@ -636,6 +644,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             addSpellDescriptionsOfDrawnSpells(canvasStateResponseBuilder, newSession);
             // build canvas
             canvasStateResponseBuilder.getCanvasStateBuilder().build();
+            // setting remaining time
+            canvasStateResponseBuilder.setLeftTimeMs(newSession.getLeftExecutionTimeMs());
 
             // send canvas state to spectator
             spectator.streamObserver().onNext(canvasStateResponseBuilder.build());
@@ -925,17 +935,21 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     " registered in attack session with id " + session.getId() +
                     " cancelled stream. Destroying the corresponding attack session...");
 
-        // mark tower to not be under attack
-        TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
-        interactor.unsetTowerUnderAttackState();
+        // removing session from sessions list
+        sessionManager.remove(session);
+
+        // if no other attackers attack the same tower -> unset under attack state
+        if (sessionManager.getAnyAttackSessionByTowerId(session.getAttackedTowerId()).isEmpty()) {
+            // mark tower to not be under attack
+            TowerAttackServiceInteractor interactor = new TowerAttackServiceInteractor(session.getAttackedTowerId());
+            interactor.unsetTowerUnderAttackState();
+        }
 
         // disconnecting spectators
         disconnectSpectators(session);
 
         // notifying listeners of tower update
         TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
-
-        sessionManager.remove(session);
     }
 
     /**
@@ -982,8 +996,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
         disconnectSpectators(session);
 
         // sending response with session expiration to attacker and closing connection
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-        responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+        SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
+        responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_EXPIRED);
         responseBuilder.getExpirationBuilder().build();
 
         // closing connection with attacker

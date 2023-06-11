@@ -3,6 +3,7 @@ package enchantedtowers.client;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,9 @@ import java.io.IOException;
 import java.util.List;
 
 import enchantedtowers.client.components.fs.AndroidFileReader;
+import org.opencv.android.OpenCVLoader;
+
+import enchantedtowers.client.components.providers.SpellBookProvider;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.game_logic.json.DefendSpellsTemplatesProvider;
@@ -29,19 +33,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // initialize spell book
-        if (!SpellBook.isInstantiated()) {
-            try {
-                String jsonConfig = AndroidFileReader.readRawFile(getBaseContext(), R.raw.canvas_templates_config);
-                List<SpellsTemplatesProvider.SpellTemplateData> spellsData = SpellsTemplatesProvider.parseSpellsJson(jsonConfig);
-                List<DefendSpellsTemplatesProvider.DefendSpellTemplateData> defendSpellsData = DefendSpellsTemplatesProvider.parseDefendSpellsJson(jsonConfig);
-                SpellBook.instantiate(spellsData, defendSpellsData);
-            } catch (JSONException | IOException e) {
-                Log.e("JSON-CONFIG", e.getMessage());
-                System.err.println(e.getMessage());
-            }
-        }
 
         // initialize opencv
         if (!OpenCVLoader.initDebug()) {
@@ -67,9 +58,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void changeActivity(View view) {
-        if (view.getId() == R.id.changeToCanvasActivity) {
+        if (view.getId() == R.id.changeToAttackTowerMenu) {
+            Intent intent = new Intent(MainActivity.this, AttackTowerMenuActivity.class);
+            startActivity(intent);
+        }
+        else if (view.getId() == R.id.changeToCanvasActivity) {
             Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
-            intent.putExtra("isAttacking", true);
+            // intent.putExtra("isAttacking", true);
             startActivity(intent);
         }
         else if (view.getId() == R.id.changeToMapActivity) {

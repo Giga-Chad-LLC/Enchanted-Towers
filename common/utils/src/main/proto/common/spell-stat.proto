@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.common";
+option java_multiple_files = true;
+
+package common;
+
+import "common/spell-type.proto";
+
+message SpellStat {
+  common.SpellType spellType = 1;
+  double match = 2; // value in range of [0.0, 1.0] which defines percentage of match of the specified spell type
+}

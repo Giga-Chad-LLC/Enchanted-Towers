@@ -16,9 +16,9 @@ public class CanvasSpellDecorator implements CanvasDrawable {
     private final SpellType spellType;
     private final Spell spell;
 
-    public CanvasSpellDecorator(SpellType spellType, Spell spell) {
+    public CanvasSpellDecorator(Spell spell) {
         this.path = getPathBySpell(spell);
-        this.spellType = spellType;
+        this.spellType = spell.getSpellType();
         this.spell = spell;
     }
 

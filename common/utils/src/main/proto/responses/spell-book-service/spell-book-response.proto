@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.responses";
+option java_multiple_files = true;
+
+package response_models;
+
+// common
+import "common/spell-description.proto";
+// responses
+import "responses/common/server-error.proto";
+
+message SpellBookResponse {
+  response_models.ServerError error = 1;
+  string jsonData = 2;
+};

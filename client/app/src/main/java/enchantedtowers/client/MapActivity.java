@@ -15,6 +15,7 @@ import java.util.Optional;
 import enchantedtowers.client.components.dialogs.LocationRequestPermissionRationaleDialog;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
+import enchantedtowers.client.components.providers.SpellBookProvider;
 import enchantedtowers.client.components.utils.ClientUtils;
 
 
@@ -25,6 +26,8 @@ public class MapActivity extends BaseActivity {
     };
 
     private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +69,9 @@ public class MapActivity extends BaseActivity {
                         locationPermissionLauncher.launch(locationPermissions);
                     }
                 });
+
+        // initialize spell book
+        SpellBookProvider.getInstance().provideSpellBook(this);
     }
 
     private void showLocationRequestPermissionRationale(ActivityResultLauncher<String[]> locationPermissionLauncher) {

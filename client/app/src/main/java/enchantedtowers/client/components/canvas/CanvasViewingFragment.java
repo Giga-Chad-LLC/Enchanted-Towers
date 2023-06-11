@@ -1,7 +1,9 @@
 package enchantedtowers.client.components.canvas;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,10 +21,16 @@ public class CanvasViewingFragment extends CanvasFragment {
     }
 
     @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflateFragment(R.layout.fragment_canvas_view_enchantment, inflater, container);
+    }
+
+    @Override
     public void onViewCreated(@NonNull View rootView, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
         initViewerFunctionality(rootView);
     }
+
     private void initViewerFunctionality(View rootView) {
         canvasWidget = (rootView.findViewById(R.id.canvasView));
 
