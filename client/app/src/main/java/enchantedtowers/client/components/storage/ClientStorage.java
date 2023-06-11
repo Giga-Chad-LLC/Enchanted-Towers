@@ -13,10 +13,15 @@ public class ClientStorage {
         return instance;
     }
 
-    // getter
+    // getters
+    public Optional<String> getJWTToken() {
+        return playerData.jwtToken;
+    }
+
     public Optional<Integer> getPlayerId() {
         return playerData.playerId;
     }
+
     public Optional<String> getUsername() {
         return playerData.username;
     }
@@ -35,9 +40,14 @@ public class ClientStorage {
     }
 
     // setters
+    public void setJWTToken(String jwt) {
+        playerData.jwtToken = Optional.of(jwt);
+    }
+
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
     }
+
     public void setUsername(@NonNull String username) {
         playerData.username = Optional.of(username);
     }
@@ -58,6 +68,7 @@ public class ClientStorage {
     private final PlayerData playerData;
 
     private static class PlayerData {
+        public Optional<String> jwtToken = Optional.empty();
         public Optional<Integer> playerId = Optional.empty();
         public Optional<String> username = Optional.empty();
         public Optional<Integer> sessionId = Optional.empty();

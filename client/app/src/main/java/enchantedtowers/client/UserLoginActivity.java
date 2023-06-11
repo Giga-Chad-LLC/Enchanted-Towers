@@ -68,9 +68,10 @@ public class UserLoginActivity extends BaseActivity {
                     logger.info("Error occurred: " + response.getError().getMessage());
                 }
                 else {
-                    // saving player id username
+                    // saving data
                     ClientStorage.getInstance().setPlayerId(response.getId());
                     ClientStorage.getInstance().setUsername(response.getUsername());
+                    ClientStorage.getInstance().setJWTToken(response.getToken());
 
                     // TODO: remove later
                     /*String host = ServerApiStorage.getInstance().getClientHost();
