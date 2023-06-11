@@ -6,4 +6,13 @@
     <item type="id" name="submitCanvasButton" />
     <item type="id" name="showNextAttackerButton" />
     <item type="id" name="showPreviousAttackerButton" />
+
+    <item type="id" name="fire_spells_recycler_view" />
+    <item type="id" name="wind_spells_recycler_view" />
+    <item type="id" name="earth_spells_recycler_view" />
+    <item type="id" name="water_spells_recycler_view" />
+
+    <item type="id" name="defend_spells_recycler_view_1" />
+    <item type="id" name="defend_spells_recycler_view_2" />
+    <item type="id" name="defend_spells_recycler_view_3" />
 </resources>

@@ -17,7 +17,7 @@ public class DefendSpell {
     // must be relative to the bounded box of path
     // (meaning when drawn offset must be applied, defend spells must be drawn on the center of canvas)
     private Geometry curvesUnion;
-    private final List<List<Vector2>> lines;
+    private final List<List<Vector2>> lines; // points are normalized
 
     public DefendSpell(List<List<Vector2>> lines) {
         this.lines = lines;
@@ -47,6 +47,64 @@ public class DefendSpell {
                 AffineTransformation.scaleInstance(scaleX, scaleY, originX, originY)
         );
         return geometry;
+    }
+
+    /**
+     * Relies on the invariant that {@code this.lines} points are normalized
+     * @param scaleX scaling factor in X axis
+     * @param scaleY scaling factor in Y axis
+     * @return new instance of scaled {@code DefendSpell} object
+     */
+    public DefendSpell getScaledDefendSpell(double scaleX, double scaleY) {
+        List<List<Vector2>> newLines = new ArrayList<>();
+
+        for (var line : lines) {
+            List<Vector2> newLine = new ArrayList<>();
+
+            for (var p : line) {
+                newLine.add(new Vector2(p.x * scaleX, p.y * scaleY));
+            }
+
+            newLines.add(newLine);
+        }
+
+        return new DefendSpell(newLines);
+    }
+
+    private List<List<Vector2>> getLinesList(List<Vector2> mergedPoints) {
+        List<List<Vector2>> lines = new ArrayList<>();
+        List<Vector2> currentLine = new ArrayList<>();
+
+        int currentLineIndex = 0;
+        for (Vector2 p : mergedPoints) {
+            if (this.lines.get(currentLineIndex).size() == currentLine.size()) {
+                lines.add(currentLine);
+                currentLine = new ArrayList<>();
+                currentLineIndex++;
+            }
+
+            currentLine.add(p);
+        }
+
+        if (!currentLine.isEmpty()) {
+            lines.add(currentLine);
+        }
+
+        return lines;
+    }
+
+    private List<Vector2> getPointsList(Geometry geometry) {
+        List<Vector2> pointsList = new ArrayList<>();
+        Coordinate[] points = geometry.getCoordinates();
+
+        for (Coordinate point : points) {
+            pointsList.add(new Vector2(
+                    point.getX(),
+                    point.getY()
+            ));
+        }
+
+        return pointsList;
     }
 
     public Geometry getCurveUnionCopy() {

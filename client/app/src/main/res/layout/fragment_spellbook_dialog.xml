@@ -17,6 +17,7 @@
 
         <TextView
             style="@style/MedievalStyle.TextAppearance.Large"
+            android:id="@+id/spellbook_dialog_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center|start"
@@ -40,6 +41,7 @@
         android:background="@drawable/fragment_spellbook_content_background">
 
         <LinearLayout
+            android:id="@+id/spellbook_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="20dp"
@@ -49,111 +51,111 @@
             android:orientation="vertical">
 
             <!-- Fire -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="50dp">
-                <TextView
-                    style="@style/MedievalStyle.TextAppearance.Large"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="100dp"
-                    android:background="@drawable/button_background"
-                    android:gravity="center"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp"
-                    android:text="Fire"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:layout_marginBottom="20dp" />
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="vertical"-->
+<!--                android:layout_marginBottom="50dp">-->
+<!--                <TextView-->
+<!--                    style="@style/MedievalStyle.TextAppearance.Large"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:minWidth="100dp"-->
+<!--                    android:background="@drawable/button_background"-->
+<!--                    android:gravity="center"-->
+<!--                    android:paddingTop="6dp"-->
+<!--                    android:paddingBottom="6dp"-->
+<!--                    android:text="Fire"-->
+<!--                    android:textColor="#FFFFFF"-->
+<!--                    android:textSize="20sp"-->
+<!--                    android:layout_marginBottom="20dp" />-->
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/fire_spells_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center" />
-            </LinearLayout>
+<!--                <androidx.recyclerview.widget.RecyclerView-->
+<!--                    android:id="@+id/fire_spells_recycler_view"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center" />-->
+<!--            </LinearLayout>-->
 
 
             <!-- Wind -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="50dp">
-                <TextView
-                    style="@style/MedievalStyle.TextAppearance.Large"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="100dp"
-                    android:background="@drawable/button_background"
-                    android:gravity="center"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp"
-                    android:text="Wind"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:layout_marginBottom="20dp" />
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="vertical"-->
+<!--                android:layout_marginBottom="50dp">-->
+<!--                <TextView-->
+<!--                    style="@style/MedievalStyle.TextAppearance.Large"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:minWidth="100dp"-->
+<!--                    android:background="@drawable/button_background"-->
+<!--                    android:gravity="center"-->
+<!--                    android:paddingTop="6dp"-->
+<!--                    android:paddingBottom="6dp"-->
+<!--                    android:text="Wind"-->
+<!--                    android:textColor="#FFFFFF"-->
+<!--                    android:textSize="20sp"-->
+<!--                    android:layout_marginBottom="20dp" />-->
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/wind_spells_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
+<!--                <androidx.recyclerview.widget.RecyclerView-->
+<!--                    android:id="@+id/wind_spells_recycler_view"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent" />-->
+<!--            </LinearLayout>-->
 
 
             <!-- Earth -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="50dp">
-                <TextView
-                    style="@style/MedievalStyle.TextAppearance.Large"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="100dp"
-                    android:background="@drawable/button_background"
-                    android:gravity="center"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp"
-                    android:text="Earth"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:layout_marginBottom="20dp" />
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="vertical"-->
+<!--                android:layout_marginBottom="50dp">-->
+<!--                <TextView-->
+<!--                    style="@style/MedievalStyle.TextAppearance.Large"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:minWidth="100dp"-->
+<!--                    android:background="@drawable/button_background"-->
+<!--                    android:gravity="center"-->
+<!--                    android:paddingTop="6dp"-->
+<!--                    android:paddingBottom="6dp"-->
+<!--                    android:text="Earth"-->
+<!--                    android:textColor="#FFFFFF"-->
+<!--                    android:textSize="20sp"-->
+<!--                    android:layout_marginBottom="20dp" />-->
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/earth_spells_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
+<!--                <androidx.recyclerview.widget.RecyclerView-->
+<!--                    android:id="@+id/earth_spells_recycler_view"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent" />-->
+<!--            </LinearLayout>-->
 
 
-            <!-- Water -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <TextView
-                    style="@style/MedievalStyle.TextAppearance.Large"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="100dp"
-                    android:background="@drawable/button_background"
-                    android:gravity="center"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp"
-                    android:text="Water"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:layout_marginBottom="20dp" />
+<!--            &lt;!&ndash; Water &ndash;&gt;-->
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="vertical">-->
+<!--                <TextView-->
+<!--                    style="@style/MedievalStyle.TextAppearance.Large"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:minWidth="100dp"-->
+<!--                    android:background="@drawable/button_background"-->
+<!--                    android:gravity="center"-->
+<!--                    android:paddingTop="6dp"-->
+<!--                    android:paddingBottom="6dp"-->
+<!--                    android:text="Water"-->
+<!--                    android:textColor="#FFFFFF"-->
+<!--                    android:textSize="20sp"-->
+<!--                    android:layout_marginBottom="20dp" />-->
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/water_spells_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
+<!--                <androidx.recyclerview.widget.RecyclerView-->
+<!--                    android:id="@+id/water_spells_recycler_view"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent" />-->
+<!--            </LinearLayout>-->
 
 
         </LinearLayout>

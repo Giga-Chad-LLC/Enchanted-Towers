@@ -108,6 +108,10 @@ public class ClientUtils {
         };
     }
 
+    public static int getDefendSpellColorId() {
+        return Color.rgb(54, 19, 84);
+    }
+
     public static List<SpellType> getSpellTypesList() {
         return List.of(SpellType.FIRE_SPELL, SpellType.WATER_SPELL, SpellType.WIND_SPELL, SpellType.EARTH_SPELL);
     }

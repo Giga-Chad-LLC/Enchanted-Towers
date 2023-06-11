@@ -14,10 +14,10 @@ import enchantedtowers.game_models.utils.Vector2;
 
 
 public class SpellsTemplatesProvider {
-    private static final String FIRE_SPELL_LABEL = "fire";
-    private static final String WIND_SPELL_LABEL = "wind";
-    private static final String EARTH_SPELL_LABEL = "earth";
-    private static final String WATER_SPELL_LABEL = "water";
+    public static final String FIRE_SPELL_LABEL = "Fire";
+    public static final String WIND_SPELL_LABEL = "Wind";
+    public static final String EARTH_SPELL_LABEL = "Earth";
+    public static final String WATER_SPELL_LABEL = "Water";
 
     static public class SpellTemplateData {
         private final int id;

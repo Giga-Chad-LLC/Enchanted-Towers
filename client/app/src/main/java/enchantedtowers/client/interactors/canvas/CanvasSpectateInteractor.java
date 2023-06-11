@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -365,9 +366,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
         var description = response.getSpellDescription();
         var templateOffset = description.getSpellTemplateOffset();
-        var templateType = description.getSpellType();
         Spell templateSpell = SpellBook.getSpellTemplateById(description.getSpellTemplateId());
-        templateSpell.setOffset(new Vector2(
+        Objects.requireNonNull(templateSpell).setOffset(new Vector2(
                 templateOffset.getX(),
                 templateOffset.getY()
         ));

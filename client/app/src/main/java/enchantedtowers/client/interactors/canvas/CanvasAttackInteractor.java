@@ -483,6 +483,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             worker = new AttackEventWorker(CanvasAttackInteractor.this, canvasWidget);
                             worker.start();
                         }
+                        // TODO: DEFEND_SPELL: add defend spell receiving here
                         case SESSION_EXPIRED -> {
                             sessionExpired = true;
                             logger.info("Attack session expired!");

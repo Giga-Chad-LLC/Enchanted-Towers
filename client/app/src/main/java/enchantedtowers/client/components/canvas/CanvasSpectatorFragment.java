@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,11 +12,14 @@ import androidx.annotation.Nullable;
 import java.util.Arrays;
 
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasSpectateInteractor;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 public class CanvasSpectatorFragment extends CanvasFragment {
+    private final DefendSpellbookDialogFragment defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance();
+
     public static CanvasFragment newInstance() {
         return new CanvasSpectatorFragment();
     }
@@ -50,5 +54,9 @@ public class CanvasSpectatorFragment extends CanvasFragment {
 
         showNextAttackerButton.setOnClickListener(v ->
                 this.toggleSpectatingAttacker(ToggleAttackerRequest.RequestType.SHOW_NEXT_ATTACKER));
+
+
+        Button openDefendSpellbookButton = rootView.findViewById(R.id.apply_defend_spell_button);
+        openDefendSpellbookButton.setOnClickListener(v -> defendSpellbookDialog.show(getParentFragmentManager(), defendSpellbookDialog.getTag()));
     }
 }
