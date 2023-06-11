@@ -55,24 +55,24 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/signUp"
-        android:layout_width="65dp"
-        android:layout_height="40dp"
+        android:id="@+id/changeToSignUpActivity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Sign Up"
-        android:textSize="8sp"
         android:onClick="changeActivity"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
 
     <Button
-        android:id="@+id/logIn"
-        android:layout_width="65dp"
-        android:layout_height="40dp"
+        android:id="@+id/changeToLoginActivity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:onClick="changeActivity"
         android:text="Log in"
-        android:textSize="8sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/changeToSignUpActivity" />
 
     <Button
         android:id="@+id/changeToMapActivity"
@@ -83,13 +83,13 @@
         android:text="Map"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
+        app:layout_constraintTop_toBottomOf="@+id/changeToLoginActivity" />
 
     <FrameLayout
         android:id="@+id/frame_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="-16dp"
+        tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

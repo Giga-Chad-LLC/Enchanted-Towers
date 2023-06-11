@@ -58,11 +58,11 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         }
-        else if (view.getId() == R.id.signUp) {
+        else if (view.getId() == R.id.changeToSignUpActivity) {
             Intent intent = new Intent(MainActivity.this, UserRegistrationActivity.class);
             startActivity(intent);
         }
-        else if (view.getId() == R.id.logIn){
+        else if (view.getId() == R.id.changeToLoginActivity) {
             Intent intent = new Intent(MainActivity.this, UserLoginActivity.class);
             startActivity(intent);
         } else {

@@ -1,81 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".UserRegistrationActivity"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".UserRegistrationActivity">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/editTextPersonName"
-        android:layout_width="274dp"
-        android:layout_height="87dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="80dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <EditText
-        android:id="@+id/editTextPassword"
-        android:layout_width="274dp"
-        android:layout_height="87dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="196dp"
-        android:ems="10"
-        android:inputType="textPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextPersonName" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="80dp"
+            android:paddingBottom="20dp"
+            android:paddingLeft="30dp"
+            android:paddingRight="30dp">
 
-    <EditText
-        android:id="@+id/editTextEmailAddress"
-        android:layout_width="274dp"
-        android:layout_height="87dp"
-        android:layout_marginStart="16dp"
-        android:ems="10"
-        android:inputType="textEmailAddress"
-        app:layout_constraintBottom_toTopOf="@+id/editTextPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextPersonName"
-        app:layout_constraintVertical_bias="0.495" />
 
-    <TextView
-        android:id="@+id/TextViewUsernameField"
-        android:layout_width="78dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="16dp"
-        android:text="Your name"
-        app:layout_constraintBottom_toTopOf="@+id/editTextPersonName"
-        app:layout_constraintStart_toStartOf="parent" />
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="70dp"
+                android:text="Registration"
+                android:textSize="40sp" />
 
-    <TextView
-        android:id="@+id/TextViewPasswordField"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Your passwrod"
-        app:layout_constraintBottom_toTopOf="@+id/editTextPassword"
-        app:layout_constraintStart_toStartOf="parent" />
+            <!-- Data Fields -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="90dp">
 
-    <TextView
-        android:id="@+id/textViewEmailField"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Your Email"
-        app:layout_constraintBottom_toTopOf="@+id/editTextEmailAddress"
-        app:layout_constraintStart_toStartOf="parent" />
+                <!-- Email -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="30dp">
+                    <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:text="Email:"
+                        android:textSize="22sp"/>
 
-    <Button
-        android:id="@+id/buttonToSendData"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="52dp"
-        android:onClick="sendUserDataForRegistration"
-        android:text="Sign up!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.445"
-        app:layout_constraintStart_toStartOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+                    <EditText
+                        android:id="@+id/editTextEmailAddress"
+                        style="@style/MedievalStyle.EditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress" />
+                </LinearLayout>
+
+                <!-- Username -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="30dp">
+
+                    <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:text="Username:"
+                        android:textSize="22sp" />
+
+                    <EditText
+                        style="@style/MedievalStyle.EditText"
+                        android:id="@+id/editTextUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress" />
+
+                </LinearLayout>
+
+
+                <!-- Password -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="30dp">
+                    <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:text="Password:"
+                        android:textSize="22sp"/>
+
+                    <EditText
+                        style="@style/MedievalStyle.EditText"
+                        android:id="@+id/editTextPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword" />
+                </LinearLayout>
+
+                <!-- Confirmation Password -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:text="Confirm password:"
+                        android:textSize="22sp"/>
+
+                    <EditText
+                        style="@style/MedievalStyle.EditText"
+                        android:id="@+id/editTextConfirmationPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!--Submit/Go to registration page-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <Button
+                    style="@style/MedievalStyle.Button"
+                    android:id="@+id/buttonToSendData"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="30dp"
+                    android:onClick="sendUserDataForRegistration"
+                    android:text="Register" />
+
+                <TextView
+                    style="@style/MedievalStyle.TextAppearance.Small"
+                    android:id="@+id/redirectToLoginActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/already_have_an_account"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

@@ -26,14 +26,13 @@ public class UserRegistrationActivity extends AppCompatActivity {
     }
 
     public void sendUserDataForRegistration(View view) {
-
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
 
         ManagedChannel channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
         AuthServiceGrpc.AuthServiceStub authServiceStub = AuthServiceGrpc.newStub(channel);
 
-        EditText userNameTextInput = findViewById(R.id.editTextPersonName);
+        EditText userNameTextInput = findViewById(R.id.editTextUsername);
         EditText userPasswordTextInput = findViewById(R.id.editTextPassword);
         EditText userEmailTextInput = findViewById(R.id.editTextEmailAddress);
 
@@ -48,7 +47,6 @@ public class UserRegistrationActivity extends AppCompatActivity {
                 .register(request, new StreamObserver<>() {
             @Override
             public void onNext(ActionResultResponse value) {
-                // TODO: Toast can be made only on UI thread
                 runOnUiThread(() -> {
                     if (value.hasError()) {
                         Toast.makeText(UserRegistrationActivity.this, value.getError().getMessage(), Toast.LENGTH_SHORT).show();

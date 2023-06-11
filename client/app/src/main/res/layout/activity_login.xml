@@ -1,63 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".UserLoginActivity"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".UserLoginActivity">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/TextViewUsernameField"
-        android:layout_width="82dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="32dp"
-        android:text="Your Email"
-        app:layout_constraintBottom_toTopOf="@+id/editTextEmailAddressForLogin"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <EditText
-        android:id="@+id/editTextEmailAddressForLogin"
-        android:layout_width="274dp"
-        android:layout_height="87dp"
-        android:layout_marginTop="88dp"
-        android:ems="10"
-        android:inputType="textEmailAddress"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.248"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="80dp"
+            android:paddingBottom="20dp"
+            android:paddingLeft="30dp"
+            android:paddingRight="30dp">
 
-    <EditText
-        android:id="@+id/editTextPasswordForLogin"
-        android:layout_width="274dp"
-        android:layout_height="87dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="124dp"
-        android:ems="10"
-        android:inputType="textPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextEmailAddressForLogin" />
 
-    <TextView
-        android:id="@+id/TextViewPasswordField"
-        android:layout_width="102dp"
-        android:layout_height="22dp"
-        android:layout_marginStart="32dp"
-        android:text="Your password"
-        app:layout_constraintBottom_toTopOf="@+id/editTextPassword"
-        app:layout_constraintStart_toStartOf="parent" />
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="70dp"
+                android:text="Login"
+                android:textSize="40sp" />
 
-    <Button
-        android:id="@+id/logInButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="68dp"
-        android:onClick="sendUserDataForLogin"
-        android:text="Login"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Data Fields -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="90dp">
+
+                <!-- Email -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="30dp">
+
+                    <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
+                        android:id="@+id/TextViewUsernameField"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:text="Email:"
+                        android:textSize="22sp" />
+
+                    <EditText
+                        style="@style/MedievalStyle.EditText"
+                        android:id="@+id/editTextEmailAddressForLogin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress" />
+
+                </LinearLayout>
+
+
+                <!-- Password -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/MedievalStyle.TextAppearance.Large"
+                        android:id="@+id/TextViewPasswordField"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="15dp"
+                        android:text="Password:"
+                        android:textSize="22sp"/>
+
+                    <EditText
+                        style="@style/MedievalStyle.EditText"
+                        android:id="@+id/editTextPasswordForLogin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!--Submit/Go to registration page-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <Button
+                    style="@style/MedievalStyle.Button"
+                    android:id="@+id/logInButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="30dp"
+                    android:onClick="sendUserDataForLogin"
+                    android:text="Login" />
+
+                <TextView
+                    style="@style/MedievalStyle.TextAppearance.Small"
+                    android:id="@+id/redirectToSignUpActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/do_not_have_an_account_yet"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
