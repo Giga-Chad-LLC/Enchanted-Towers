@@ -3,12 +3,17 @@ package enchantedtowers.client;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.snackbar.Snackbar;
 
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.responses.LoginResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.Grpc;
@@ -17,46 +22,69 @@ import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 public class UserLoginActivity extends BaseActivity {
+    private final static Logger logger = Logger.getLogger(UserLoginActivity.class.getName());
+
+    private ManagedChannel channel;
+    private AuthServiceGrpc.AuthServiceStub asyncStub;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        String host = ServerApiStorage.getInstance().getClientHost();
+        int port = ServerApiStorage.getInstance().getPort();
+
+        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+        asyncStub = AuthServiceGrpc.newStub(channel);
     }
 
 
     public void sendUserDataForLogin(View view) {
-        String host = ServerApiStorage.getInstance().getClientHost();
-        int port = ServerApiStorage.getInstance().getPort();
-
-        ManagedChannel channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        AuthServiceGrpc.AuthServiceStub authServiceStub = AuthServiceGrpc.newStub(channel);
-
-        EditText userPasswordTextInput = findViewById(R.id.editTextPasswordForLogin);
         EditText userEmailTextInput = findViewById(R.id.editTextEmailAddressForLogin);
+        EditText userPasswordTextInput = findViewById(R.id.editTextPasswordForLogin);
+
+        String email = userEmailTextInput.getText().toString();
+        String password = userPasswordTextInput.getText().toString();
+
+        logger.info("email=" + email + ", password=" + password);
 
         LoginRequest request = LoginRequest.newBuilder()
-                .setEmail(userEmailTextInput.getText().toString())
-                .setPassword(userPasswordTextInput.getText().toString())
+                .setEmail(email)
+                .setPassword(password)
                 .build();
 
-        authServiceStub.login(request, new StreamObserver<LoginResponse>() {
+        asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .login(request, new StreamObserver<>() {
+            private Optional<ServerError> serverError = Optional.empty();
+
             @Override
-            public void onNext(LoginResponse value) {
-                if (value.hasError()) {
-                    Toast.makeText(UserLoginActivity.this, value.getError().getMessage(), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(UserLoginActivity.this, "You are registered", Toast.LENGTH_SHORT).show();
+            public void onNext(LoginResponse response) {
+                // TODO: save token somewhere
+                if (response.hasError()) {
+                    serverError = Optional.of(response.getError());
+                    logger.info("Error occurred: " + response.getError().getMessage());
                 }
             }
 
             @Override
             public void onError(Throwable t) {
-                Toast.makeText(UserLoginActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+                logger.warning("Unexpected error: " + t.getMessage() + ": " + t);
+                ClientUtils.showSnackbar(view, "Unexpected error occurred. Try again!", Snackbar.LENGTH_LONG);
             }
 
             @Override
             public void onCompleted() {
-                Toast.makeText(UserLoginActivity.this, "You are login", Toast.LENGTH_SHORT).show();
+                if (serverError.isPresent()) {
+                    ClientUtils.showSnackbar(view, "Error occurred: " + serverError.get().getMessage(), Snackbar.LENGTH_LONG);
+                }
+                else {
+                    ClientUtils.showSnackbar(view, "Successful login. Redirecting to map...", Snackbar.LENGTH_LONG);
+                    // TODO: need to set player id (aka id of User model)
+                    // TODO: redirect to map activity
+                    /*Intent intent = new Intent(UserLoginActivity.this, MapActivity.class);
+                    startActivity(intent);*/
+                }
             }
         });
     }

@@ -72,7 +72,6 @@ public class UserRegistrationActivity extends BaseActivity {
                     serverError = Optional.of(response.getError());
                     logger.info("Error occurred: " + response.getError().getMessage());
                 }
-
             }
 
             @Override
