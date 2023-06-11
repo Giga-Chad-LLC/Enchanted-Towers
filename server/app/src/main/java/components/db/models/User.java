@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 
 
 // TODO: move into db.models package
-@Entity(name="User")
+@Entity
 @Table(name = "users")
 public class User {
     @Id
