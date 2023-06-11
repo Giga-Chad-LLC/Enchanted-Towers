@@ -13,12 +13,10 @@ import io.grpc.stub.StreamObserver;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final Logger logger = Logger.getLogger(AuthService.class.getName());
-
 
     @Override
     public synchronized void register(RegistrationRequest request, StreamObserver<ActionResultResponse> responseObserver) {
@@ -85,11 +83,19 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         String email = request.getEmail();
         String username = request.getUsername();
         String password = request.getPassword();
+        String confirmationPassword = request.getConfirmationPassword();
 
         // if there are empty fields
         if (email.isEmpty() || username.isEmpty() || password.isEmpty()) {
             return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
                     .setMessage("All fields must be filled")
+                    .build());
+        }
+
+        // if passwords do not match
+        if (!password.equals(confirmationPassword)) {
+            return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
+                    .setMessage("Passwords do not match")
                     .build());
         }
 

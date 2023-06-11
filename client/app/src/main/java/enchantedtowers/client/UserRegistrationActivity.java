@@ -60,6 +60,7 @@ public class UserRegistrationActivity extends BaseActivity {
                 .setEmail(email)
                 .setUsername(username)
                 .setPassword(password)
+                .setConfirmationPassword(confirmationPassword)
                 .build();
 
         asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)

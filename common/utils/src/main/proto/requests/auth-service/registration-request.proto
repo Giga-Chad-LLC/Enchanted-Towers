@@ -8,5 +8,6 @@ package request_models;
 message RegistrationRequest {
   string email = 1;
   string password = 2;
-  string username = 3;
+  string confirmationPassword = 3;
+  string username = 4;
 };

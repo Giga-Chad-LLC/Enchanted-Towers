@@ -39,7 +39,6 @@ public class UserLoginActivity extends BaseActivity {
         asyncStub = AuthServiceGrpc.newStub(channel);
     }
 
-
     public void sendUserDataForLogin(View view) {
         EditText userEmailTextInput = findViewById(R.id.editTextEmailAddressForLogin);
         EditText userPasswordTextInput = findViewById(R.id.editTextPasswordForLogin);
