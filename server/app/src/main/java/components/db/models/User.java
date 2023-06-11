@@ -1,23 +1,32 @@
 package components.db;
-import javax.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
+
+// TODO: move into db.models package
+//@Table(name = "users")
 @Entity
-@Table(name = "users")
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @Column(name = "id")
     private Integer id;
-    @Column(name = "name", length = 50)
+//    @Column(name = "name")
     private String name;
-    @Column(name = "hashed_password", length = 100)
+//    @Column(name = "hashed_password")
     private String hashedPassword;
-    @Column(name = "email", length = 100)
+//    @Column(name = "email")
     private String email;
-    @Column(name = "jwt_access", length = 100)
+//    @Column(name = "jwt_access", length = 100)
     private String jwtAccess;
-    @Column(name = "jwt_refresh", length = 100)
+//    @Column(name = "jwt_refresh", length = 100)
     private String jwtRefresh;
+
+    public User() {}
 
     public Integer getId() {
         return id;
