@@ -1,7 +1,9 @@
 package services;
 
-import components.db.UsersDao;
+import components.config.Config;
+import components.db.dao.UsersDao;
 import components.db.models.User;
+import components.utils.JwtUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.LogoutRequest;
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
@@ -10,10 +12,12 @@ import enchantedtowers.common.utils.proto.responses.LoginResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import io.grpc.stub.StreamObserver;
+import io.jsonwebtoken.*;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 import java.util.logging.Logger;
+import javax.crypto.SecretKey;
 
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final Logger logger = Logger.getLogger(AuthService.class.getName());
@@ -58,8 +62,12 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
             Optional<User> user = usersDao.findByEmail(request.getEmail());
             assert user.isPresent();
 
+            String jwsToken = JwtUtils.generateJWSToken(request.getEmail());
+            // save access token in db
+
             // TODO: set token
             responseBuilder.setId(user.get().getId())
+                    .setToken(jwsToken)
                     .setUsername(user.get().getUsername());
         }
         else {
@@ -72,9 +80,20 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    // TODO: remove this rpc method
     @Override
     public synchronized void logout(LogoutRequest request, StreamObserver<ActionResultResponse> responseObserver) {
-        // TODO: implement
+        String jws = request.getToken();
+        logger.info("logout: token=" + jws);
+
+        try {
+            logger.info("token subject: '" + JwtUtils.validate(jws) + "'");
+            responseObserver.onNext(ActionResultResponse.newBuilder().build());
+            responseObserver.onCompleted();
+        }
+        catch (JwtException err) {
+            logger.warning("Error: " + err);
+        }
     }
 
     private Optional<ServerError> validateRegistrationRequest(RegistrationRequest request, UsersDao dao) {
