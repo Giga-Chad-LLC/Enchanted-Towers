@@ -63,8 +63,7 @@ public class UserRegistrationActivity extends BaseActivity {
                 .setConfirmationPassword(confirmationPassword)
                 .build();
 
-        asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                .register(request, new StreamObserver<>() {
+        asyncStub.register(request, new StreamObserver<>() {
             private Optional<ServerError> serverError = Optional.empty();
 
             @Override

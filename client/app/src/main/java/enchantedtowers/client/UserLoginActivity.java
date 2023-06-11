@@ -1,5 +1,6 @@
 package enchantedtowers.client;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -10,8 +11,11 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
+import enchantedtowers.common.utils.proto.requests.LogoutRequest;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.LoginResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
@@ -53,8 +57,7 @@ public class UserLoginActivity extends BaseActivity {
                 .setPassword(password)
                 .build();
 
-        asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
-                .login(request, new StreamObserver<>() {
+        asyncStub.login(request, new StreamObserver<>() {
             private Optional<ServerError> serverError = Optional.empty();
 
             @Override
@@ -63,6 +66,20 @@ public class UserLoginActivity extends BaseActivity {
                 if (response.hasError()) {
                     serverError = Optional.of(response.getError());
                     logger.info("Error occurred: " + response.getError().getMessage());
+                }
+                else {
+                    // saving player id username
+                    ClientStorage.getInstance().setPlayerId(response.getId());
+                    ClientStorage.getInstance().setUsername(response.getUsername());
+
+                    // TODO: remove later
+                    /*String host = ServerApiStorage.getInstance().getClientHost();
+                    int port = ServerApiStorage.getInstance().getPort();
+                    var newChannel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
+                    var blockingStub = AuthServiceGrpc.newBlockingStub(newChannel);
+
+                    LogoutRequest request = LogoutRequest.newBuilder().setToken(response.getToken()).build();
+                    ActionResultResponse res = blockingStub.logout(request);*/
                 }
             }
 
@@ -79,10 +96,8 @@ public class UserLoginActivity extends BaseActivity {
                 }
                 else {
                     ClientUtils.showSnackbar(view, "Successful login. Redirecting to map...", Snackbar.LENGTH_LONG);
-                    // TODO: need to set player id (aka id of User model)
-                    // TODO: redirect to map activity
-                    /*Intent intent = new Intent(UserLoginActivity.this, MapActivity.class);
-                    startActivity(intent);*/
+                    Intent intent = new Intent(UserLoginActivity.this, MapActivity.class);
+                    startActivity(intent);
                 }
             }
         });
