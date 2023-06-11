@@ -13,16 +13,16 @@ public class Token {
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private Integer userId;
+    private User user;
 
     @Column(name="token")
     private String token;
 
 
-    Token() {}
+    public Token() {}
 
-    Token(int userId, @NonNull String token) {
-        this.userId = userId;
+    public Token(User user, @NonNull String token) {
+        this.user = user;
         this.token = token;
     }
 
@@ -35,11 +35,7 @@ public class Token {
     }
 
     public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
+        return user.getId();
     }
 
     public String getToken() {
@@ -52,6 +48,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token[id=" + id + ", userId=" + userId + ", token=" + token + "]";
+        return "Token[id=" + id + ", userId=" + user.getId() + ", token=" + token + "]";
     }
 }

@@ -1,7 +1,9 @@
 package services;
 
 import components.config.Config;
+import components.db.dao.TokensDao;
 import components.db.dao.UsersDao;
+import components.db.models.Token;
 import components.db.models.User;
 import components.utils.JwtUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
@@ -62,11 +64,20 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
             Optional<User> user = usersDao.findByEmail(request.getEmail());
             assert user.isPresent();
 
-            String jwsToken = JwtUtils.generateJWSToken(request.getEmail());
-            // save access token in db
+            final int userId = user.get().getId();
 
-            // TODO: set token
-            responseBuilder.setId(user.get().getId())
+            String jwsToken = JwtUtils.generateJWSToken(request.getEmail());
+
+            TokensDao tokensDao = new TokensDao();
+
+            // delete existing tokens
+            tokensDao.deleteByUserId(userId);
+
+            // save new token in db
+            Token token = new Token(user.get(), jwsToken);
+            tokensDao.save(token);
+
+            responseBuilder.setId(userId)
                     .setToken(jwsToken)
                     .setUsername(user.get().getUsername());
         }

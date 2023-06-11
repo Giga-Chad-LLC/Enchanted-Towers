@@ -20,7 +20,8 @@ public class UsersDao {
 
     public void save(User user) {
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
             // save user
             session.persist(user);
@@ -31,6 +32,9 @@ public class UsersDao {
             assert transaction != null;
             transaction.rollback();
             throw new RuntimeException(err);
+        }
+        finally {
+            session.close();
         }
     }
 

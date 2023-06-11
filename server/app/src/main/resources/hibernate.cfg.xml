@@ -23,5 +23,6 @@
 
         <!-- Mapping classes -->
         <mapping class="components.db.models.User" />
+        <mapping class="components.db.models.Token" />
     </session-factory>
 </hibernate-configuration>
