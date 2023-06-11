@@ -1,5 +1,6 @@
-package components.db;
+package components.db.dao;
 
+import components.db.HibernateUtil;
 import components.db.models.User;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.hibernate.Session;
@@ -17,11 +18,6 @@ public class UsersDao {
 
     private static final Logger logger = Logger.getLogger(UsersDao.class.getName());
 
-    public Optional<User> get(int id) {
-        // TODO
-        return null;
-    }
-
     public void save(User user) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -36,10 +32,6 @@ public class UsersDao {
             transaction.rollback();
             throw new RuntimeException(err);
         }
-    }
-
-    public void update(User user, UserDto dto) {
-        // TODO
     }
 
     public void updateUserRecord (User user) {
