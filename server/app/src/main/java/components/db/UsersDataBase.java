@@ -1,10 +1,10 @@
 package components.db;
 
+import components.db.models.User;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.query.*;
+import org.hibernate.query.Query;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,7 +37,9 @@ public class UsersDataBase {
         logger.log(Level.INFO, "Find Users in DataBase by email");
         Session session = HibernateUtil.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        Query<User> query = session.createQuery("FROM User WHERE email = :email", User.class);
+
+        String queryString = "SELECT u FROM User u WHERE u.email = :email";
+        Query<User> query = session.createQuery(queryString, User.class);
         query.setParameter("email", email);
 
         User user = query.uniqueResult();

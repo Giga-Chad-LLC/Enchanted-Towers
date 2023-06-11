@@ -1,13 +1,6 @@
 package services;
 
-import org.mindrot.jbcrypt.BCrypt;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import components.db.User;
+import components.db.models.User;
 import components.db.UsersDataBase;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.LogoutRequest;
@@ -17,6 +10,10 @@ import enchantedtowers.common.utils.proto.responses.LoginResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import io.grpc.stub.StreamObserver;
+import org.mindrot.jbcrypt.BCrypt;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final Logger logger = Logger.getLogger(AuthService.class.getName());

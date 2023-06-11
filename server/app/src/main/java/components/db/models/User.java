@@ -1,4 +1,4 @@
-package components.db;
+package components.db.models;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,18 +8,18 @@ import jakarta.persistence.Table;
 
 
 // TODO: move into db.models package
-//@Table(name = "users")
-@Entity
+@Entity(name="User")
+@Table(name = "users")
 public class User {
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    @Column(name = "id")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Integer id;
-//    @Column(name = "name")
+    @Column(name = "name")
     private String name;
-//    @Column(name = "hashed_password")
+    @Column(name = "hashed_password")
     private String hashedPassword;
-//    @Column(name = "email")
+    @Column(name = "email")
     private String email;
 //    @Column(name = "jwt_access", length = 100)
     private String jwtAccess;
