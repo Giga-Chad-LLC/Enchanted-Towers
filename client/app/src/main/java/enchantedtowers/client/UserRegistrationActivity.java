@@ -1,13 +1,13 @@
 package enchantedtowers.client;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.concurrent.TimeUnit;
 
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -43,9 +43,12 @@ public class UserRegistrationActivity extends AppCompatActivity {
                 .setEmail(userEmailTextInput.getText().toString())
                 .build();
 
-        authServiceStub.register(request, new StreamObserver<>() {
+        authServiceStub
+                .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                .register(request, new StreamObserver<>() {
             @Override
             public void onNext(ActionResultResponse value) {
+                // TODO: Toast can be made only on UI thread
                 if (value.hasError()) {
                     Toast.makeText(UserRegistrationActivity.this, value.getError().getMessage(), Toast.LENGTH_SHORT).show();
                 } else {
@@ -65,4 +68,3 @@ public class UserRegistrationActivity extends AppCompatActivity {
         });
     }
 }
-
