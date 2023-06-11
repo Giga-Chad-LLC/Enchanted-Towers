@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: enchanted_towers_db
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
