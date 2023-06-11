@@ -1,7 +1,7 @@
 package services;
 
+import components.db.UsersDao;
 import components.db.models.User;
-import components.db.UsersDataBase;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.LogoutRequest;
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
@@ -12,112 +12,134 @@ import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final Logger logger = Logger.getLogger(AuthService.class.getName());
-    private final UsersDataBase usersDataBase = new UsersDataBase();
 
-    //List<User> users = new ArrayList<>();
 
     @Override
-    public void register(RegistrationRequest request, StreamObserver<ActionResultResponse> responseObserver) {
-        User newUser = new User();
+    public synchronized void register(RegistrationRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+        // TODO: add confirmation password into request
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
-        newUser.setEmail(request.getEmail());
-        newUser.setName(request.getUsername());
-        newUser.setHashedPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
+        UsersDao usersDao = new UsersDao();
+        Optional<ServerError> serverError = validateRegistrationRequest(request, usersDao);
 
-        if (usersDataBase.findUserRecordByEmail(newUser.getEmail()) != null) {
-            ServerError error = ServerError.newBuilder().setMessage("User's name already exist").setType(ServerError.ErrorType.INVALID_REQUEST).build();
-            ActionResultResponse response = ActionResultResponse.newBuilder().setError(error).build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-            logger.log(Level.INFO, "Name of new user already exist");
+        if (serverError.isEmpty()) {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String hashedPassword = hashPassword(request.getPassword());
+
+            User user = new User(email, username, hashedPassword);
+            usersDao.save(user);
+
+            responseBuilder.setSuccess(true);
+        }
+        else {
+            // error occurred
+            logger.info("Cannot register user, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
-        if (usersDataBase.findUserRecordByName(newUser.getName()) != null) {
-            ServerError error = ServerError.newBuilder().setMessage("User's email already exist").setType(ServerError.ErrorType.INVALID_REQUEST).build();
-            ActionResultResponse response = ActionResultResponse.newBuilder().setError(error).build();
-            responseObserver.onNext(response);
-            logger.log(Level.INFO, "Email of new user already exist");
-            responseObserver.onCompleted();
-        }
-
-
-        //newUser.eMail = request.getEmail();
-        //newUser.userName = request.getUsername();
-        //newUser.password = request.getPassword();
-
-        /*for (var user: users) {
-            if (user.userName.equals(newUser.userName)) {
-                ServerError error = ServerError.newBuilder().setMessage("User already exist").setType(ServerError.ErrorType.INVALID_REQUEST).build();
-                ActionResultResponse response = ActionResultResponse.newBuilder().setError(error).build();
-                responseObserver.onNext(response);
-                responseObserver.onCompleted();
-                logger.log(Level.INFO, "Name of new user already exist");
-                return;
-            }
-
-            if (user.eMail.equals(newUser.eMail)) {
-                ServerError error = ServerError.newBuilder().setMessage("Email already exist").setType(ServerError.ErrorType.INVALID_REQUEST).build();
-                ActionResultResponse response = ActionResultResponse.newBuilder().setError(error).build();
-                responseObserver.onNext(response);
-                logger.log(Level.INFO, "Email of new user already exist");
-                responseObserver.onCompleted();
-                return;
-            }
-        }*/
-
-        responseObserver.onNext(ActionResultResponse.newBuilder().build());
-        usersDataBase.saveUserRecord(newUser);
-        //users.add(newUser);
-        logger.log(Level.INFO, "New user(Email: " + newUser.getEmail() + ", Name: " + newUser.getName() + ", Password:" +newUser.getHashedPassword() + ")");
-
+        responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
-
-        // TODO: rewrite
     }
 
     @Override
-    public void login(LoginRequest request, StreamObserver<LoginResponse> responseObserver) {
-        User newUser = new User();
+    public synchronized void login(LoginRequest request, StreamObserver<LoginResponse> responseObserver) {
+        LoginResponse.Builder responseBuilder = LoginResponse.newBuilder();
 
-        //newUser.eMail = request.getEmail();
-        //newUser.password = request.getPassword();
-        newUser.setEmail(request.getEmail());
-        newUser.setHashedPassword(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()));
-        logger.log(Level.INFO, "Next user(Email: " + newUser.getEmail()  + ", Password:" +newUser.getHashedPassword() + ")");
+        UsersDao usersDao = new UsersDao();
+        Optional<ServerError> serverError = validateLoginRequest(request, usersDao);
 
-        if (usersDataBase.findUserRecordByEmail(newUser.getEmail()) != null) {
-            LoginResponse response = LoginResponse.newBuilder().build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-            logger.log(Level.INFO, "User is find");
-            return;
+        if (serverError.isEmpty()) {
+            // retrieve user
+            Optional<User> user = usersDao.findByEmail(request.getEmail());
+            assert user.isPresent();
+
+            // TODO: set token
+            responseBuilder.setId(user.get().getId())
+                    .setUsername(user.get().getUsername());
+        }
+        else {
+            // error occurred
+            logger.info("Cannot login user, reason: '" + serverError.get().getMessage() + "'");
+            responseBuilder.setError(serverError.get());
         }
 
-        /*for (var user: users) {
-            if (user.eMail.equals(newUser.eMail) && user.password.equals(newUser.password)) {
-                LoginResponse response = LoginResponse.newBuilder().build();
-                responseObserver.onNext(response);
-                responseObserver.onCompleted();
-                logger.log(Level.INFO, "User is find");
-                return;
-            }
-        }*/
-
-        logger.log(Level.INFO, "User not find");
-        ServerError error = ServerError.newBuilder().setMessage("User not exist").setType(ServerError.ErrorType.INVALID_REQUEST).build();
-        LoginResponse response = LoginResponse.newBuilder().setError(error).build();
-        responseObserver.onNext(response);
+        responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
-        // TODO: rewrite
     }
 
     @Override
-    public void logout(LogoutRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+    public synchronized void logout(LogoutRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         // TODO: implement
+    }
+
+    private Optional<ServerError> validateRegistrationRequest(RegistrationRequest request, UsersDao dao) {
+        ServerError.Builder builder = ServerError.newBuilder();
+
+        String email = request.getEmail();
+        String username = request.getUsername();
+        String password = request.getPassword();
+
+        // if there are empty fields
+        if (email.isEmpty() || username.isEmpty() || password.isEmpty()) {
+            return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
+                    .setMessage("All fields must be filled")
+                    .build());
+        }
+
+        // if email already registered
+        if (dao.existsByEmail(email)) {
+            return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
+                            .setMessage("User with provided email already exists")
+                            .build());
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<ServerError> validateLoginRequest(LoginRequest request, UsersDao dao) {
+        ServerError.Builder builder = ServerError.newBuilder();
+
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        logger.info("validateLoginRequest: email=" + email + ", password=" + password);
+
+        // if there are empty fields
+        if (email.isEmpty() || password.isEmpty()) {
+            return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
+                    .setMessage("All fields must be filled")
+                    .build());
+        }
+
+        Optional<User> user = dao.findByEmail(email);
+
+        // user with provided email does not exist
+        if (user.isEmpty()) {
+            return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
+                    .setMessage("User with provided email does not exist")
+                    .build());
+        }
+
+        // passwords do not match
+        boolean passwordMatch = BCrypt.checkpw(password, user.get().getPassword());
+
+        if (!passwordMatch) {
+            return Optional.of(builder.setType(ServerError.ErrorType.INVALID_REQUEST)
+                    .setMessage("Provided password is incorrect")
+                    .build());
+        }
+
+        return Optional.empty();
+    }
+
+    private String hashPassword(String password) {
+        return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 }

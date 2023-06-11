@@ -10,6 +10,8 @@ import "responses/common/server-error.proto";
 
 
 message LoginResponse {
-  string token = 1;
-  response_models.ServerError error = 2;
+  int32 id = 1;
+  string username = 2;
+  string token = 3;
+  response_models.ServerError error = 4;
 };
