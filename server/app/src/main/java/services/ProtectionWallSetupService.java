@@ -1,6 +1,6 @@
 package services;
 
-import components.session.AttackSession;
+import components.mediator.TowersUpdatesMediator;
 import components.session.ProtectionWallSession;
 import components.session.ProtectionWallSessionManager;
 import components.time.Timeout;
@@ -8,17 +8,14 @@ import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
 import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.ServerError;
-import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
-import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
+import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrpc;
 import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.TemplateDescription;
 import enchantedtowers.game_models.Tower;
-import enchantedtowers.game_models.registry.TowersRegistry;
+import components.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
 import interactors.ProtectionWallSetupServiceInteractor;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -67,11 +64,16 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             timeouts.put(towerId, new Timeout(CAPTURE_LOCK_TIMEOUT_MS, () -> {
                 logger.info("Remove capture lock for tower with id " + towerId + " of owner with id " + playerId);
                 interactor.unsetCaptureLock();
+                // notifying listeners of tower update
+                TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
                 // removing timeout from map
                 timeouts.remove(towerId);
             }));
 
             logger.info("Successful capture of tower with id " + towerId + " by player with id " + playerId);
+
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
 
             responseBuilder.setSuccess(true);
         }
@@ -117,8 +119,8 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
      * Creates {@link ProtectionWallSession} associated with provided tower id and player id if the validation of request succeeds.
      */
     @Override
-    public synchronized void enterProtectionWallCreationSession(ProtectionWallIdRequest request, StreamObserver<SessionInfoResponse> streamObserver) {
-        SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
+    public synchronized void enterProtectionWallCreationSession(ProtectionWallIdRequest request, StreamObserver<SessionStateInfoResponse> streamObserver) {
+        SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
 
         Optional<ServerError> serverError = validateEnteringProtectionWallCreationSession(request);
 
@@ -141,21 +143,27 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             int sessionId = session.getId();
 
             // create cancel handler to hook the event of client closing the connection
-            var callObserver = (ServerCallStreamObserver<SessionInfoResponse>) streamObserver;
+            var callObserver = (ServerCallStreamObserver<SessionStateInfoResponse>) streamObserver;
             // `setOnCancelHandler` must be called before any `onNext` calls
             callObserver.setOnCancelHandler(() -> onProtectionWallCreatorStreamCancellation(session));
 
-            // send session id to client
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_ID);
-            responseBuilder.getSessionBuilder().setSessionId(sessionId);
+            // send session data to client
+            responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_CREATED);
+            responseBuilder.getSessionBuilder()
+                    .setSessionId(sessionId)
+                    .setLeftTimeMs(session.getExpirationTimeoutMs())
+                    .build();
 
             streamObserver.onNext(responseBuilder.build());
+
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
         }
         else {
             // error
             logger.info("Creation session cannot be entered, reason: '" + serverError.get().getMessage() + "'");
-
             responseBuilder.setError(serverError.get());
+
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
         }
@@ -284,6 +292,9 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             // tower is no longer under protection wall installation
             interactor.unsetProtectionWallInstallation();
 
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getTowerId()));
+
             logger.info("New enchantment of protection wall with id " + session.getProtectionWallId() +
                     " of tower with id " + session.getTowerId() + " installed");
 
@@ -317,9 +328,13 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         Optional<ServerError> serverError = validateEnchantmentDestroyRequest(request);
 
         if (serverError.isEmpty()) {
+            int towerId = request.getTowerId();
             // removing enchantment from protection wall
-            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(request.getTowerId());
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(towerId);
             interactor.destroyEnchantment(request.getProtectionWallId());
+
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
         }
         else {
             // error occurred
@@ -664,9 +679,13 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
                 " cancelled stream. Destroying corresponding protection wall session with id " +
                 session.getId() + "...");
 
-        ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
+        int towerId = session.getTowerId();
+
+        ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(towerId);
         // unblock other players from attacking the tower
         interactor.unsetProtectionWallInstallation();
+        // notifying listeners of tower update
+        TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
 
         sessionManager.remove(session);
     }
@@ -688,13 +707,17 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
             ProtectionWallSession session = sessionOpt.get();
             logger.info("onSessionExpired: session with id " + sessionId + " expired");
 
-            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(session.getTowerId());
+            int towerId = session.getTowerId();
+
+            ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(towerId);
             // unblock players from attacking the tower
             interactor.unsetProtectionWallInstallation();
+            // notifying listeners of tower update
+            TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
 
             // sending response with session expiration and closing connection
-            SessionInfoResponse.Builder responseBuilder = SessionInfoResponse.newBuilder();
-            responseBuilder.setType(SessionInfoResponse.ResponseType.SESSION_EXPIRED);
+            SessionStateInfoResponse.Builder responseBuilder = SessionStateInfoResponse.newBuilder();
+            responseBuilder.setType(SessionStateInfoResponse.ResponseType.SESSION_EXPIRED);
             responseBuilder.getExpirationBuilder().build();
 
             var responseObserver = session.getPlayerResponseObserver();

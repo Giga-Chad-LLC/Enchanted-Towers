@@ -5,6 +5,8 @@ option java_multiple_files = true;
 
 package services;
 
+// common
+import "common/empty.proto";
 // requests
 import "requests/towers-service/player-coordinates-request.proto";
 // responses
@@ -12,5 +14,6 @@ import "responses/towers-service/towers-aggregation-response.proto";
 
 
 service TowersService {
-    rpc GetTowersCoordinates(request_models.PlayerCoordinatesRequest) returns (response_models.TowersAggregationResponse) {}
+    rpc GetTowers(common.Empty) returns (response_models.TowersAggregationResponse) {}
+    rpc ListenTowersUpdates(common.Empty) returns (stream response_models.TowersAggregationResponse) {}
 }

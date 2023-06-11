@@ -5,7 +5,19 @@ option java_multiple_files = true;
 
 package response_models;
 
+// common
+import "common/vector2.proto";
+// responses
+import "responses/towers-service/protection-wall-response.proto";
+
+
 message TowerResponse {
-  double x = 1;
-  double y = 2;
+  int32 towerId = 1;
+  common.Vector2 position = 2;
+  repeated ProtectionWallResponse protectionWalls = 3;
+  optional int32 ownerId = 4;
+  optional int64 lastProtectionWallModificationTimestamp_ms = 5;
+  bool isUnderProtectionWallsInstallation = 6;
+  bool isUnderCaptureLock = 7;
+  bool isUnderAttack = 8;
 };

@@ -3,6 +3,7 @@ package components.session;
 import components.time.Timeout;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import enchantedtowers.game_logic.CanvasState;
 import enchantedtowers.game_models.TemplateDescription;
@@ -20,17 +21,18 @@ import java.util.logging.Logger;
  * <p>Caller must provide thread-safe execution of the methods.</p>
  */
 public class AttackSession {
-    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 10 * 1000; // 10s
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 120 * 1000; // 60s
 
     private final int id;
     private final int attackingPlayerId;
     private final int attackedTowerId;
     private final int protectionWallId;
-    private final StreamObserver<SessionInfoResponse> attackerResponseObserver;
+    private final StreamObserver<SessionStateInfoResponse> attackerResponseObserver;
     private final Timeout sessionExpirationTimeout;
     private final CanvasState canvasState = new CanvasState();
     private final SpellDrawingDescription currentSpellDescription = new SpellDrawingDescription();
     private final List<Spectator> spectators = new ArrayList<>();
+    private final long creationTimestampMs = System.currentTimeMillis();
 
     private static final Logger logger = Logger.getLogger(AttackSession.class.getName());
 
@@ -38,7 +40,7 @@ public class AttackSession {
                   int attackingPlayerId,
                   int attackedTowerId,
                   int protectionWallId,
-                  StreamObserver<SessionInfoResponse> attackerResponseObserver,
+                  StreamObserver<SessionStateInfoResponse> attackerResponseObserver,
                   IntConsumer onSessionExpiredCallback) {
         this.id = id;
         this.attackingPlayerId = attackingPlayerId;
@@ -52,6 +54,15 @@ public class AttackSession {
                 SESSION_EXPIRATION_TIMEOUT_MS,
                 () -> onSessionExpiredCallback.accept(this.id)
         );
+    }
+
+    public long getExpirationTimeoutMs() {
+        return SESSION_EXPIRATION_TIMEOUT_MS;
+    }
+
+    public long getLeftExecutionTimeMs() {
+        long pastTime_ms = System.currentTimeMillis() - creationTimestampMs;
+        return Math.max(getExpirationTimeoutMs() - pastTime_ms, 0);
     }
 
     public void cancelExpirationTimeout() {
@@ -110,7 +121,7 @@ public class AttackSession {
         return attackedTowerId;
     }
 
-    public StreamObserver<SessionInfoResponse> getAttackerResponseObserver() {
+    public StreamObserver<SessionStateInfoResponse> getAttackerResponseObserver() {
         return attackerResponseObserver;
     }
 

@@ -49,21 +49,24 @@ public class UserRegistrationActivity extends AppCompatActivity {
             @Override
             public void onNext(ActionResultResponse value) {
                 // TODO: Toast can be made only on UI thread
-                if (value.hasError()) {
-                    Toast.makeText(UserRegistrationActivity.this, value.getError().getMessage(), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(UserRegistrationActivity.this, "You are registered", Toast.LENGTH_SHORT).show();
-                }
+                runOnUiThread(() -> {
+                    if (value.hasError()) {
+                        Toast.makeText(UserRegistrationActivity.this, value.getError().getMessage(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(UserRegistrationActivity.this, "You are registered", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
             }
 
             @Override
             public void onError(Throwable t) {
-                Toast.makeText(UserRegistrationActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+                runOnUiThread(() -> Toast.makeText(UserRegistrationActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show());
             }
 
             @Override
             public void onCompleted() {
-                Toast.makeText(UserRegistrationActivity.this, "You are registered", Toast.LENGTH_SHORT).show();
+                runOnUiThread(() -> Toast.makeText(UserRegistrationActivity.this, "You are registered", Toast.LENGTH_SHORT).show());
             }
         });
     }

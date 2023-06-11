@@ -22,11 +22,12 @@ public class SpellsPatternMatchingAlgorithm {
         if (Utils.isValidPath(spellPoints)) {
             Spell pattern = new Spell(
                 Utils.getNormalizedPoints(spellPoints, offset),
-                offset
+                offset,
+                spellType
             );
 
             return getMatchedTemplate(
-                SpellBook.getTemplates(),
+                SpellBook.getTemplatesBySpellType(spellType),
                 pattern,
                 spellType,
                 new HausdorffMetric()
@@ -77,6 +78,8 @@ public class SpellsPatternMatchingAlgorithm {
 
         System.out.println("Matched template: " + matchedTemplateId);
 
+        // recalculate matched template boundaries
+        templateBounds = templates.get(matchedTemplateId).getBoundary();
         Vector2 patternOffset = pattern.getOffset();
         Vector2 matchedTemplateOffset = new Vector2(
                 patternOffset.x + (patternBounds.getWidth() - templateBounds.getWidth()) / 2,

@@ -17,13 +17,15 @@ import "responses/common/action-result-response.proto";
 import "responses/common/session-id-response.proto";
 import "responses/common/session-info-response.proto";
 import "responses/common/spell-finish-response.proto";
+import "responses/common/session-state-info-response.proto";
 import "responses/tower-attack-service/spectate-tower-attack-response.proto";
 import "responses/tower-attack-service/matched-spell-stats-response.proto";
 
 
+
 service TowerAttackService {
   rpc TryAttackTowerById(request_models.TowerIdRequest) returns (response_models.ActionResultResponse) {}
-  rpc AttackTowerById(request_models.TowerIdRequest) returns (stream response_models.SessionInfoResponse) {}
+  rpc AttackTowerById(request_models.TowerIdRequest) returns (stream response_models.SessionStateInfoResponse) {}
   // TODO: it seems like we don't even need this rpc
   rpc LeaveAttack(request_models.LeaveAttackRequest) returns (response_models.ActionResultResponse) {}
 

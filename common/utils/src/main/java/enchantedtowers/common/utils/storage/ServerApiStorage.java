@@ -13,6 +13,7 @@ public class ServerApiStorage {
     final String serverHost;
     final String clientHost;
     final int port;
+    final int channelTerminationAwaitingTimeout = 300; // ms
     final int clientRequestTimeout = 5000; // ms
 
     /**
@@ -27,8 +28,8 @@ public class ServerApiStorage {
      * </ol>
      */
     private ServerApiStorage() {
-        serverHost = "192.168.0.103";/*"localhost"*/;
-        clientHost = "192.168.0.103"/*"localhost"*//*"10.0.2.2"*/; // emulators
+        serverHost = "192.168.0.102";/*"localhost"*/;
+        clientHost = "192.168.0.102"/*"localhost"*//*"10.0.2.2"*/; // emulators
         // port is common for both client and server
         port = 50051/*8080*/;
     }
@@ -47,5 +48,9 @@ public class ServerApiStorage {
 
     public int getClientRequestTimeout() {
         return clientRequestTimeout;
+    }
+
+    public int getChannelTerminationAwaitingTimeout() {
+        return channelTerminationAwaitingTimeout;
     }
 }

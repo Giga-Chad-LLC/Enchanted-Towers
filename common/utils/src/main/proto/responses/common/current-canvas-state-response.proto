@@ -9,7 +9,7 @@ package response_models;
 import "common/vector2.proto";
 import "common/spell-type.proto";
 // responses
-import "responses/common/spell-description-response.proto";
+import "common/spell-description.proto";
 
 message CurrentCanvasStateResponse {
   message CurrentSpellState {
@@ -18,5 +18,5 @@ message CurrentCanvasStateResponse {
   }
 
   CurrentSpellState currentSpellState = 1;
-  repeated response_models.SpellDescriptionResponse spellDescriptions = 2;
+  repeated common.SpellDescription spellDescriptions = 2;
 };

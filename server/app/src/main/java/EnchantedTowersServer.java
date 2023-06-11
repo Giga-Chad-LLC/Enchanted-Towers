@@ -1,9 +1,13 @@
 import components.fs.FileReader;
+import components.fs.ResourceProvider;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import org.json.JSONException;
+import services.*;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -11,11 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import org.json.JSONException;
-import services.AuthService;
-import services.ProtectionWallSetupService;
-import services.TowerAttackService;
-import services.TowersService;
 
 
 public class EnchantedTowersServer {
@@ -26,12 +25,16 @@ public class EnchantedTowersServer {
         String host = ServerApiStorage.getInstance().getServerHost();
         int port = ServerApiStorage.getInstance().getPort();
 
+        // Executor executor = Executors.newSingleThreadExecutor(); // Create a single-threaded executor
+
         server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
                 // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
                 .addService(new AuthService())
                 .addService(new ProtectionWallSetupService())
                 .addService(new TowerAttackService())
                 .addService(new TowersService())
+                .addService(new SpellBookService())
+                // .executor(executor) // making server be single threaded
                 .build()
                 .start();
 
@@ -86,7 +89,7 @@ public class EnchantedTowersServer {
      */
     public static void main(String[] args) throws IOException, InterruptedException {
         // reading spell templates from json file
-        URL url = EnchantedTowersServer.class.getClassLoader().getResource("canvas_templates_config.json");
+        URL url = EnchantedTowersServer.class.getClassLoader().getResource(ResourceProvider.spellBookJSONFilename);
         loadSpellTemplatesFromFile(url);
 
         // starting server

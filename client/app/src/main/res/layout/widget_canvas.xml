@@ -2,11 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent">
 
     <enchantedtowers.client.components.canvas.CanvasWidget
+        android:id="@+id/canvas_widget"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFD5A4" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
