@@ -95,7 +95,6 @@ public class UserLoginActivity extends BaseActivity {
                     ClientUtils.showSnackbar(view, "Error occurred: " + serverError.get().getMessage(), Snackbar.LENGTH_LONG);
                 }
                 else {
-                    ClientUtils.showSnackbar(view, "Successful login. Redirecting to map...", Snackbar.LENGTH_LONG);
                     Intent intent = new Intent(UserLoginActivity.this, MapActivity.class);
                     startActivity(intent);
                 }
