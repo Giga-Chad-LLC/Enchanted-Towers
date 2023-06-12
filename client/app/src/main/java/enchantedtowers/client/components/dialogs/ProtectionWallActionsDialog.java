@@ -24,6 +24,7 @@ import enchantedtowers.client.components.data.ProtectionWallData;
 import enchantedtowers.client.components.map.TowerStatisticsDialogFragment;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.PlayerData;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -52,7 +53,9 @@ public class ProtectionWallActionsDialog extends BottomSheetDialogFragment {
         int port = ServerApiStorage.getInstance().getPort();
 
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        towerProtectAsyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
+        towerProtectAsyncStub = ProtectionWallSetupServiceGrpc
+                .newStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
     }
 
     @Nullable
