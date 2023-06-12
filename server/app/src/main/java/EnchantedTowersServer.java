@@ -3,7 +3,9 @@ import components.fs.ResourceProvider;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
+import interceptors.GameSessionTokenRequestInterceptor;
 import io.grpc.Server;
+import io.grpc.ServerInterceptors;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.json.JSONException;
 import services.*;
@@ -30,8 +32,14 @@ public class EnchantedTowersServer {
         server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
                 // GrpcServerBuilder.newServerBuilderForPort(port, InsecureServerCredentials.create())
                 .addService(new AuthService())
-                .addService(new ProtectionWallSetupService())
-                .addService(new TowerAttackService())
+                .addService(ServerInterceptors.intercept(
+                        new ProtectionWallSetupService(),
+                        new GameSessionTokenRequestInterceptor()
+                ))
+                .addService(ServerInterceptors.intercept(
+                        new TowerAttackService(),
+                        new GameSessionTokenRequestInterceptor()
+                ))
                 .addService(new TowersService())
                 .addService(new SpellBookService())
                 // .executor(executor) // making server be single threaded
