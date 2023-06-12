@@ -1,6 +1,6 @@
 package interceptors;
 
-import components.utils.JwtUtils;
+import components.utils.JwtTokenUtils;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import io.grpc.*;
 
@@ -20,7 +20,7 @@ public class AuthRequestInterceptor implements ServerInterceptor {
         logger.info("Validating user token: '" + userToken + "'");
 
         try {
-            JwtUtils.validate(userToken);
+            JwtTokenUtils.validate(userToken);
         }
         catch (Exception err) {
             logger.info("Invalid token: " + err.getMessage());

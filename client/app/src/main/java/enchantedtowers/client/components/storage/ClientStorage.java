@@ -18,6 +18,10 @@ public class ClientStorage {
         return playerData.jwtToken;
     }
 
+    public Optional<String> getGameSessionToken() {
+        return playerData.gameSessionToken;
+    }
+
     public Optional<Integer> getPlayerId() {
         return playerData.playerId;
     }
@@ -42,6 +46,10 @@ public class ClientStorage {
     // setters
     public void setJWTToken(String jwt) {
         playerData.jwtToken = Optional.of(jwt);
+    }
+
+    public void setGameSessionToken(String token) {
+        playerData.gameSessionToken = Optional.of(token);
     }
 
     public void setPlayerId(int playerId) {
@@ -69,6 +77,7 @@ public class ClientStorage {
 
     private static class PlayerData {
         public Optional<String> jwtToken = Optional.empty();
+        public Optional<String> gameSessionToken = Optional.empty();
         public Optional<Integer> playerId = Optional.empty();
         public Optional<String> username = Optional.empty();
         public Optional<Integer> sessionId = Optional.empty();

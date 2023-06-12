@@ -2,40 +2,36 @@ package enchantedtowers.client;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
-import enchantedtowers.client.components.fs.AndroidFileReader;
 import enchantedtowers.client.components.fs.JwtFileManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
+import enchantedtowers.common.utils.proto.responses.GameSessionTokenResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
-import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
-import enchantedtowers.game_models.SpellBook;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
+import io.grpc.stub.StreamObserver;
 
 
 public class MainActivity extends AppCompatActivity {
+    private static final Logger logger = Logger.getLogger(MainActivity.class.getName());
     private ManagedChannel channel;
     private AuthServiceGrpc.AuthServiceStub asyncStub;
-    private AtomicBoolean authServiceCallFinished = new AtomicBoolean(false);
+    private final AtomicBoolean authServiceCallFinished = new AtomicBoolean(false);
 
 
     @Override
@@ -54,7 +50,57 @@ public class MainActivity extends AppCompatActivity {
             channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
             asyncStub = AuthServiceGrpc.newStub(channel);
 
-            // TODO: make call to get game session token
+            JwtTokenRequest request = JwtTokenRequest.newBuilder().setToken(token.get()).build();
+
+            asyncStub.withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
+                    .createGameSessionToken(request, new StreamObserver<>() {
+                private Optional<ServerError> serverError = Optional.empty();
+
+                @Override
+                public void onNext(GameSessionTokenResponse response) {
+                    if (response.hasError()) {
+                        serverError = Optional.of(response.getError());
+                    }
+                    else {
+                        // setting data into client storage
+                        String gameSessionToken = response.getGameSessionToken();
+                        String username = response.getUsername();
+                        int playerId = response.getPlayerId();
+
+                        ClientStorage.getInstance().setGameSessionToken(gameSessionToken);
+                        ClientStorage.getInstance().setUsername(username);
+                        ClientStorage.getInstance().setPlayerId(playerId);
+                    }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.warning("Error occurred: " + t.getMessage());
+                    t.printStackTrace();
+                    View view = findViewById(R.id.mainActivityContainer);
+                    ClientUtils.showSnackbar(view, t.getMessage(), Snackbar.LENGTH_LONG);
+
+                    authServiceCallFinished.set(true);
+                }
+
+                @Override
+                public void onCompleted() {
+                    if (serverError.isPresent()) {
+                        View view = findViewById(R.id.mainActivityContainer);
+                        ClientUtils.showSnackbar(view, "Login required: " + serverError.get().getMessage(), Snackbar.LENGTH_LONG);
+                    }
+                    else {
+                        // redirect to map activity
+                        Intent intent = new Intent(MainActivity.this, MapActivity.class);
+                        startActivity(intent);
+                    }
+
+                    authServiceCallFinished.set(true);
+                }
+            });
+        }
+        else {
+            authServiceCallFinished.set(true);
         }
 
         /*
@@ -91,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         }
         */
 
-        if (authServiceCallFinished.get() || true) {
+        if (authServiceCallFinished.get()) {
             if (view.getId() == R.id.changeToSignUpActivity) {
                 Intent intent = new Intent(MainActivity.this, UserRegistrationActivity.class);
                 startActivity(intent);

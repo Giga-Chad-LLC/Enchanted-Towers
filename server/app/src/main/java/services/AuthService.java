@@ -1,10 +1,14 @@
 package services;
 
+import components.db.dao.GameSessionTokensDao;
 import components.db.dao.JwtTokensDao;
 import components.db.dao.UsersDao;
+import components.db.models.GameSessionToken;
 import components.db.models.JwtToken;
 import components.db.models.User;
-import components.utils.JwtUtils;
+import components.utils.GameSessionTokenUtils;
+import components.utils.JwtTokenUtils;
+import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
@@ -65,7 +69,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
             final int userId = user.get().getId();
 
-            String jwsToken = JwtUtils.generateJWSToken(request.getEmail());
+            String jwsToken = JwtTokenUtils.generateJWSToken(request.getEmail());
 
             JwtTokensDao jwtTokensDao = new JwtTokensDao();
 
@@ -97,7 +101,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         logger.info("logout: token=" + jws);
 
         try {
-            logger.info("token subject: '" + JwtUtils.validate(jws) + "'");
+            logger.info("token subject: '" + JwtTokenUtils.validate(jws) + "'");
             responseObserver.onNext(ActionResultResponse.newBuilder().build());
             responseObserver.onCompleted();
         }
@@ -109,10 +113,73 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     @Override
     public synchronized void createGameSessionToken(
             JwtTokenRequest request, StreamObserver<GameSessionTokenResponse> responseObserver) {
-        // validate jwt token
-        // remove previous game session tokens if any
-        // create new game session token
-        // return game session token
+        GameSessionTokenResponse.Builder responseBuilder = GameSessionTokenResponse.newBuilder();
+
+        GameSessionTokensDao sessionTokensDao = new GameSessionTokensDao();
+        Optional<ServerError> serverError = validateGameSessionTokenCreationRequest(request);
+
+        try {
+            if (serverError.isEmpty()) {
+                String jwtToken = request.getToken();
+                String userEmail = JwtTokenUtils.validate(jwtToken);
+
+                // retrieve user
+                UsersDao usersDao = new UsersDao();
+                Optional<User> user = usersDao.findByEmail(userEmail);
+
+                if (user.isEmpty()) {
+                    throw new Exception("User with email '" + userEmail + "' not found");
+                }
+
+                // remove game session token if any
+                sessionTokensDao.deleteByUserId(user.get().getId());
+
+                // create new game session token
+                GameSessionToken sessionToken = new GameSessionToken(user.get(), GameSessionTokenUtils.generateGameSessionToken());
+                sessionTokensDao.save(sessionToken);
+
+                // setting data into response
+                responseBuilder.setGameSessionToken(sessionToken.getToken())
+                        .setUsername(user.get().getUsername())
+                        .setPlayerId(user.get().getId());
+            }
+            else {
+                // error occurred
+                logger.info("Cannot create game session token, reason: '" + serverError.get().getMessage() + "'");
+                responseBuilder.setError(serverError.get());
+            }
+        }
+        catch (Exception err) {
+            logger.info("Error occurred: " + err.getMessage());
+            err.printStackTrace();
+
+            ServerError.Builder errorBuilder = ServerError.newBuilder();
+            ProtoModelsUtils.buildServerError(errorBuilder, ServerError.ErrorType.UNEXPECTED_ERROR, "Unexpected error occurred");
+            responseBuilder.setError(errorBuilder.build());
+        }
+
+        responseObserver.onNext(responseBuilder.build());
+        responseObserver.onCompleted();
+    }
+
+    private Optional<ServerError> validateGameSessionTokenCreationRequest(JwtTokenRequest request) {
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        try {
+            JwtTokenUtils.validate(request.getToken());
+        }
+        catch (Exception err) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder, ServerError.ErrorType.INVALID_REQUEST, "Invalid JWT token");
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+        else {
+            return Optional.empty();
+        }
     }
 
     private Optional<ServerError> validateRegistrationRequest(RegistrationRequest request, UsersDao dao) {

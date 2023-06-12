@@ -1,14 +1,13 @@
 package components.utils;
 
 import components.config.Config;
-import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import io.jsonwebtoken.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-public class JwtUtils {
+public class JwtTokenUtils {
     private static final long EXPIRATION_TIMEOUT_MS = 30L * 24 * 60 * 60 * 1000; // 30 days
 
     public static String generateJWSToken(@NonNull String payload) {
