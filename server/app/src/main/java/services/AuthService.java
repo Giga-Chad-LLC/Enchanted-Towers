@@ -30,7 +30,6 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
     @Override
     public synchronized void register(RegistrationRequest request, StreamObserver<ActionResultResponse> responseObserver) {
-        // TODO: add confirmation password into request
         ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
 
         UsersDao usersDao = new UsersDao();
