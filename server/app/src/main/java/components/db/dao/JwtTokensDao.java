@@ -1,7 +1,7 @@
 package components.db.dao;
 
 import components.db.HibernateUtil;
-import components.db.models.Token;
+import components.db.models.JwtToken;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
@@ -14,15 +14,15 @@ import java.util.logging.Logger;
 public class TokensDao {
     private static final Logger logger = Logger.getLogger(TokensDao.class.getName());
 
-    public void save(Token token) {
+    public void save(JwtToken jwtToken) {
         Transaction transaction = null;
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
             transaction = session.beginTransaction();
             // save user
-            session.persist(token);
+            session.persist(jwtToken);
             transaction.commit();
-            logger.info("Token: " + token + " saved in db");
+            logger.info("JwtToken: " + jwtToken + " saved in db");
         }
         catch (Exception err) {
             assert transaction != null;
@@ -40,7 +40,7 @@ public class TokensDao {
         try {
             transaction = session.beginTransaction();
 
-            Optional<Token> token = findByUserId(userId);
+            Optional<JwtToken> token = findByUserId(userId);
             boolean removed = false;
 
             if (token.isPresent()) {
@@ -61,21 +61,21 @@ public class TokensDao {
         }
     }
 
-    public Optional<Token> findByUserId(int userId) {
+    public Optional<JwtToken> findByUserId(int userId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             // SELECT u FROM User u WHERE u.email = :email
-            String queryString = "SELECT t FROM Token t WHERE t.user.id = :userId";
-            Query<Token> query = session.createQuery(queryString, Token.class);
+            String queryString = "SELECT t FROM JwtToken t WHERE t.user.id = :userId";
+            Query<JwtToken> query = session.createQuery(queryString, JwtToken.class);
             query.setParameter("userId", userId);
 
-            Token token = query.uniqueResult();
+            JwtToken jwtToken = query.uniqueResult();
 
-            if (token != null) {
-                logger.info("Found token: " + token);
-                return Optional.of(token);
+            if (jwtToken != null) {
+                logger.info("Found jwtToken: " + jwtToken);
+                return Optional.of(jwtToken);
             }
             else {
-                logger.info("No token associated with user id " + userId + " exists");
+                logger.info("No jwtToken associated with user id " + userId + " exists");
                 return Optional.empty();
             }
         }
