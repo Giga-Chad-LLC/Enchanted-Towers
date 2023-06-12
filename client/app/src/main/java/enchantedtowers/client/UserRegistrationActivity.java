@@ -26,7 +26,7 @@ import io.grpc.stub.StreamObserver;
 
 public class UserRegistrationActivity extends BaseActivity {
     private final static Logger logger = Logger.getLogger(UserRegistrationActivity.class.getName());
-    private ManagedChannel channel;
+    private Optional<ManagedChannel> channel;
     AuthServiceGrpc.AuthServiceStub asyncStub;
 
     @Override
@@ -38,8 +38,8 @@ public class UserRegistrationActivity extends BaseActivity {
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
 
-        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        asyncStub = AuthServiceGrpc.newStub(channel);
+        channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
+        asyncStub = AuthServiceGrpc.newStub(channel.get());
     }
 
     public void sendUserDataForRegistration(View view) {
@@ -92,5 +92,18 @@ public class UserRegistrationActivity extends BaseActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        if (channel.isPresent()) {
+            channel.get().shutdownNow();
+            try {
+                channel.get().awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException err) {
+                err.printStackTrace();
+            }
+        }
+        super.onDestroy();
     }
 }

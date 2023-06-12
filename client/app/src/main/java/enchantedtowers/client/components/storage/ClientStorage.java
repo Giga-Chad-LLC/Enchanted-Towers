@@ -52,6 +52,10 @@ public class ClientStorage {
         playerData.gameSessionToken = Optional.of(token);
     }
 
+    public void resetGameSessionToken() {
+        playerData.gameSessionToken = Optional.empty();
+    }
+
     public void setPlayerId(int playerId) {
         playerData.playerId = Optional.of(playerId);
     }

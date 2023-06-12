@@ -168,8 +168,6 @@ public class MainActivity extends AppCompatActivity {
                 err.printStackTrace();
             }
         }
-
-
         super.onDestroy();
     }
 }

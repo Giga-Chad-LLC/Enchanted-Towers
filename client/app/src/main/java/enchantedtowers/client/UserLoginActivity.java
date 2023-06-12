@@ -8,6 +8,7 @@ import android.widget.EditText;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.components.fs.JwtFileManager;
@@ -26,7 +27,7 @@ import io.grpc.stub.StreamObserver;
 public class UserLoginActivity extends BaseActivity {
     private final static Logger logger = Logger.getLogger(UserLoginActivity.class.getName());
 
-    private ManagedChannel channel;
+    private Optional<ManagedChannel> channel = Optional.empty();
     private AuthServiceGrpc.AuthServiceStub asyncStub;
 
     @Override
@@ -37,8 +38,8 @@ public class UserLoginActivity extends BaseActivity {
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
 
-        channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        asyncStub = AuthServiceGrpc.newStub(channel);
+        channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
+        asyncStub = AuthServiceGrpc.newStub(channel.get());
     }
 
     public void sendUserDataForLogin(View view) {
@@ -106,4 +107,16 @@ public class UserLoginActivity extends BaseActivity {
         });
     }
 
+    @Override
+    public void onDestroy() {
+        if (channel.isPresent()) {
+            channel.get().shutdownNow();
+            try {
+                channel.get().awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException err) {
+                err.printStackTrace();
+            }
+        }
+        super.onDestroy();
+    }
 }

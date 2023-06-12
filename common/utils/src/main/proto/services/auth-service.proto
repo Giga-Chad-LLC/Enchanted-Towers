@@ -9,6 +9,7 @@ package services;
 import "requests/auth-service/registration-request.proto";
 import "requests/auth-service/login-request.proto";
 import "requests/auth-service/jwt-token-request.proto";
+import "requests/auth-service/game-session-token-request.proto";
 // responses
 import "responses/auth-service/login-response.proto";
 import "responses/auth-service/game-session-token-response.proto";
@@ -20,4 +21,5 @@ service AuthService {
   rpc Login(request_models.LoginRequest) returns (response_models.LoginResponse) {}
   rpc Logout(request_models.JwtTokenRequest) returns (response_models.ActionResultResponse) {}
   rpc CreateGameSessionToken(request_models.JwtTokenRequest) returns (response_models.GameSessionTokenResponse) {}
+  rpc EstablishGameSession(request_models.GameSessionTokenRequest) returns (stream response_models.ActionResultResponse) {}
 }

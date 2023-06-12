@@ -42,7 +42,9 @@ import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
+import enchantedtowers.common.utils.proto.requests.GameSessionTokenRequest;
 import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.GameSessionTokenResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
@@ -94,6 +96,12 @@ public class MapFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         logger.log(Level.INFO, "Created with context '" + requireContext().getClass().getName() + "'");
+
+        String host = ServerApiStorage.getInstance().getClientHost();
+        int port = ServerApiStorage.getInstance().getPort();
+
+        channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
+        authServiceStub = AuthServiceGrpc.newStub(channel.get());
     }
 
     @Override
@@ -126,62 +134,112 @@ public class MapFragment extends Fragment {
             enableUserLocationAndRegisterLocationUpdatesListener();
 
             if (ClientStorage.getInstance().getGameSessionToken().isPresent()) {
-                requestTowers();
+                establishGameSession(this::requestTowers);
             }
             else {
-                // request game session token if not found
-                String host = ServerApiStorage.getInstance().getClientHost();
-                int port = ServerApiStorage.getInstance().getPort();
-
-                channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
-                authServiceStub = AuthServiceGrpc.newStub(channel.get());
-                // form request (assume that jwt token already stored in storage)
-                JwtTokenRequest request = JwtTokenRequest.newBuilder()
-                        .setToken(ClientStorage.getInstance().getJWTToken().get())
-                        .build();
-
-                // requesting game session token
-                logger.info("No game session token found. Requesting new one...");
-                authServiceStub.createGameSessionToken(request, new StreamObserver<>() {
-                    private Optional<ServerError> serverError = Optional.empty();
-
-                    @Override
-                    public void onNext(GameSessionTokenResponse response) {
-                        if (response.hasError()) {
-                            serverError = Optional.of(response.getError());
-                        }
-                        else {
-                            // setting data into client storage (assuming that username and player id already set)
-                            String gameSessionToken = response.getGameSessionToken();
-                            ClientStorage.getInstance().setGameSessionToken(gameSessionToken);
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        logger.warning("Error occurred: " + t.getMessage());
-                        t.printStackTrace();
-                        ClientUtils.showSnackbar(fragmentMapView, t.getMessage(), Snackbar.LENGTH_LONG);
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        if (serverError.isPresent()) {
-                            ClientUtils.showSnackbar(fragmentMapView, "Error occurred: " + serverError.get().getMessage() + ". Try to relaunch the game", Snackbar.LENGTH_LONG);
-                        }
-                        else {
-                            String sessionToken = ClientStorage.getInstance().getGameSessionToken().get();
-                            logger.info("New game session token granted: " + sessionToken);
-                            requestTowers();
-                        }
-                    }
-                });
+                // request game session token
+                requestGameSessionToken(() -> establishGameSession(this::requestTowers));
             }
-
-
         });
 
         return view;
+    }
+
+    private void establishGameSession(Runnable onSuccessCallback) {
+        String sessionToken = ClientStorage.getInstance().getGameSessionToken().get();
+        GameSessionTokenRequest request = GameSessionTokenRequest.newBuilder()
+                .setToken(sessionToken)
+                .build();
+
+        logger.info("Establishing game session connection...");
+        authServiceStub.establishGameSession(request, new StreamObserver<>() {
+            private Optional<ServerError> serverError = Optional.empty();
+            @Override
+            public void onNext(ActionResultResponse response) {
+                if (response.hasError()) {
+                    serverError = Optional.of(response.getError());
+                }
+                else {
+                    logger.info("Game session established success=" + response.getSuccess());
+                    // if establishment succeeded then run callback
+                    if (response.getSuccess()) {
+                        onSuccessCallback.run();
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                logger.warning("Error occurred: " + t.getMessage());
+                t.printStackTrace();
+                if (fragmentMapView != null) {
+                    ClientUtils.showSnackbar(fragmentMapView, t.getMessage(), Snackbar.LENGTH_LONG);
+                }
+
+                // removing game session token
+                ClientStorage.getInstance().resetGameSessionToken();
+            }
+
+            @Override
+            public void onCompleted() {
+                if (serverError.isPresent() && fragmentMapView != null) {
+                    ClientUtils.showSnackbar(fragmentMapView, "Error occurred: " + serverError.get().getMessage(), Snackbar.LENGTH_LONG);
+                }
+                else {
+                    logger.info("Game session ended");
+                }
+
+                // removing game session token
+                ClientStorage.getInstance().resetGameSessionToken();
+            }
+        });
+    }
+
+    private void requestGameSessionToken(Runnable onSuccessCallback) {
+        // form request (assume that jwt token already stored in storage)
+        JwtTokenRequest request = JwtTokenRequest.newBuilder()
+                .setToken(ClientStorage.getInstance().getJWTToken().get())
+                .build();
+
+        // requesting game session token
+        logger.info("No game session token found. Requesting new one...");
+        authServiceStub.createGameSessionToken(request, new StreamObserver<>() {
+            private Optional<ServerError> serverError = Optional.empty();
+
+            @Override
+            public void onNext(GameSessionTokenResponse response) {
+                if (response.hasError()) {
+                    serverError = Optional.of(response.getError());
+                }
+                else {
+                    // setting data into client storage (assuming that username and player id already set)
+                    String gameSessionToken = response.getGameSessionToken();
+                    ClientStorage.getInstance().setGameSessionToken(gameSessionToken);
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                logger.warning("Error occurred: " + t.getMessage());
+                t.printStackTrace();
+                if (fragmentMapView != null) {
+                    ClientUtils.showSnackbar(fragmentMapView, t.getMessage(), Snackbar.LENGTH_LONG);
+                }
+            }
+
+            @Override
+            public void onCompleted() {
+                if (serverError.isPresent()) {
+                    ClientUtils.showSnackbar(fragmentMapView, "Error occurred: " + serverError.get().getMessage() + ". Try to relaunch the game", Snackbar.LENGTH_LONG);
+                }
+                else {
+                    String sessionToken = ClientStorage.getInstance().getGameSessionToken().get();
+                    logger.info("New game session token granted: " + sessionToken);
+                    // running callback
+                    onSuccessCallback.run();
+                }
+            }
+        });
     }
 
     private void requestTowers() {
@@ -389,6 +447,9 @@ public class MapFragment extends Fragment {
                 err.printStackTrace();
             }
         }
+
+        // removing game session token
+        ClientStorage.getInstance().resetGameSessionToken();
 
         super.onDestroy();
     }

@@ -33,6 +33,24 @@ public class GameSessionTokensDao {
         }
     }
 
+    public void delete(GameSessionToken sessionToken) throws HibernateException {
+        Transaction transaction = null;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            transaction = session.beginTransaction();
+            session.remove(sessionToken);
+            transaction.commit();
+        }
+        catch (Exception err) {
+            assert transaction != null;
+            transaction.rollback();
+            throw new HibernateException(err);
+        }
+        finally {
+            session.close();
+        }
+    }
+
     public boolean deleteByUserId(int userId) throws HibernateException {
         Transaction transaction = null;
         Session session = HibernateUtil.getSessionFactory().openSession();
@@ -82,8 +100,34 @@ public class GameSessionTokensDao {
         }
     }
 
-    public boolean existsByUserId(int userId) {
+    public Optional<GameSessionToken> findByToken(String token) throws HibernateException {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String queryString = "SELECT t FROM GameSessionToken t WHERE t.token = :token";
+            Query<GameSessionToken> query = session.createQuery(queryString, GameSessionToken.class);
+            query.setParameter("token", token);
+
+            GameSessionToken sessionToken = query.uniqueResult();
+
+            if (sessionToken != null) {
+                logger.info("Found sessionToken: " + sessionToken);
+                return Optional.of(sessionToken);
+            }
+            else {
+                logger.info("No sessionToken associated with token '" + token + "' exists");
+                return Optional.empty();
+            }
+        }
+        catch (Exception err) {
+            throw new HibernateException(err);
+        }
+    }
+
+    public boolean existsByUserId(int userId) throws HibernateException {
         return findByUserId(userId).isPresent();
+    }
+
+    public boolean existsByToken(String token) throws HibernateException {
+        return findByToken(token).isPresent();
     }
 }
 

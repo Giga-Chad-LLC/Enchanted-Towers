@@ -9,14 +9,13 @@ import components.db.models.User;
 import components.utils.GameSessionTokenUtils;
 import components.utils.JwtTokenUtils;
 import components.utils.ProtoModelsUtils;
+import enchantedtowers.common.utils.proto.requests.GameSessionTokenRequest;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
-import enchantedtowers.common.utils.proto.responses.GameSessionTokenResponse;
-import enchantedtowers.common.utils.proto.responses.LoginResponse;
-import enchantedtowers.common.utils.proto.responses.ServerError;
+import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.jsonwebtoken.JwtException;
 import org.mindrot.jbcrypt.BCrypt;
@@ -160,6 +159,82 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void establishGameSession(GameSessionTokenRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+        Optional<ServerError> serverError = validateGameSessionEstablishmentRequest(request);
+
+        if (serverError.isEmpty()) {
+            responseBuilder.setSuccess(true);
+            responseObserver.onNext(responseBuilder.build());
+
+            // create cancel handler to hook the event of client closing the connection
+            var callObserver = (ServerCallStreamObserver<ActionResultResponse>) responseObserver;
+            // `setOnCancelHandler` must be called before any `onNext` calls
+            callObserver.setOnCancelHandler(() -> onClientStreamCancellation(request.getToken(), responseObserver));
+        }
+        else {
+            responseBuilder.setSuccess(false);
+            responseBuilder.setError(serverError.get());
+
+            responseObserver.onNext(responseBuilder.build());
+            responseObserver.onCompleted();
+        }
+    }
+
+    private void onClientStreamCancellation(String token, StreamObserver<ActionResultResponse> responseObserver) {
+        logger.info("onClientStreamCancellation: client disconnected, deleting game session token from db...");
+        // removing game session token
+        try {
+            GameSessionTokensDao tokensDao = new GameSessionTokensDao();
+            Optional<GameSessionToken> sessionToken = tokensDao.findByToken(token);
+
+            if (sessionToken.isPresent()) {
+                tokensDao.delete(sessionToken.get());
+            }
+            else {
+                logger.warning("Session token associated with token '" + token + "' not found");
+            }
+        }
+        catch (Exception err) {
+            logger.warning("Error occurred: " + err.getMessage());
+            err.printStackTrace();
+        }
+        finally {
+            responseObserver.onCompleted();
+        }
+    }
+
+    private Optional<ServerError> validateGameSessionEstablishmentRequest(GameSessionTokenRequest request) {
+        Optional<ServerError> serverError = Optional.empty();
+
+        try {
+            String token = request.getToken();
+            GameSessionTokensDao tokensDao = new GameSessionTokensDao();
+
+            if (!tokensDao.existsByToken(token)) {
+                String message = "Game session token associated with provided token '" + request.getToken() + "' not found";
+                logger.info(message);
+
+                serverError = Optional.of(ServerError.newBuilder()
+                        .setType(ServerError.ErrorType.INVALID_REQUEST)
+                        .setMessage(message)
+                        .build());
+            }
+        }
+        catch (Exception err) {
+            logger.warning("Error occurred: " + err.getMessage());
+            err.printStackTrace();
+
+            serverError = Optional.of(ServerError.newBuilder()
+                    .setType(ServerError.ErrorType.UNEXPECTED_ERROR)
+                    .setMessage("Unexpected error occurred")
+                    .build());
+        }
+
+        return serverError;
     }
 
     private Optional<ServerError> validateGameSessionTokenCreationRequest(JwtTokenRequest request) {
