@@ -36,6 +36,7 @@ import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.PlayerData;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
@@ -84,8 +85,14 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         int port = ServerApiStorage.getInstance().getPort();
 
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        towerAttackAsyncStub = TowerAttackServiceGrpc.newStub(channel);
-        towerProtectAsyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
+
+        towerAttackAsyncStub = TowerAttackServiceGrpc
+                .newStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
+
+        towerProtectAsyncStub = ProtectionWallSetupServiceGrpc
+                .newStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
 
         adapter = new UsedSpellsAdapter(usedSpellImageIds);
     }
