@@ -10,6 +10,7 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.components.fs.JwtFileManager;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
@@ -59,7 +60,6 @@ public class UserLoginActivity extends BaseActivity {
 
             @Override
             public void onNext(LoginResponse response) {
-                // TODO: save token somewhere
                 if (response.hasError()) {
                     serverError = Optional.of(response.getError());
                     logger.info("Error occurred: " + response.getError().getMessage());
@@ -69,6 +69,12 @@ public class UserLoginActivity extends BaseActivity {
                     ClientStorage.getInstance().setPlayerId(response.getId());
                     ClientStorage.getInstance().setUsername(response.getUsername());
                     ClientStorage.getInstance().setJWTToken(response.getToken());
+
+                    // saving jwt token into file
+                    JwtFileManager jwtFileManager = new JwtFileManager(UserLoginActivity.this);
+                    if (!jwtFileManager.storeJwtToken(response.getToken())) {
+                        logger.warning("Couldn't store jwt token into file");
+                    }
 
                     // TODO: remove later
                     /*String host = ServerApiStorage.getInstance().getClientHost();

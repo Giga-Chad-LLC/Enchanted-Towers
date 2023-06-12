@@ -24,5 +24,6 @@
         <!-- Mapping classes -->
         <mapping class="components.db.models.User" />
         <mapping class="components.db.models.JwtToken" />
+        <mapping class="components.db.models.GameSessionToken" />
     </session-factory>
 </hibernate-configuration>

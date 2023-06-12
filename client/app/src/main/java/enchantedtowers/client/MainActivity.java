@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         Optional<String> token = jwtFileManager.getJwtToken();
 
         if (token.isPresent()) {
+            logger.info("JWT token present: '" + token.get() + "'");
+
             // make call to AuthService to retrieve game session token
             String host = ServerApiStorage.getInstance().getClientHost();
             int port = ServerApiStorage.getInstance().getPort();

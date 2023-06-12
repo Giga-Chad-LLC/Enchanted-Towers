@@ -62,7 +62,7 @@ public class GameSessionTokensDao {
 
     public Optional<GameSessionToken> findByUserId(int userId) throws HibernateException {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String queryString = "SELECT t FROM JwtToken t WHERE t.user.id = :userId";
+            String queryString = "SELECT t FROM GameSessionToken t WHERE t.user.id = :userId";
             Query<GameSessionToken> query = session.createQuery(queryString, GameSessionToken.class);
             query.setParameter("userId", userId);
 

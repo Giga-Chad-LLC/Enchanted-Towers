@@ -11,3 +11,9 @@ CREATE TABLE IF NOT EXISTS jwt_tokens (
     user_id INTEGER UNIQUE REFERENCES users(id),
     token VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS game_session_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER UNIQUE REFERENCES users(id),
+    token VARCHAR(255) NOT NULL
+);
