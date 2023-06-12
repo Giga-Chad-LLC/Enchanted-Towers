@@ -304,14 +304,6 @@ class AttackEventWorker extends Thread {
                 // redirect to base activity
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(), MapActivity.class, e.getMessage());
-
-                /*Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                intent.putExtra("showToastOnStart", true);
-                intent.putExtra("toastMessage", e.getMessage());
-
-                canvasWidget.getContext().startActivity(intent);*/
             }
         }
 

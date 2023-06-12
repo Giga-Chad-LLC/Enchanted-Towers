@@ -32,8 +32,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.MainActivity;
-import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.dialogs.EnableGPSSuggestionDialog;
 import enchantedtowers.client.components.permissions.PermissionManager;
@@ -172,10 +170,6 @@ public class MapFragment extends Fragment {
             public void onError(Throwable t) {
                 logger.warning("Error occurred: " + t.getMessage());
                 t.printStackTrace();
-                if (fragmentMapView != null) {
-                    ClientUtils.showSnackbar(fragmentMapView, t.getMessage(), Snackbar.LENGTH_LONG);
-                }
-
                 // removing game session token
                 ClientStorage.getInstance().resetGameSessionToken();
             }
@@ -222,9 +216,6 @@ public class MapFragment extends Fragment {
             public void onError(Throwable t) {
                 logger.warning("Error occurred: " + t.getMessage());
                 t.printStackTrace();
-                if (fragmentMapView != null) {
-                    ClientUtils.showSnackbar(fragmentMapView, t.getMessage(), Snackbar.LENGTH_LONG);
-                }
             }
 
             @Override
@@ -249,7 +240,6 @@ public class MapFragment extends Fragment {
             @Override
             public void onError(Throwable t) {
                 logger.severe("Error requesting towers: " + t.getMessage());
-                ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
             }
 
             @Override
