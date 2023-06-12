@@ -11,8 +11,8 @@ import java.util.logging.Logger;
 
 
 // TODO: NEVER throw RuntimeException, only checked exceptions!
-public class TokensDao {
-    private static final Logger logger = Logger.getLogger(TokensDao.class.getName());
+public class JwtTokensDao {
+    private static final Logger logger = Logger.getLogger(JwtTokensDao.class.getName());
 
     public void save(JwtToken jwtToken) {
         Transaction transaction = null;

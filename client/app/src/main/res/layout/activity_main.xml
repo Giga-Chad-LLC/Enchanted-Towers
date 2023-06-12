@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
 
-    <EditText
+    <!--<EditText
         android:id="@+id/main_activity_player_id_text_input"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
@@ -52,7 +52,16 @@
         app:barrierAllowsGoneWidgets="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />-->
+
+    <Button
+        android:id="@+id/changeToLoginActivity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="changeActivity"
+        android:text="Login"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/changeToSignUpActivity"
@@ -62,19 +71,10 @@
         android:onClick="changeActivity"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
+        app:layout_constraintTop_toBottomOf="@+id/changeToLoginActivity" />
 
-    <Button
-        android:id="@+id/changeToLoginActivity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="changeActivity"
-        android:text="Log in"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/changeToSignUpActivity" />
 
-    <Button
+    <!--<Button
         android:id="@+id/changeToMapActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -90,6 +90,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        tools:layout_editor_absoluteY="0dp" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

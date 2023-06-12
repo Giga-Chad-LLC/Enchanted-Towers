@@ -1,25 +1,24 @@
 package services;
 
-import components.config.Config;
-import components.db.dao.TokensDao;
+import components.db.dao.JwtTokensDao;
 import components.db.dao.UsersDao;
-import components.db.models.Token;
+import components.db.models.JwtToken;
 import components.db.models.User;
 import components.utils.JwtUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
-import enchantedtowers.common.utils.proto.requests.LogoutRequest;
+import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.GameSessionTokenResponse;
 import enchantedtowers.common.utils.proto.responses.LoginResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import io.grpc.stub.StreamObserver;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.JwtException;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 import java.util.logging.Logger;
-import javax.crypto.SecretKey;
 
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final Logger logger = Logger.getLogger(AuthService.class.getName());
@@ -68,14 +67,14 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
             String jwsToken = JwtUtils.generateJWSToken(request.getEmail());
 
-            TokensDao tokensDao = new TokensDao();
+            JwtTokensDao jwtTokensDao = new JwtTokensDao();
 
             // delete existing tokens
-            tokensDao.deleteByUserId(userId);
+            jwtTokensDao.deleteByUserId(userId);
 
-            // save new token in db
-            Token token = new Token(user.get(), jwsToken);
-            tokensDao.save(token);
+            // save new jwtToken in db
+            JwtToken jwtToken = new JwtToken(user.get(), jwsToken);
+            jwtTokensDao.save(jwtToken);
 
             responseBuilder.setId(userId)
                     .setToken(jwsToken)
@@ -93,7 +92,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
     // TODO: remove this rpc method
     @Override
-    public synchronized void logout(LogoutRequest request, StreamObserver<ActionResultResponse> responseObserver) {
+    public synchronized void logout(JwtTokenRequest request, StreamObserver<ActionResultResponse> responseObserver) {
         String jws = request.getToken();
         logger.info("logout: token=" + jws);
 
@@ -105,6 +104,15 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         catch (JwtException err) {
             logger.warning("Error: " + err);
         }
+    }
+
+    @Override
+    public synchronized void createGameSessionToken(
+            JwtTokenRequest request, StreamObserver<GameSessionTokenResponse> responseObserver) {
+        // validate jwt token
+        // remove previous game session tokens if any
+        // create new game session token
+        // return game session token
     }
 
     private Optional<ServerError> validateRegistrationRequest(RegistrationRequest request, UsersDao dao) {

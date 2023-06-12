@@ -8,14 +8,16 @@ package services;
 // requests
 import "requests/auth-service/registration-request.proto";
 import "requests/auth-service/login-request.proto";
-import "requests/auth-service/logout-request.proto";
+import "requests/auth-service/jwt-token-request.proto";
 // responses
 import "responses/auth-service/login-response.proto";
+import "responses/auth-service/game-session-token-response.proto";
 import "responses/common/action-result-response.proto";
 
 
 service AuthService {
   rpc Register(request_models.RegistrationRequest) returns (response_models.ActionResultResponse) {}
   rpc Login(request_models.LoginRequest) returns (response_models.LoginResponse) {}
-  rpc Logout(request_models.LogoutRequest) returns (response_models.ActionResultResponse) {}
+  rpc Logout(request_models.JwtTokenRequest) returns (response_models.ActionResultResponse) {}
+  rpc CreateGameSessionToken(request_models.JwtTokenRequest) returns (response_models.GameSessionTokenResponse) {}
 }

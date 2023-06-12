@@ -8,14 +8,11 @@ import android.widget.EditText;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.requests.LoginRequest;
-import enchantedtowers.common.utils.proto.requests.LogoutRequest;
-import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
 import enchantedtowers.common.utils.proto.responses.LoginResponse;
 import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;

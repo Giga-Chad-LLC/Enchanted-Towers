@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 @Entity
-@Table(name = "tokens")
-public class Token {
+@Table(name = "jwt_tokens")
+public class JwtToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -19,9 +19,9 @@ public class Token {
     private String token;
 
 
-    public Token() {}
+    public JwtToken() {}
 
-    public Token(User user, @NonNull String token) {
+    public JwtToken(User user, @NonNull String token) {
         this.user = user;
         this.token = token;
     }
@@ -48,6 +48,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token[id=" + id + ", userId=" + user.getId() + ", token=" + token + "]";
+        return "JwtToken[id=" + id + ", userId=" + user.getId() + ", token=" + token + "]";
     }
 }

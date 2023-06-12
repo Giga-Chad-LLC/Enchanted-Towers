@@ -19,13 +19,17 @@ public class JwtUtils {
                 .signWith(key).compact();
     }
 
-    public static String validate(@NonNull String jws) {
+    public static String validate(String jws) throws JwtException {
+        if (jws == null) {
+            throw new JwtException("No token provided");
+        }
+
         JwtParserBuilder parserBuilder = Jwts.parserBuilder().setSigningKey(Config.getSecretKey());
         Jws<Claims> jwsClaims = parserBuilder.build().parseClaimsJws(jws);
         Claims claims = jwsClaims.getBody();
 
         if (isExpired(claims.getExpiration())) {
-            throw new ExpiredJwtException(jwsClaims.getHeader(), claims, "Token expired: " + jws);
+            throw new ExpiredJwtException(jwsClaims.getHeader(), claims, "JwtToken expired: " + jws);
         }
 
         return claims.getSubject();
