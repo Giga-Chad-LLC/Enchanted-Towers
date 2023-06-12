@@ -7,4 +7,5 @@ package common;
 
 message PlayerData {
   int32 playerId = 1;
+  string username = 2;
 };

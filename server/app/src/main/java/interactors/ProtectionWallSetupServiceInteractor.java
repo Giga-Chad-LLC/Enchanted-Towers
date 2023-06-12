@@ -16,8 +16,8 @@ public class ProtectionWallSetupServiceInteractor {
         this.tower = TowersRegistry.getInstance().getTowerById(towerId).get();
     }
 
-    public void setTowerOwner(int playerId) {
-        tower.setOwnerId(playerId);
+    public void setTowerOwner(int playerId, String username) {
+        tower.setOwnerData(playerId, username);
     }
 
     public void setCaptureLock() {

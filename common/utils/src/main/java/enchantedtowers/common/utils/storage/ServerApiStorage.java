@@ -1,5 +1,7 @@
 package enchantedtowers.common.utils.storage;
 
+import io.grpc.Metadata;
+
 public class ServerApiStorage {
     static private ServerApiStorage instance = null;
     static public ServerApiStorage getInstance() {
@@ -8,6 +10,9 @@ public class ServerApiStorage {
         }
         return instance;
     }
+
+    public static final Metadata.Key<String> GAME_SESSION_TOKEN_METADATA_KEY =
+            Metadata.Key.of("game-session-token", Metadata.ASCII_STRING_MARSHALLER);
 
     // member fields
     final String serverHost;
@@ -28,10 +33,10 @@ public class ServerApiStorage {
      * </ol>
      */
     private ServerApiStorage() {
-        serverHost = "localhost";
-        clientHost = "10.0.2.2"; // emulators
+        serverHost = "192.168.0.102";/*"localhost"*/;
+        clientHost = "192.168.0.102"/*"localhost"*//*"10.0.2.2"*/; // emulators
         // port is common for both client and server
-        port = 8080;
+        port = 50051/*8080*/;
     }
 
     public String getServerHost() {

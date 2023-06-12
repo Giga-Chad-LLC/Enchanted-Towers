@@ -66,6 +66,8 @@ public class CreateTowersResponseInteractor {
                 .setIsUnderAttack(tower.isUnderAttack());
 
         tower.getOwnerId().ifPresent(towerResponseBuilder::setOwnerId);
+        tower.getOwnerUsername().ifPresent(towerResponseBuilder::setOwnerUsername);
+
         tower.getLastProtectionWallModificationTimestamp().ifPresent(
                 timestamp -> towerResponseBuilder.setLastProtectionWallModificationTimestampMs(timestamp.toEpochMilli()));
 

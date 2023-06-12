@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_package = "enchantedtowers.common.utils.proto.services";
+option java_multiple_files = true;
+
+package services;
+
+// requests
+import "requests/auth-service/registration-request.proto";
+import "requests/auth-service/login-request.proto";
+import "requests/auth-service/jwt-token-request.proto";
+import "requests/auth-service/game-session-token-request.proto";
+// responses
+import "responses/auth-service/login-response.proto";
+import "responses/auth-service/game-session-token-response.proto";
+import "responses/common/action-result-response.proto";
+
+
+service AuthService {
+  rpc Register(request_models.RegistrationRequest) returns (response_models.ActionResultResponse) {}
+  rpc Login(request_models.LoginRequest) returns (response_models.LoginResponse) {}
+  rpc CreateGameSessionToken(request_models.JwtTokenRequest) returns (response_models.GameSessionTokenResponse) {}
+  rpc EstablishGameSession(request_models.GameSessionTokenRequest) returns (stream response_models.ActionResultResponse) {}
+}
