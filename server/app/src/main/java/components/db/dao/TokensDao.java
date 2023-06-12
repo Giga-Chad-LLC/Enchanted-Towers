@@ -2,9 +2,6 @@ package components.db.dao;
 
 import components.db.HibernateUtil;
 import components.db.models.Token;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaDelete;
-import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
@@ -12,6 +9,8 @@ import org.hibernate.query.Query;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+
+// TODO: NEVER throw RuntimeException, only checked exceptions!
 public class TokensDao {
     private static final Logger logger = Logger.getLogger(TokensDao.class.getName());
 
