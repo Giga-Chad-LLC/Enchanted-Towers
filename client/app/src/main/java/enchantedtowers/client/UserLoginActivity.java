@@ -76,15 +76,6 @@ public class UserLoginActivity extends BaseActivity {
                     if (!jwtFileManager.storeJwtToken(response.getToken())) {
                         logger.warning("Couldn't store jwt token into file");
                     }
-
-                    // TODO: remove later
-                    /*String host = ServerApiStorage.getInstance().getClientHost();
-                    int port = ServerApiStorage.getInstance().getPort();
-                    var newChannel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-                    var blockingStub = AuthServiceGrpc.newBlockingStub(newChannel);
-
-                    LogoutRequest request = LogoutRequest.newBuilder().setToken(response.getToken()).build();
-                    ActionResultResponse res = blockingStub.logout(request);*/
                 }
             }
 

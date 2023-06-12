@@ -10,14 +10,16 @@ import components.utils.GameSessionTokenUtils;
 import components.utils.JwtTokenUtils;
 import components.utils.ProtoModelsUtils;
 import enchantedtowers.common.utils.proto.requests.GameSessionTokenRequest;
-import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
+import enchantedtowers.common.utils.proto.requests.LoginRequest;
 import enchantedtowers.common.utils.proto.requests.RegistrationRequest;
-import enchantedtowers.common.utils.proto.responses.*;
+import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
+import enchantedtowers.common.utils.proto.responses.GameSessionTokenResponse;
+import enchantedtowers.common.utils.proto.responses.LoginResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import io.jsonwebtoken.JwtException;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
@@ -91,22 +93,6 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         responseObserver.onNext(responseBuilder.build());
         responseObserver.onCompleted();
-    }
-
-    // TODO: remove this rpc method
-    @Override
-    public synchronized void logout(JwtTokenRequest request, StreamObserver<ActionResultResponse> responseObserver) {
-        String jws = request.getToken();
-        logger.info("logout: token=" + jws);
-
-        try {
-            logger.info("token subject: '" + JwtTokenUtils.validate(jws) + "'");
-            responseObserver.onNext(ActionResultResponse.newBuilder().build());
-            responseObserver.onCompleted();
-        }
-        catch (JwtException err) {
-            logger.warning("Error: " + err);
-        }
     }
 
     @Override
