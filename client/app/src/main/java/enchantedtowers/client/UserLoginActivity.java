@@ -40,6 +40,14 @@ public class UserLoginActivity extends BaseActivity {
 
         channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
         asyncStub = AuthServiceGrpc.newStub(channel.get());
+
+        // set up redirection link
+        View redirectToSignUpActivityView = findViewById(R.id.redirectToSignUpActivity);
+        redirectToSignUpActivityView.setOnClickListener(v -> {
+            // redirect to sign up activity
+            Intent intent = new Intent(this, UserRegistrationActivity.class);
+            startActivity(intent);
+        });
     }
 
     public void sendUserDataForLogin(View view) {
