@@ -8,12 +8,13 @@ import java.util.logging.Logger;
 
 
 public class GameSessionTokenRequestInterceptor implements ServerInterceptor {
-
     private final Logger logger = Logger.getLogger(GameSessionTokenRequestInterceptor.class.getName());
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
-            ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> next) {
+            ServerCall<ReqT, RespT> serverCall,
+            Metadata metadata,
+            ServerCallHandler<ReqT, RespT> next) {
 
         var gameSessionToken = metadata.get(ServerApiStorage.GAME_SESSION_TOKEN_METADATA_KEY);
 
