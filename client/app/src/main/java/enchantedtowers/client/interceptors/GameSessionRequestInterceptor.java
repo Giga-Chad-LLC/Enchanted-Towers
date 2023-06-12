@@ -15,19 +15,20 @@ import io.grpc.MethodDescriptor;
 public class GameSessionRequestInterceptor implements ClientInterceptor {
     private final static Logger logger = Logger.getLogger(GameSessionRequestInterceptor.class.getName());
 
+    @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-            final MethodDescriptor<ReqT, RespT> methodDescriptor,
-            final CallOptions callOptions,
-            final Channel channel) {
-
-        return new ForwardingClientCall.SimpleForwardingClientCall<>(channel.newCall(methodDescriptor, callOptions)) {
+            MethodDescriptor<ReqT, RespT> method,
+            CallOptions callOptions,
+            Channel next
+    ) {
+        return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
             @Override
-            public void start(ClientCall.Listener<RespT> responseListener, Metadata metadata) {
+            public void start(Listener<RespT> responseListener, Metadata headers) {
                 String gameSessionToken = ClientStorage.getInstance().getGameSessionToken().get();
-                logger.info("Setting game session token into request");
+                logger.info("Setting game session token into request: " + gameSessionToken);
 
-                metadata.put(ServerApiStorage.GAME_SESSION_TOKEN_METADATA_KEY, gameSessionToken);
-                super.start(responseListener, metadata);
+                headers.put(ServerApiStorage.GAME_SESSION_TOKEN_METADATA_KEY, gameSessionToken);
+                super.start(responseListener, headers);
             }
         };
     }

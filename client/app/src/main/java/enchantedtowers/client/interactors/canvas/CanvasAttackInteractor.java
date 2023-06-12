@@ -29,6 +29,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
@@ -202,7 +203,9 @@ class AttackEventWorker extends Thread {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
-        blockingStub = TowerAttackServiceGrpc.newBlockingStub(channel);
+        blockingStub = TowerAttackServiceGrpc
+                .newBlockingStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
     }
 
     @Override
@@ -340,7 +343,9 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             String host = ServerApiStorage.getInstance().getClientHost();
             int port = ServerApiStorage.getInstance().getPort();
             channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-            asyncStub = TowerAttackServiceGrpc.newStub(channel);
+            asyncStub = TowerAttackServiceGrpc
+                    .newStub(channel)
+                    .withInterceptors(new GameSessionRequestInterceptor());
         }
 
         callAsyncAttackTowerById(canvasWidget);
