@@ -11,8 +11,8 @@ public class ServerApiStorage {
         return instance;
     }
 
-    public static final Metadata.Key<String> AUTHORIZATION_METADATA_KEY =
-            Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+    public static final Metadata.Key<String> GAME_SESSION_TOKEN_METADATA_KEY =
+            Metadata.Key.of("game-session-token", Metadata.ASCII_STRING_MARSHALLER);
 
     // member fields
     final String serverHost;
