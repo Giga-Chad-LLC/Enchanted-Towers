@@ -104,41 +104,9 @@ public class MainActivity extends AppCompatActivity {
         else {
             authServiceCallFinished.set(true);
         }
-
-        /*
-        // TODO: temporary solution (must be done after registration/login)
-        Button button = findViewById(R.id.main_activity_set_player_id_button);
-        EditText playerIdTextInput = findViewById(R.id.main_activity_player_id_text_input);
-        button.setOnClickListener(v -> {
-            try {
-                int playerId = Integer.parseInt(playerIdTextInput.getText().toString());
-                ClientStorage.getInstance().setPlayerId(playerId);
-
-                ClientUtils.showSnackbar(playerIdTextInput, "Player id set to " + playerId, Snackbar.LENGTH_SHORT);
-            } catch (NumberFormatException err) {
-                ClientUtils.showSnackbar(playerIdTextInput, err.getMessage(), Snackbar.LENGTH_SHORT);
-            }
-        });
-        */
     }
 
     public void changeActivity(View view) {
-        /*
-        if (view.getId() == R.id.changeToAttackTowerMenu) {
-            Intent intent = new Intent(MainActivity.this, AttackTowerMenuActivity.class);
-            startActivity(intent);
-        }
-        else if (view.getId() == R.id.changeToCanvasActivity) {
-            Intent intent = new Intent(MainActivity.this, CanvasActivity.class);
-            // intent.putExtra("isAttacking", true);
-            startActivity(intent);
-        }
-        else if (view.getId() == R.id.changeToMapActivity) {
-            Intent intent = new Intent(MainActivity.this, MapActivity.class);
-            startActivity(intent);
-        }
-        */
-
         if (authServiceCallFinished.get()) {
             if (view.getId() == R.id.changeToSignUpActivity) {
                 Intent intent = new Intent(MainActivity.this, UserRegistrationActivity.class);
@@ -147,10 +115,6 @@ public class MainActivity extends AppCompatActivity {
             else if (view.getId() == R.id.changeToLoginActivity) {
                 Intent intent = new Intent(MainActivity.this, UserLoginActivity.class);
                 startActivity(intent);
-            }
-            else {
-                System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view);
-                ClientUtils.showSnackbar(view, "Unknown view emitted", Snackbar.LENGTH_SHORT);
             }
         }
         else {
