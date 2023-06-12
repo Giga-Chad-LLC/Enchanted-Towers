@@ -145,20 +145,19 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
     }
 
     private void setTowerStatisticsOnView(View view, Tower tower) {
-        TextView ownerIdView = view.findViewById(R.id.owner_id);
+        TextView ownerUsernameView = view.findViewById(R.id.owner_usename);
         TextView mageLevelView = view.findViewById(R.id.mage_level);
         TextView wallsCountView = view.findViewById(R.id.walls_count);
         Button actionButton = view.findViewById(R.id.action_button);
 
-        // TODO: replace with owner username later
         // setting owner view
         if (tower.getOwnerId().isPresent()) {
-            String username = tower.getOwnerId().get().toString();
+            String username = tower.getOwnerUsername().get();
             String content = String.format(view.getContext().getString(R.string.username), username);
-            ownerIdView.setText(content);
+            ownerUsernameView.setText(content);
         }
         else {
-            ownerIdView.setText(R.string.abandoned);
+            ownerUsernameView.setText(R.string.abandoned);
         }
 
         // TODO: replace boilerplate with real content later
@@ -369,10 +368,12 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
         actionButton.setText("Capture!");
 
         int playerId = ClientStorage.getInstance().getPlayerId().get();
+        String username = ClientStorage.getInstance().getUsername().get();
 
         TowerIdRequest.Builder requestBuilder = TowerIdRequest.newBuilder();
         requestBuilder.getPlayerDataBuilder()
                 .setPlayerId(playerId)
+                .setUsername(username)
                 .build();
         requestBuilder.setTowerId(towerId);
 

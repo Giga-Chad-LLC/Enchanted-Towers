@@ -84,6 +84,7 @@ public class TowersRegistry {
         Vector2 position = new Vector2(response.getPosition().getX(), response.getPosition().getY());
 
         Optional<Integer> ownerId = response.hasOwnerId() ? Optional.of(response.getOwnerId()) : Optional.empty();
+        Optional<String> ownerUsername = response.hasOwnerUsername() ? Optional.of(response.getOwnerUsername()) : Optional.empty();
 
         List<ProtectionWall> protectionWalls = createProtectionWalls(response);
 
@@ -99,6 +100,7 @@ public class TowersRegistry {
                 towerId,
                 position,
                 ownerId,
+                ownerUsername,
                 protectionWalls,
                 lastProtectionWallModificationTimestamp,
                 isUnderProtectionWallsInstallation,

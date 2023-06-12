@@ -445,9 +445,12 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         {
             int playerId = ClientStorage.getInstance().getPlayerId().get();
             int towerId = ClientStorage.getInstance().getTowerId().get();
+            String username = ClientStorage.getInstance().getUsername().get();
+
             requestBuilder.setTowerId(towerId);
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(playerId)
+                    .setUsername(username)
                     .build();
         }
 

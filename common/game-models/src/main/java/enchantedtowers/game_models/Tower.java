@@ -14,6 +14,7 @@ public class Tower {
     private final Vector2 position;
     private final List<ProtectionWall> protectionWalls;
     private Optional<Integer> ownerId;
+    private Optional<String> ownerUsername;
     private Optional<Instant> lastProtectionWallModificationTimestamp;
     private boolean isUnderProtectionWallsInstallation;
     // defines whether the tower has been captured recently
@@ -34,6 +35,7 @@ public class Tower {
             new ProtectionWall(2)
         );
         ownerId = Optional.empty();
+        ownerUsername = Optional.empty();
         lastProtectionWallModificationTimestamp = Optional.empty();
         isUnderProtectionWallsInstallation = false;
         isUnderCaptureLock = false;
@@ -43,6 +45,7 @@ public class Tower {
     public Tower(int towerId,
                  Vector2 position,
                  Optional<Integer> ownerId,
+                 Optional<String> ownerUsername,
                  List<ProtectionWall> protectionWalls,
                  Optional<Instant> lastProtectionWallModificationTimestamp,
                  boolean isUnderProtectionWallsInstallation,
@@ -52,6 +55,7 @@ public class Tower {
         this.position = position;
         this.protectionWalls = protectionWalls;
         this.ownerId = ownerId;
+        this.ownerUsername = ownerUsername;
         this.lastProtectionWallModificationTimestamp = lastProtectionWallModificationTimestamp;
         this.isUnderProtectionWallsInstallation = isUnderProtectionWallsInstallation;
         this.isUnderCaptureLock = isUnderCaptureLock;
@@ -62,6 +66,7 @@ public class Tower {
     static public Tower of(int towerId,
                            Vector2 position,
                            Optional<Integer> ownerId,
+                           Optional<String> ownerUsername,
                            List<ProtectionWall> protectionWalls,
                            Optional<Instant> lastProtectionWallModificationTimestamp,
                            boolean isUnderProtectionWallsInstallation,
@@ -70,6 +75,7 @@ public class Tower {
         return new Tower(towerId,
                         position,
                         ownerId,
+                        ownerUsername,
                         protectionWalls,
                         lastProtectionWallModificationTimestamp,
                         isUnderProtectionWallsInstallation,
@@ -98,11 +104,12 @@ public class Tower {
         }
     }
 
-    public void setOwnerId(int ownerId) {
+    public void setOwnerData(int ownerId, String username) {
         synchronized (lock) {
             // because there is a new owner who did not do any modifications yet
             this.lastProtectionWallModificationTimestamp = Optional.empty();
             this.ownerId = Optional.of(ownerId);
+            this.ownerUsername = Optional.of(username);
         }
     }
 
@@ -201,6 +208,12 @@ public class Tower {
     public void setUnderAttack(boolean underAttack) {
         synchronized (lock) {
             isUnderAttack = underAttack;
+        }
+    }
+
+    public Optional<String> getOwnerUsername() {
+        synchronized (lock) {
+            return ownerUsername;
         }
     }
 }
