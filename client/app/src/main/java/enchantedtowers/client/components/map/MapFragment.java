@@ -28,17 +28,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.MainActivity;
+import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.dialogs.EnableGPSSuggestionDialog;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.registry.TowersRegistryManager;
+import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.map.DrawTowersOnMapInteractor;
+import enchantedtowers.common.utils.proto.requests.JwtTokenRequest;
+import enchantedtowers.common.utils.proto.responses.GameSessionTokenResponse;
+import enchantedtowers.common.utils.proto.responses.ServerError;
+import enchantedtowers.common.utils.proto.services.AuthServiceGrpc;
+import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.Tower;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.ManagedChannel;
+import io.grpc.stub.StreamObserver;
 
 
 public class MapFragment extends Fragment {
@@ -66,6 +79,8 @@ public class MapFragment extends Fragment {
     private final DrawTowersOnMapInteractor drawInteractor = new DrawTowersOnMapInteractor();
     private final List<TowerUpdateSubscription> onTowerUpdateSubscriptions = new ArrayList<>();
     private final Logger logger = Logger.getLogger(MapFragment.class.getName());
+    private AuthServiceGrpc.AuthServiceStub authServiceStub;
+    private Optional<ManagedChannel> channel = Optional.empty();
     private View fragmentMapView;
 
 
@@ -110,30 +125,87 @@ public class MapFragment extends Fragment {
             // enabling user location and registering location updates listener
             enableUserLocationAndRegisterLocationUpdatesListener();
 
-            // requesting towers from server
-            TowersRegistryManager.getInstance().requestTowers(new TowersRegistryManager.Callback() {
-                @Override
-                public void onError(Throwable t) {
-                    // TODO: show error notification
-                    logger.severe("Error requesting towers: " + t.getMessage());
-                    ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
-                }
+            if (ClientStorage.getInstance().getGameSessionToken().isPresent()) {
+                requestTowers();
+            }
+            else {
+                // request game session token if not found
+                String host = ServerApiStorage.getInstance().getClientHost();
+                int port = ServerApiStorage.getInstance().getPort();
 
-                @Override
-                public void onCompleted() {
-                    // drawing towers
-                    requireActivity().runOnUiThread(() -> {
-                        logger.info("Drawing " + TowersRegistry.getInstance().getTowers().size() + " towers on map");
-                        drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
+                channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
+                authServiceStub = AuthServiceGrpc.newStub(channel.get());
+                // form request (assume that jwt token already stored in storage)
+                JwtTokenRequest request = JwtTokenRequest.newBuilder()
+                        .setToken(ClientStorage.getInstance().getJWTToken().get())
+                        .build();
 
-                        // register for tower updates
-                        registerTowersUpdatesSubscriptions();
-                    });
-                }
-            });
+                // requesting game session token
+                logger.info("No game session token found. Requesting new one...");
+                authServiceStub.createGameSessionToken(request, new StreamObserver<>() {
+                    private Optional<ServerError> serverError = Optional.empty();
+
+                    @Override
+                    public void onNext(GameSessionTokenResponse response) {
+                        if (response.hasError()) {
+                            serverError = Optional.of(response.getError());
+                        }
+                        else {
+                            // setting data into client storage (assuming that username and player id already set)
+                            String gameSessionToken = response.getGameSessionToken();
+                            ClientStorage.getInstance().setGameSessionToken(gameSessionToken);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        logger.warning("Error occurred: " + t.getMessage());
+                        t.printStackTrace();
+                        ClientUtils.showSnackbar(fragmentMapView, t.getMessage(), Snackbar.LENGTH_LONG);
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        if (serverError.isPresent()) {
+                            ClientUtils.showSnackbar(fragmentMapView, "Error occurred: " + serverError.get().getMessage() + ". Try to relaunch the game", Snackbar.LENGTH_LONG);
+                        }
+                        else {
+                            String sessionToken = ClientStorage.getInstance().getGameSessionToken().get();
+                            logger.info("New game session token granted: " + sessionToken);
+                            requestTowers();
+                        }
+                    }
+                });
+            }
+
+
         });
 
         return view;
+    }
+
+    private void requestTowers() {
+        // requesting towers from server
+        logger.info("Requesting towers...");
+        TowersRegistryManager.getInstance().requestTowers(new TowersRegistryManager.Callback() {
+            @Override
+            public void onError(Throwable t) {
+                logger.severe("Error requesting towers: " + t.getMessage());
+                ClientUtils.showSnackbar(fragmentMapView, "Unexpected error occurred while requesting towers data", Snackbar.LENGTH_LONG);
+            }
+
+            @Override
+            public void onCompleted() {
+                // drawing towers
+                requireActivity().runOnUiThread(() -> {
+                    logger.info("Drawing " + TowersRegistry.getInstance().getTowers().size() + " towers on map");
+                    drawInteractor.drawTowerIcons(googleMap.get(), TowersRegistry.getInstance().getTowers());
+
+                    // register for tower updates
+                    registerTowersUpdatesSubscriptions();
+                });
+            }
+        });
     }
 
     private void registerTowersUpdatesSubscriptions() {
@@ -306,6 +378,16 @@ public class MapFragment extends Fragment {
         // dismissing GPS dialog
         if (GPSDialog.isPresent() && GPSDialog.get().isShowing()) {
             GPSDialog.get().dismiss();
+        }
+
+        // shutting down grpc channel
+        if (channel.isPresent()) {
+            channel.get().shutdownNow();
+            try {
+                channel.get().awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException err) {
+                err.printStackTrace();
+            }
         }
 
         super.onDestroy();

@@ -29,7 +29,7 @@ import io.grpc.stub.StreamObserver;
 
 public class MainActivity extends AppCompatActivity {
     private static final Logger logger = Logger.getLogger(MainActivity.class.getName());
-    private ManagedChannel channel;
+    private Optional<ManagedChannel> channel = Optional.empty();
     private AuthServiceGrpc.AuthServiceStub asyncStub;
     private final AtomicBoolean authServiceCallFinished = new AtomicBoolean(false);
 
@@ -49,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
             String host = ServerApiStorage.getInstance().getClientHost();
             int port = ServerApiStorage.getInstance().getPort();
 
-            channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-            asyncStub = AuthServiceGrpc.newStub(channel);
+            channel = Optional.of(Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build());
+            asyncStub = AuthServiceGrpc.newStub(channel.get());
 
             JwtTokenRequest request = JwtTokenRequest.newBuilder().setToken(token.get()).build();
 
@@ -160,12 +160,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
-        channel.shutdownNow();
-        try {
-            channel.awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException err) {
-            err.printStackTrace();
+        if (channel.isPresent()) {
+            channel.get().shutdownNow();
+            try {
+                channel.get().awaitTermination(ServerApiStorage.getInstance().getChannelTerminationAwaitingTimeout(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException err) {
+                err.printStackTrace();
+            }
         }
+
 
         super.onDestroy();
     }

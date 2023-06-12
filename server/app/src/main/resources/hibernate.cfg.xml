@@ -12,6 +12,9 @@
 
         <property name="current_session_context_class">thread</property>
 
+        <!-- Disable Hibernate's second-level cache -->
+        <property name="cache.provider_class">org.hibernate.cache.internal.NoCachingRegionFactory</property>
+
         <!-- Hibernate dialect for PostgreSQL -->
         <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 
