@@ -19,7 +19,7 @@ public class CanvasDrawStateInteractor implements CanvasInteractor {
     @Override
     public void onDraw(CanvasState state, Canvas canvas) {
         Paint brush = state.getBrushCopy();
-
+        System.out.println("Draw state: " + state);
         // for DEBUG purposes
         // drawTemplates(state, canvas);
 

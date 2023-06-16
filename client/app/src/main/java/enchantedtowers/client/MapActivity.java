@@ -12,6 +12,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Optional;
 
+import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
 import enchantedtowers.client.components.dialogs.LocationRequestPermissionRationaleDialog;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;

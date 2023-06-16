@@ -7,4 +7,6 @@
     <string name="location_request_permission_rationale">Access to device location is required for the application to function properly, e.g. to show your precise location on a map and determine distances between towers.\n\nPlease, grant the device location permission to the application to gain full-fledged user experience.
     </string>
     <string name="enable_gps_suggestion">GPS is disabled. GPS is required to let application function properly.\n\nWould you mind enabling it?</string>
+    <string name="camera_request_permission_rationale">Access to device camera is required for the application to recognize your drawings by taking photo of them.\n\nPlease, grant the device camera permission to the application to gain full-fledged user experience.
+    </string>
 </resources>

@@ -18,7 +18,7 @@ import enchantedtowers.client.interactors.canvas.CanvasSpectateInteractor;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 public class CanvasSpectatorFragment extends CanvasFragment {
-    private final DefendSpellbookDialogFragment defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance();
+    private final DefendSpellbookDialogFragment defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance(getParentFragmentManager());
 
     public static CanvasFragment newInstance() {
         return new CanvasSpectatorFragment();

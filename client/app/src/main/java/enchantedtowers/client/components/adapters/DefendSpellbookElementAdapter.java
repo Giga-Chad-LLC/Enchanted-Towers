@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.locationtech.jts.geom.Envelope;
@@ -14,21 +15,35 @@ import java.util.List;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.canvas.CanvasDefendSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasWidget;
+import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
+import enchantedtowers.client.components.dialogs.ImageRecognitionDialogFragment;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class DefendSpellbookElementAdapter extends RecyclerView.Adapter<DefendSpellbookElementAdapter.DefendSpellViewHolder> {
-    private final List<DefendSpell> defendSpells;
+    private final int defendSpellId;
+    private final DefendSpell defendSpell;
+    private final View.OnClickListener defendSpellOnClickListener;
+    private final ImageRecognitionDialogFragment imageRecognitionDialog = ImageRecognitionDialogFragment.newInstance();
 
-    public DefendSpellbookElementAdapter(List<DefendSpell> defendSpells) {
-        this.defendSpells = defendSpells;
+    public DefendSpellbookElementAdapter(int defendSpellId, DefendSpell defendSpell, FragmentManager parentFragmentManager) {
+        this.defendSpellId = defendSpellId;
+        this.defendSpell = defendSpell;
+        this.defendSpellOnClickListener = (view) -> {
+            imageRecognitionDialog.setDefendSpellId(defendSpellId);
+            imageRecognitionDialog.setDefendSpellName(String.valueOf(defendSpellId));
+
+            imageRecognitionDialog.show(parentFragmentManager, imageRecognitionDialog.getTag());
+        };
     }
 
     @NonNull
     @Override
     public DefendSpellViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.element_spellbook_item, parent, false);
+        view.setOnClickListener(defendSpellOnClickListener);
+
         CanvasWidget canvas = view.findViewById(R.id.canvas_widget);
 
         // set new size
@@ -43,8 +58,7 @@ public class DefendSpellbookElementAdapter extends RecyclerView.Adapter<DefendSp
 
     @Override
     public void onBindViewHolder(@NonNull DefendSpellViewHolder holder, int index) {
-        DefendSpell spell = defendSpells.get(index);
-        Envelope boundingBox = spell.getBoundary();
+        Envelope boundingBox = defendSpell.getBoundary();
 
         final double padding_dp = DefendSpellViewHolder.PADDING * holder.density;
 
@@ -53,7 +67,7 @@ public class DefendSpellbookElementAdapter extends RecyclerView.Adapter<DefendSp
 
         double applyingScale = Math.min(scaleX, scaleY);
 
-        DefendSpell scaledSpell = spell.getScaledDefendSpell(applyingScale, applyingScale);
+        DefendSpell scaledSpell = defendSpell.getScaledDefendSpell(applyingScale, applyingScale);
         Envelope scaledBoundingBox = scaledSpell.getBoundary();
 
         double offsetX = (holder.targetWidth - scaledBoundingBox.getWidth()) / 2.0;
@@ -67,7 +81,7 @@ public class DefendSpellbookElementAdapter extends RecyclerView.Adapter<DefendSp
 
     @Override
     public int getItemCount() {
-        return defendSpells.size();
+        return 1;
     }
 
     public static class DefendSpellViewHolder extends RecyclerView.ViewHolder {

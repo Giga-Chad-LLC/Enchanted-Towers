@@ -11,56 +11,50 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.adapters.DefendSpellbookElementAdapter;
-import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.SpellBook;
 
 public class DefendSpellbookDialogFragment extends DialogFragment {
     private static class AdapterHolder {
         private final int adapterXmlId;
-        private final List<DefendSpell> spells;
         private final DefendSpellbookElementAdapter adapter;
 
-        AdapterHolder(List<DefendSpell> spells, int id) {
-            this.spells = spells;
-            this.adapterXmlId = id;
-            this.adapter = new DefendSpellbookElementAdapter(spells);
-        }
-
-        int getDefendSpellTemplateId() {
-            int result = -1;
-            if (adapterXmlId == R.id.defend_spells_recycler_view_1) {
-                result = 1;
-            }
-            else if (adapterXmlId == R.id.defend_spells_recycler_view_2) {
-                result = 2;
-            }
-            else if (adapterXmlId == R.id.defend_spells_recycler_view_3) {
-                result = 3;
-            }
-
-            return result;
+        AdapterHolder(int xmlId, int spellId, FragmentManager parentFragmentManager) {
+            this.adapterXmlId = xmlId;
+            this.adapter = new DefendSpellbookElementAdapter(
+                    spellId,
+                    SpellBook.getDefendSpellTemplateById(spellId),
+                    parentFragmentManager
+            );
         }
     }
 
     private final List<AdapterHolder> adapterHolders;
 
-    public static DefendSpellbookDialogFragment newInstance() {
-        return new DefendSpellbookDialogFragment();
+    public static DefendSpellbookDialogFragment newInstance(FragmentManager fragmentManager) {
+        return new DefendSpellbookDialogFragment(fragmentManager);
     }
 
-    private DefendSpellbookDialogFragment() {
+    private DefendSpellbookDialogFragment(FragmentManager fragmentManager) {
         adapterHolders = new ArrayList<>();
-        List<Integer> defendSpellsIds = List.of(R.id.defend_spells_recycler_view_1, R.id.defend_spells_recycler_view_2, R.id.defend_spells_recycler_view_3);
-        for (int i = 0; i < defendSpellsIds.size(); ++i) {
-            adapterHolders.add(new AdapterHolder(new ArrayList<>(), defendSpellsIds.get(i)));
+        List<Integer> defendSpellsXmlIds = List.of(R.id.defend_spells_recycler_view_1, R.id.defend_spells_recycler_view_2, R.id.defend_spells_recycler_view_3);
+        List<Integer> defendSpellsIds = SpellBook.getDefendSpellsTemplates().keySet().stream().collect(Collectors.toList());
+
+        for (int defendSpellId : defendSpellsIds) {
+            adapterHolders.add(new AdapterHolder(
+                defendSpellsXmlIds.get(defendSpellId - 1),
+                defendSpellId,
+                fragmentManager
+            ));
         }
     }
 
@@ -84,9 +78,6 @@ public class DefendSpellbookDialogFragment extends DialogFragment {
         // setting close button
         Button closeButton = view.findViewById(R.id.close_spellbook_button);
         closeButton.setOnClickListener(v -> dismiss());
-
-        // clearing drawn defend spells
-        adapterHolders.forEach(holder -> holder.spells.clear());
 
         // redraw
         for (var holder : adapterHolders) {
@@ -124,9 +115,9 @@ public class DefendSpellbookDialogFragment extends DialogFragment {
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
         recyclerView.setAdapter(holder.adapter);
 
-        DefendSpell defendSpell = SpellBook.getDefendSpellTemplateById(holder.getDefendSpellTemplateId());
+        //DefendSpell defendSpell = SpellBook.getDefendSpellTemplateById(holder.getDefendSpellTemplateId());
+        // holder.spells.add(defendSpell);
 
-        holder.spells.add(defendSpell);
         holder.adapter.notifyItemRangeInserted(0, holder.adapter.getItemCount());
     }
 

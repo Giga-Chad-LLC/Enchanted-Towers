@@ -2,6 +2,9 @@ package enchantedtowers.client.components.providers;
 
 import android.app.Activity;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONException;
@@ -10,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.BaseActivity;
+import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.SpellBookResponse;
@@ -89,6 +94,10 @@ public class SpellBookProvider {
                             }
 
                             SpellBook.instantiate(spellTemplatesData, defendSpellTemplatesData);
+                            // TODO: for debugging
+                            FragmentManager fragmentManager = ((AppCompatActivity)context).getSupportFragmentManager();
+                            DefendSpellbookDialogFragment defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance(fragmentManager);
+                            defendSpellbookDialog.show(fragmentManager, defendSpellbookDialog.getTag());
                         }
                     });
             }
