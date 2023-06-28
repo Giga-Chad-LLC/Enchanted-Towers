@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS game_session_tokens (
 CREATE TABLE IF NOT EXISTS positions (
     id SERIAL PRIMARY KEY,
     x DOUBLE PRECISION NOT NULL,
-    y DOUBLE PRECISION NOT NULL
+    y DOUBLE PRECISION NOT NULL,
+    tower_id INT
 );
 
 -- Create towers table
@@ -43,11 +44,19 @@ CREATE TABLE IF NOT EXISTS towers (
     is_under_attack BOOLEAN DEFAULT false NOT NULL
 );
 
+-- Alter positions table to add constaint to tower_id field
+ALTER TABLE positions
+ADD CONSTRAINT fk_positions_towers
+FOREIGN KEY (tower_id) REFERENCES towers(id)
+DEFERRABLE INITIALLY DEFERRED;
+
+
 -- Create protection wall states table
 CREATE TABLE protection_wall_states (
     id SERIAL PRIMARY KEY,
     broken BOOLEAN DEFAULT false NOT NULL,
-    enchanted BOOLEAN DEFAULT false NOT NULL
+    enchanted BOOLEAN DEFAULT false NOT NULL,
+    protection_wall_id INT
 );
 
 -- Create protection walls table
@@ -56,3 +65,9 @@ CREATE TABLE IF NOT EXISTS protection_walls (
     tower_id INT REFERENCES towers(id) NOT NULL,
     state_id INT REFERENCES protection_wall_states(id) NOT NULL
 );
+
+-- Alter protection_wall_states table to add constaint to protection_wall_id field
+ALTER TABLE protection_wall_states
+ADD CONSTRAINT fk_protection_wall_states_protection_walls
+FOREIGN KEY (protection_wall_id) REFERENCES protection_walls(id)
+DEFERRABLE INITIALLY DEFERRED;
