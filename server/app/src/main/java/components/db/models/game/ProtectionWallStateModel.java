@@ -15,4 +15,15 @@ public class ProtectionWallStateModel {
 
     @Column(name = "enchanted")
     private Boolean enchanted;
+
+    @OneToOne
+    @JoinColumn(name = "protection_wall_id")
+    private ProtectionWallModel protectionWall;
+
+    public ProtectionWallStateModel() {}
+
+    @Override
+    public String toString() {
+        return "ProtectionWallStateModel[id=" + id + ", broken=" + broken + ", enchanted=" + enchanted + "]";
+    }
 }

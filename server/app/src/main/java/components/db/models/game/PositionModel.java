@@ -8,20 +8,21 @@ import jakarta.persistence.*;
 public class PositionModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
+
+    @OneToOne
+    @JoinColumn(name = "tower_id")
+    private TowerModel tower;
 
     @Column(name = "x")
-    private final double x;
+    private Double x;
 
     @Column(name = "y")
-    private final double y;
+    private Double y;
 
-    PositionModel() {
-        x = 0;
-        y = 0;
-    }
+    public PositionModel() {}
 
-    PositionModel(double x, double y) {
+    public PositionModel(double x, double y) {
         this.x = x;
         this.y = y;
     }
@@ -36,5 +37,10 @@ public class PositionModel {
 
     public Double getY() {
         return y;
+    }
+
+    @Override
+    public String toString() {
+        return "PositionModel[id=" + id + ", towerId=" + tower.getId() + ", x=" + x + ", y=" + y + "]";
     }
 }

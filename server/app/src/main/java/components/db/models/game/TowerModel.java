@@ -3,7 +3,6 @@ package components.db.models.game;
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Entity
 @Table(name = "towers")
@@ -16,14 +15,15 @@ public class TowerModel {
     @JoinColumn(name = "position_id")
     private PositionModel positionModel;
 
+    // TODO: mark nullable?
     @Column(name = "owner_id")
-    private Optional<Integer> ownerId;
+    private Integer ownerId;
 
     @Column(name = "owner_username")
-    private Optional<String> ownerUsername;
+    private String ownerUsername;
 
     @Column(name = "last_protection_wall_modification_timestamp")
-    private Optional<Instant> lastProtectionWallModificationTimestamp;
+    private Instant lastProtectionWallModificationTimestamp;
 
     @Column(name = "is_under_protection_walls_installation")
     private Boolean isUnderProtectionWallsInstallation;
@@ -35,4 +35,8 @@ public class TowerModel {
     private Boolean isUnderAttack;
 
     TowerModel() {}
+
+    public Integer getId() {
+        return id;
+    }
 }
