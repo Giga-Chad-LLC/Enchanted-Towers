@@ -33,8 +33,8 @@ public class ServerApiStorage {
      * </ol>
      */
     private ServerApiStorage() {
-        serverHost = "192.168.0.102";/*"localhost"*/;
-        clientHost = "192.168.0.102"/*"localhost"*//*"10.0.2.2"*/; // emulators
+        serverHost = "192.168.43.221";/*"localhost"*/;
+        clientHost = "192.168.43.221"/*"localhost"*//*"10.0.2.2"*/; // emulators
         // port is common for both client and server
         port = 50051/*8080*/;
     }
