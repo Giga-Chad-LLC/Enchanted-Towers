@@ -40,7 +40,6 @@ service TowerAttackService {
   rpc TrySpectateTowerById(request_models.TowerIdRequest) returns (response_models.SessionIdResponse) {}
   rpc SpectateTowerBySessionId(request_models.SessionIdRequest) returns (stream response_models.SpectateTowerAttackResponse) {}
   rpc ToggleAttacker(request_models.ToggleAttackerRequest) returns (response_models.SessionIdResponse) {}
-  rpc CastDefendSpell()
 
   // TODO: it seems like we don't even need this rpc
   rpc LeaveSpectating(request_models.LeaveSpectatingRequest) returns (response_models.ActionResultResponse) {}
