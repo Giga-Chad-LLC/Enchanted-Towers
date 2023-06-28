@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,10 +25,11 @@ import enchantedtowers.game_models.utils.Vector2;
 public class DefendSpellbookElementAdapter extends RecyclerView.Adapter<DefendSpellbookElementAdapter.DefendSpellViewHolder> {
     private final DefendSpell defendSpell;
     private final View.OnClickListener defendSpellOnClickListener;
-    private final ImageRecognitionDialogFragment imageRecognitionDialog = ImageRecognitionDialogFragment.newInstance();
+    private final ImageRecognitionDialogFragment imageRecognitionDialog;
 
-    public DefendSpellbookElementAdapter(int defendSpellId, DefendSpell defendSpell, FragmentManager parentFragmentManager) {
+    public DefendSpellbookElementAdapter(int defendSpellId, DefendSpell defendSpell, FragmentManager parentFragmentManager, DialogFragment parentDialog) {
         this.defendSpell = defendSpell;
+        this.imageRecognitionDialog = ImageRecognitionDialogFragment.newInstance(parentDialog);
         this.defendSpellOnClickListener = (view) -> {
             imageRecognitionDialog.setDefendSpellId(defendSpellId);
             imageRecognitionDialog.setDefendSpellName(defendSpell.getName());

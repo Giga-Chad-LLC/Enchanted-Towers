@@ -10,6 +10,7 @@ import "common/vector2.proto";
 import "common/spell-type.proto";
 import "common/spell-stat.proto";
 import "common/spell-description.proto";
+import "common/defend-spell-description.proto";
 // responses
 import "responses/common/server-error.proto";
 import "responses/common/current-canvas-state-response.proto";
@@ -23,6 +24,8 @@ message SpectateTowerAttackResponse {
     FINISH_SPELL = 3;
     CLEAR_CANVAS = 4; // does not require any additional data in response (serves as marker to clean canvas)
     COMPARE_ENCHANTMENTS = 5;
+    ADD_DEFEND_SPELL = 6;
+    REMOVE_DEFEND_SPELL = 7;
   };
 
   ResponseType responseType = 1;
@@ -31,13 +34,16 @@ message SpectateTowerAttackResponse {
   // CURRENT_CANVAS_STATE
   response_models.CurrentCanvasStateResponse canvasState = 3;
   int64 leftTime_ms = 4;
+  repeated common.DefendSpellDescription activeDefendSpells = 5;
   // SELECT_SPELL_COLOR
-  common.SpellType spellType = 5;
+  common.SpellType spellType = 6;
   // DRAW_SPELL
-  common.Vector2 spellPoint = 6;
+  common.Vector2 spellPoint = 7;
   // FINISH_SPELL
-  common.SpellDescription spellDescription = 7;
+  common.SpellDescription spellDescription = 8;
   // COMPARE_ENCHANTMENTS
-  repeated common.SpellStat spellMatchStats = 8;
-  bool ProtectionWallDestroyed = 9;
+  repeated common.SpellStat spellMatchStats = 9;
+  bool ProtectionWallDestroyed = 10;
+  // ADD|REMOVE_DEFEND_SPELL
+  int32 defendSpellId = 11;
 };

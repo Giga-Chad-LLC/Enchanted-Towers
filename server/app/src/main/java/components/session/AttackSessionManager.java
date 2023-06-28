@@ -1,11 +1,15 @@
 package components.session;
 
+import components.session.AttackSession.Spectator;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
+import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
 import io.grpc.stub.StreamObserver;
 
 import java.util.*;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>{@link AttackSessionManager} provides convenient API of storing/removing/searching {@link AttackSession}.</p>
@@ -45,6 +49,23 @@ public class AttackSessionManager {
          }
       }
       throw new NoSuchElementException("Attack session with id " + session.getId() + " not found");
+   }
+
+   public List<StreamObserver<SessionStateInfoResponse>> getAttackersAssociatedWithTowerId(int towerId) {
+      if (!sessions.containsKey(towerId)) {
+         return List.of();
+      }
+
+      return sessions.get(towerId).stream().map(AttackSession::getAttackerResponseObserver).toList();
+   }
+
+   public List<StreamObserver<SpectateTowerAttackResponse>> getSpectatorsAssociatedWithTowerId(int towerId) {
+      if (!sessions.containsKey(towerId)) {
+         return List.of();
+      }
+
+      return sessions.get(towerId).stream().flatMap(session -> session.getSpectators().stream()).map(
+          Spectator::streamObserver).toList();
    }
 
    public AttackSession getKthNeighbourOfSession(int towerId, AttackSession session, int k) {

@@ -479,11 +479,19 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             this.timer = Optional.of(
                                     new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
 
+                            // TODO: apply defend spells
+                            logger.info("Attacker: active defend spells count " + response.getActiveDefendSpellsCount());
+
                             logger.info("Starting worker...");
                             worker = new AttackEventWorker(CanvasAttackInteractor.this, canvasWidget);
                             worker.start();
                         }
-                        // TODO: DEFEND_SPELL: add defend spell receiving here
+                        case ADD_DEFEND_SPELL -> {
+                            logger.info("Attacker: add defend spell");
+                        }
+                        case REMOVE_DEFEND_SPELL -> {
+                            logger.info("Attacker: remove defend spell");
+                        }
                         case SESSION_EXPIRED -> {
                             sessionExpired = true;
                             logger.info("Attack session expired!");

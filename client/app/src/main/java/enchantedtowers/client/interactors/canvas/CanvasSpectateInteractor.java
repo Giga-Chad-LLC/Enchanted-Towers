@@ -101,6 +101,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 else {
                     switch (response.getResponseType()) {
                         case CURRENT_CANVAS_STATE -> {
+                            // TODO: apply defend spells
+                            logger.info("Spectator: active defend spells count " + response.getActiveDefendSpellsCount());
+
                             logger.info("Received CURRENT_CANVAS_STATE");
                             onCurrentCanvasStateReceived(response, state, canvasWidget);
                         }
@@ -126,6 +129,12 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                             onCompareEnchantmentsReceived(response);
                             // clearing canvas
                             onClearCanvasReceived(state, canvasWidget);
+                        }
+                        case ADD_DEFEND_SPELL -> {
+                            logger.info("Spectator: add defend spell!");
+                        }
+                        case REMOVE_DEFEND_SPELL -> {
+                            logger.info("Spectator: remove defend spell!");
                         }
                     }
                 }

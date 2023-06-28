@@ -29,12 +29,13 @@ public class DefendSpellbookDialogFragment extends DialogFragment {
         private final int adapterXmlId;
         private final DefendSpellbookElementAdapter adapter;
 
-        AdapterHolder(int xmlId, int spellId, FragmentManager parentFragmentManager) {
+        AdapterHolder(int xmlId, int spellId, FragmentManager parentFragmentManager, DialogFragment parentDialog) {
             this.adapterXmlId = xmlId;
             this.adapter = new DefendSpellbookElementAdapter(
                     spellId,
                     SpellBook.getDefendSpellTemplateById(spellId),
-                    parentFragmentManager
+                    parentFragmentManager,
+                    parentDialog
             );
         }
     }
@@ -54,7 +55,8 @@ public class DefendSpellbookDialogFragment extends DialogFragment {
             adapterHolders.add(new AdapterHolder(
                 defendSpellsXmlIds.get(defendSpellId - 1),
                 defendSpellId,
-                fragmentManager
+                fragmentManager,
+                this
             ));
         }
     }
