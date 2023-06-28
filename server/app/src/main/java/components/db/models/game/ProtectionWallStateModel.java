@@ -22,6 +22,10 @@ public class ProtectionWallStateModel {
 
     public ProtectionWallStateModel() {}
 
+    public Integer getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
         return "ProtectionWallStateModel[id=" + id + ", broken=" + broken + ", enchanted=" + enchanted + "]";

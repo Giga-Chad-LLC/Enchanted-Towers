@@ -16,5 +16,10 @@ public class ProtectionWallModel {
 
     @ManyToOne
     @JoinColumn(name = "state_id")
-    private ProtectionWallStateModel state;
+    private ProtectionWallStateModel wallState;
+
+    @Override
+    public String toString() {
+        return "ProtectionWallModel[id=" + id + ", towerId=" + tower.getId() + ", wallStateId=" + wallState.getId() + "]";
+    }
 }
