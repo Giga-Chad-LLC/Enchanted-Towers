@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "protection_wall")
+@Table(name = "protection_walls")
 public class ProtectionWallModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,6 +17,13 @@ public class ProtectionWallModel {
     @ManyToOne
     @JoinColumn(name = "state_id")
     private ProtectionWallStateModel wallState;
+
+    public ProtectionWallModel() {}
+
+    public ProtectionWallModel(TowerModel tower, ProtectionWallStateModel wallState) {
+        this.tower = tower;
+        this.wallState = wallState;
+    }
 
     @Override
     public String toString() {

@@ -4,17 +4,17 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "protection_wall_state")
+@Table(name = "protection_wall_states")
 public class ProtectionWallStateModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "broken")
-    private Boolean broken;
+    private Boolean broken = false;
 
     @Column(name = "enchanted")
-    private Boolean enchanted;
+    private Boolean enchanted = false;
 
     @OneToOne
     @JoinColumn(name = "protection_wall_id")

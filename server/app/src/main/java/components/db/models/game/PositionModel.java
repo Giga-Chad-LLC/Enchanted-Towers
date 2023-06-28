@@ -41,6 +41,6 @@ public class PositionModel {
 
     @Override
     public String toString() {
-        return "PositionModel[id=" + id + ", towerId=" + tower.getId() + ", x=" + x + ", y=" + y + "]";
+        return "PositionModel[id=" + id + ", towerId=" + (tower != null ? tower.getId() : "N/A") + ", x=" + x + ", y=" + y + "]";
     }
 }
