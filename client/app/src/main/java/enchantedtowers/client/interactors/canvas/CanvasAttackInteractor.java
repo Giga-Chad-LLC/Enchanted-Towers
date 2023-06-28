@@ -46,6 +46,7 @@ import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
@@ -343,10 +344,18 @@ public class CanvasAttackInteractor implements CanvasInteractor {
     private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private final ManagedChannel channel;
+    private final CanvasWidget canvasWidget;
+
+    // defend spells actions
+    boolean invertedXDefendSpellActive = false;
+    boolean invertedYDefendSpellActive = false;
+    // boolean smthElse
+
 
     public CanvasAttackInteractor(CanvasAttackerFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
         this.canvasFragment = canvasFragment;
+        this.canvasWidget = canvasWidget;
 
         // configuring async client stub
         {
@@ -385,6 +394,17 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         if (worker == null) {
             return false;
         }
+
+        if (invertedXDefendSpellActive) {
+            System.out.println("Invert X axis, canvas width: " + canvasWidget.getWidth());
+            x = canvasWidget.getWidth() - x;
+        }
+
+        if (invertedYDefendSpellActive) {
+            System.out.println("Invert Y axis, canvas height: " + canvasWidget.getHeight());
+            y = canvasWidget.getHeight() - y;
+        }
+
 
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
@@ -488,8 +508,11 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             logger.info("Attacker: active defend spells count " + response.getActiveDefendSpellsCount());
                             List<DefendSpellDescription> activeDefendSpells = response.getActiveDefendSpellsList();
                             for (var activeDefendSpell : activeDefendSpells) {
+                                int defendSpellId = activeDefendSpell.getDefendSpellTemplateId();
+                                setActiveDefendSpell(defendSpellId, true);
+
                                 canvasFragment.addActiveDefendSpell(
-                                    activeDefendSpell.getDefendSpellTemplateId(),
+                                    defendSpellId,
                                     activeDefendSpell.getLeftTimeMs()
                                 );
                             }
@@ -502,11 +525,15 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
                             long totalDuration = response.getUpdatedDefendSpell().getLeftTimeMs();
 
+                            setActiveDefendSpell(defendSpellId, true);
+
                             canvasFragment.addActiveDefendSpell(defendSpellId, totalDuration);
                             logger.info("Attacker: add defend spell " + defendSpellId);
                         }
                         case REMOVE_DEFEND_SPELL -> {
                             int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+
+                            setActiveDefendSpell(defendSpellId, false);
 
                             canvasFragment.removeActiveDefendSpell(defendSpellId);
                             logger.info("Attacker: remove defend spell " + defendSpellId);
@@ -544,6 +571,15 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                         (Activity) canvasWidget.getContext(), MapActivity.class, message);
             }
         });
+    }
+
+    private void setActiveDefendSpell(int defendSpellId, boolean value) {
+        if (defendSpellId == DefendSpell.DefendSpellType.INVERT_X_AXIS.getType()) {
+            invertedXDefendSpellActive = value;
+        }
+        else if (defendSpellId == DefendSpell.DefendSpellType.INVERT_Y_AXIS.getType()) {
+            invertedYDefendSpellActive = value;
+        }
     }
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {

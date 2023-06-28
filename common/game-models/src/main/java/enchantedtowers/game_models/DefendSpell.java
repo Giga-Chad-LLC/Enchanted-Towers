@@ -14,6 +14,19 @@ import java.util.List;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class DefendSpell {
+    public enum DefendSpellType {
+        INVERT_X_AXIS(1),
+        INVERT_Y_AXIS(2);
+
+        private final int type; // corresponds to the id of the defend spell
+        DefendSpellType(int type) {
+            this.type = type;
+        }
+        public int getType() {
+            return this.type;
+        }
+    };
+
     // must be relative to the bounded box of path
     // (meaning when drawn offset must be applied, defend spells must be drawn on the center of canvas)
     private Geometry curvesUnion;

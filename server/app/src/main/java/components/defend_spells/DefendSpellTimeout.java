@@ -3,7 +3,7 @@ package components.defend_spells;
 import components.time.Timeout;
 
 public class DefendSpellTimeout {
-   private static final int DEFEND_SPELL_EXPIRATION_TIMEOUT_MS = 90 * 1000;
+   private static final int DEFEND_SPELL_EXPIRATION_TIMEOUT_MS = 30 * 1000;
 
    private final long creationTimestampMs = System.currentTimeMillis();
    private final Timeout timeout;
