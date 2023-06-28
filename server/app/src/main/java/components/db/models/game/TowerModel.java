@@ -13,7 +13,7 @@ public class TowerModel {
 
     @OneToOne
     @JoinColumn(name = "position_id")
-    private PositionModel positionModel;
+    private PositionModel position;
 
     // TODO: mark nullable?
     @Column(name = "owner_id")
@@ -38,5 +38,19 @@ public class TowerModel {
 
     public Integer getId() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return "TowerModel[\n" +
+                    "\tid=" + id + ", \n" +
+                    "\tposition=" + position + ", \n" +
+                    "\townerId=" + ownerId + ", \n" +
+                    "\townerUsername=" + ownerUsername + ", \n" +
+                    "\tlastProtectionWallModificationTimestamp=" + lastProtectionWallModificationTimestamp + ", \n" +
+                    "\tisUnderProtectionWallsInstallation=" + isUnderProtectionWallsInstallation + ", \n" +
+                    "\tisUnderCaptureLock=" + isUnderCaptureLock + ", \n" +
+                    "\tisUnderAttack=" + isUnderAttack + ", \n" +
+                "]";
     }
 }
