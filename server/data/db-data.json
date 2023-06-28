@@ -1,0 +1,89 @@
+{
+  "connection": {
+    "host": "localhost",
+    "port": "5432",
+    "database": "enchanted_towers_db",
+    "username": "root",
+    "password": "123"
+  },
+  "towers": [
+    {
+      "position": {
+        "x": 39.0,
+        "y": -115.0
+      },
+      "protectionWalls": [
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        },
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        },
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        }
+      ]
+    },
+    {
+      "position": {
+        "x": 37.0,
+        "y": -118.0
+      },
+      "protectionWalls": [
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        },
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        },
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        }
+      ]
+    },
+    {
+      "position": {
+        "x": 41.0,
+        "y": -120.0
+      },
+      "protectionWalls": [
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        },
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        },
+        {
+          "state": {
+            "broken": false,
+            "enchanted": false
+          }
+        }
+      ]
+    }
+  ]
+}
