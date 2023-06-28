@@ -17,20 +17,34 @@ public class DefendSpell {
     // must be relative to the bounded box of path
     // (meaning when drawn offset must be applied, defend spells must be drawn on the center of canvas)
     private Geometry curvesUnion;
+    private final String name;
     private final List<List<Vector2>> lines; // points are normalized
 
+
+    public DefendSpell(String name, List<List<Vector2>> lines) {
+        this.name = name;
+        this.lines = lines;
+        setCurveUnion(lines);
+    }
+
     public DefendSpell(List<List<Vector2>> lines) {
+        this.name = "unknown";
         this.lines = lines;
         setCurveUnion(lines);
     }
 
     public DefendSpell(DefendSpell that) {
         curvesUnion = that.curvesUnion.copy();
+        name = that.name;
 
         lines = new ArrayList<>();
         for (var line : that.lines) {
             lines.add(new ArrayList<>(line));
         }
+    }
+
+    public String getName() {
+        return name;
     }
 
     public List<List<Vector2>> getPoints() {

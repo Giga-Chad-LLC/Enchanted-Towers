@@ -94,10 +94,6 @@ public class SpellBookProvider {
                             }
 
                             SpellBook.instantiate(spellTemplatesData, defendSpellTemplatesData);
-                            // TODO: for debugging
-                            FragmentManager fragmentManager = ((AppCompatActivity)context).getSupportFragmentManager();
-                            DefendSpellbookDialogFragment defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance(fragmentManager);
-                            defendSpellbookDialog.show(fragmentManager, defendSpellbookDialog.getTag());
                         }
                     });
             }

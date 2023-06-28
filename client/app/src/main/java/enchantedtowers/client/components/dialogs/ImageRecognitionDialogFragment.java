@@ -198,7 +198,9 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
 
         // Set defend spell name
         TextView selectedSpellTextView = dialog.findViewById(R.id.selected_spell_name);
-        selectedSpellTextView.setText(defendSpellName);
+        if (selectedSpellTextView != null) {
+            selectedSpellTextView.setText(defendSpellName);
+        }
 
         // Draw defend spell
         drawDefendSpell();

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.adapters.DefendSpellbookElementAdapter;
+import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.SpellBook;
 
 public class DefendSpellbookDialogFragment extends DialogFragment {
@@ -88,9 +89,22 @@ public class DefendSpellbookDialogFragment extends DialogFragment {
     }
 
     private void initSpellsLayout(LayoutInflater inflater, ViewGroup parentView) {
-        createSpellBookCategory(inflater, parentView, R.id.defend_spells_recycler_view_1, "Defend spell 1");
-        createSpellBookCategory(inflater, parentView, R.id.defend_spells_recycler_view_2, "Defend spell 2");
-        createSpellBookCategory(inflater, parentView, R.id.defend_spells_recycler_view_3, "Defend spell 3");
+        // hardcoded intentionally, no time to think of better solution
+        DefendSpell spell1 = SpellBook.getDefendSpellTemplateById(1);
+        DefendSpell spell2 = SpellBook.getDefendSpellTemplateById(2);
+        DefendSpell spell3 = SpellBook.getDefendSpellTemplateById(3);
+
+        if (spell1 != null) {
+            createSpellBookCategory(inflater, parentView, R.id.defend_spells_recycler_view_1, spell1.getName());
+        }
+
+        if (spell2 != null) {
+            createSpellBookCategory(inflater, parentView, R.id.defend_spells_recycler_view_2, spell2.getName());
+        }
+
+        if (spell3 != null) {
+            createSpellBookCategory(inflater, parentView, R.id.defend_spells_recycler_view_3, spell3.getName());
+        }
     }
 
     public void createSpellBookCategory(LayoutInflater inflater, ViewGroup parentView, int recyclerViewId, String title) {

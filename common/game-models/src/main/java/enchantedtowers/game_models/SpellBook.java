@@ -44,7 +44,7 @@ public class SpellBook {
         for (var defendSpell : defendSpellsTemplatesData) {
             defendSpellsTemplates.put(
                     defendSpell.getId(),
-                    new DefendSpell(defendSpell.getPoints())
+                    new DefendSpell(defendSpell.getName(), defendSpell.getPoints())
             );
         }
 

@@ -22,18 +22,15 @@ import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class DefendSpellbookElementAdapter extends RecyclerView.Adapter<DefendSpellbookElementAdapter.DefendSpellViewHolder> {
-    private final int defendSpellId;
     private final DefendSpell defendSpell;
     private final View.OnClickListener defendSpellOnClickListener;
     private final ImageRecognitionDialogFragment imageRecognitionDialog = ImageRecognitionDialogFragment.newInstance();
 
     public DefendSpellbookElementAdapter(int defendSpellId, DefendSpell defendSpell, FragmentManager parentFragmentManager) {
-        this.defendSpellId = defendSpellId;
         this.defendSpell = defendSpell;
         this.defendSpellOnClickListener = (view) -> {
             imageRecognitionDialog.setDefendSpellId(defendSpellId);
-            imageRecognitionDialog.setDefendSpellName(String.valueOf(defendSpellId));
-
+            imageRecognitionDialog.setDefendSpellName(defendSpell.getName());
             imageRecognitionDialog.show(parentFragmentManager, imageRecognitionDialog.getTag());
         };
     }

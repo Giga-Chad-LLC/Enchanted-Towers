@@ -58,7 +58,7 @@ public class CanvasActivity extends AppCompatActivity {
             } else if (extras.getBoolean("isSpectating", false)) {
                 System.out.println("Spectating on canvas");
                 isSpectating = true;
-                canvasFragment = CanvasSpectatorFragment.newInstance();
+                canvasFragment = CanvasSpectatorFragment.newInstance(this);
             } else if (extras.getBoolean("isProtecting", false)) {
                 System.out.println("Protecting on canvas");
                 isProtecting = true;

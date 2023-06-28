@@ -1,5 +1,6 @@
 package enchantedtowers.client.components.canvas;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,8 +9,13 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
@@ -18,10 +24,17 @@ import enchantedtowers.client.interactors.canvas.CanvasSpectateInteractor;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 public class CanvasSpectatorFragment extends CanvasFragment {
-    private final DefendSpellbookDialogFragment defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance(getParentFragmentManager());
+    private final DefendSpellbookDialogFragment defendSpellbookDialog;
 
-    public static CanvasFragment newInstance() {
-        return new CanvasSpectatorFragment();
+    public static CanvasFragment newInstance(FragmentActivity parentActivity) {
+        return new CanvasSpectatorFragment(parentActivity);
+    }
+
+    public CanvasSpectatorFragment(FragmentActivity parentActivity) {
+        super();
+        defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance(
+            parentActivity.getSupportFragmentManager()
+        );
     }
 
     @Override

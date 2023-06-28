@@ -12,15 +12,21 @@ import enchantedtowers.game_models.utils.Vector2;
 public class DefendSpellsTemplatesProvider {
     static public class DefendSpellTemplateData {
         private final int id;
+        private final String name;
         private final List<List<Vector2>> lines;
 
-        public DefendSpellTemplateData( int id, List<List<Vector2>> lines) {
+        public DefendSpellTemplateData(int id, String name, List<List<Vector2>> lines) {
             this.id = id;
+            this.name = name;
             this.lines = lines;
         }
 
         public int getId () {
             return id;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public List<List<Vector2>> getPoints() {
@@ -58,10 +64,11 @@ public class DefendSpellsTemplatesProvider {
                 }
             }
 
+            String name = defendSpell.getString("name");
             int id = defendSpell.getInt("id");
 
             if (!currentLinesArray.isEmpty()) {
-                defendSpellsData.add(new DefendSpellTemplateData(id, currentLinesArray));
+                defendSpellsData.add(new DefendSpellTemplateData(id, name, currentLinesArray));
             }
         }
 
