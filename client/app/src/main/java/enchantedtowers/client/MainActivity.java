@@ -75,10 +75,10 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, AttackTowerMenuActivity.class);
             startActivity(intent);
         }
-        else if (view.getId() == R.id.changeToCameraActivity) {
-            Intent intent = new Intent(MainActivity.this, CastDefendSpellActivity.class);
-            startActivity(intent);
-        }
+//        else if (view.getId() == R.id.changeToCameraActivity) {
+//            Intent intent = new Intent(MainActivity.this, CastDefendSpellActivity.class);
+//            startActivity(intent);
+//        }
         else {
             System.err.println("Unknown view emitted `MainActivity::changeActivity`: " + view);
         }

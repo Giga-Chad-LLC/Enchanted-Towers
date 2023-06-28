@@ -1,9 +1,8 @@
 package enchantedtowers.client;
 
-import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,21 +12,25 @@ import android.graphics.Path;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.widget.Button;
-import android.widget.ImageView;
+import android.util.Pair;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,59 +40,81 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-
 import enchantedtowers.client.components.utils.ClientUtils;
-import enchantedtowers.game_logic.algorithm.DefendSpellMatchingAlgorithm;
 import enchantedtowers.game_models.DefendSpell;
-import enchantedtowers.game_models.DefendSpellTemplateDescription;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 import kotlin.Triple;
 
-public class CastDefendSpellActivity extends AppCompatActivity {
-
-    private static final int REQUEST_PERMISSION_CAMERA = 1;
-
-    private ImageView imageView;
+public class CastDefendSpell {
+    private final FragmentActivity parentActivity;
+    private static final Logger logger = Logger.getLogger(CastDefendSpell.class.getName());
+    private final ActivityResultLauncher<Intent> cameraLauncher;
     private Uri capturedImageUri;
+    private final Consumer<String> onErrorCallback;
 
-    private static final Logger logger = Logger.getLogger(CastDefendSpellActivity.class.getName());
+    public CastDefendSpell(
+            Fragment parentDialog,
+            FragmentActivity parentActivity,
+            Consumer<Pair<Bitmap, List<List<Vector2>>>> onSuccess,
+            Consumer<String> onError
+    ) {
+        this.parentActivity = parentActivity;
+        this.onErrorCallback = onError;
 
-    private final ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(), this::cameraLaunchCallback);
+        // Use Fragment class here to register for activity result
+        this.cameraLauncher = parentDialog.registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            (result) -> {
+                try {
+                    Pair<Bitmap, List<List<Vector2>>> data = processImage(result);
+                    onSuccess.accept(data);
+                }
+                catch(Exception e) {
+                    onError.accept(e.getMessage());
+                }
+            }
+        );
+    }
 
-    private void cameraLaunchCallback(ActivityResult result) {
-        if (result.getResultCode() != RESULT_OK) {
-            ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Error while taking image!", Toast.LENGTH_LONG);
-            logger.warning("Error while taking picture, result code is not OK: code=" + result.getResultCode());
-            return;
+    public void startCamera() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        if (takePictureIntent.resolveActivity(parentActivity.getPackageManager()) != null) {
+            capturedImageUri = createTempImageFile();
+            logger.info("Image URI: " + capturedImageUri);
+
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedImageUri);
+            cameraLauncher.launch(takePictureIntent);
+        }
+        else {
+            onErrorCallback.accept("Unable to start camera, try restarting the game.");
+        }
+    }
+
+    private Pair<Bitmap, List<List<Vector2>>> processImage(ActivityResult result) throws Exception {
+        if (result.getResultCode() != Activity.RESULT_OK) {
+            // ClientUtils.showToastOnUIThread(parentActivity, "Error while taking image!", Toast.LENGTH_LONG);
+            logger.warning("Error while taking picture, result code: " + result.getResultCode());
+            throw new Exception("Error while taking picture, result code: " + result.getResultCode());
         }
 
         // Loading image from temp file
         logger.info("Loading captured image bitmap in launcher, uri=" + capturedImageUri);
-        Bitmap capturedImage = null;
+        Bitmap capturedImage;
 
         try {
-            Bitmap savedOnDeviceImage = MediaStore.Images.Media.getBitmap(getContentResolver(), capturedImageUri);
-            Bitmap rotatedImage = rotateImageIfRequired(getBaseContext(), savedOnDeviceImage, capturedImageUri);
+            Bitmap savedOnDeviceImage = MediaStore.Images.Media.getBitmap(parentActivity.getContentResolver(), capturedImageUri);
+            Bitmap rotatedImage = rotateImageIfRequired(parentActivity.getBaseContext(), savedOnDeviceImage, capturedImageUri);
             capturedImage = cropImageAroundBorders(rotatedImage, 60, 60);
         } catch (IOException e) {
-            ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to show create image", Toast.LENGTH_LONG);
+            // ClientUtils.showToastOnUIThread(parentActivity, "Unable to show create image", Toast.LENGTH_LONG);
             logger.warning("Error while loading saved image: " + e.getMessage());
             e.printStackTrace();
-            return;
+            throw new Exception("Error while loading saved image: " + e.getMessage());
         }
 
         // Create opencv 'Mat' object for taken photo
@@ -134,14 +159,11 @@ public class CastDefendSpellActivity extends AppCompatActivity {
             resultingBitmap = blitContoursToBitmap(resultingBitmap, defendSpell.getPoints());
         }
 
-        imageView.setImageBitmap(resultingBitmap);
-
-        // run pattern matching
-        Optional<DefendSpellTemplateDescription> matchDescription = DefendSpellMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(contours);
-
         // remove temporary image file
         deleteTempImageFile(capturedImageUri);
         capturedImageUri = null;
+
+        return new Pair<>(resultingBitmap, contours);
     }
 
     private Mat convertToGrayScale(Mat imageMat) {
@@ -307,39 +329,25 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         return rotatedImg;
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_camera);
-
-        imageView = findViewById(R.id.capturedImageView);
-        Button captureButton = findViewById(R.id.captureImageButton);
-
-        captureButton.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(
-                    CastDefendSpellActivity.this, Manifest.permission.CAMERA) ==
-                    PackageManager.PERMISSION_GRANTED) {
-                startCamera();
-            } else {
-                // TODO: maybe can reuse permissions manager from map
-                requestCameraPermission();
-            }
-        });
-    }
-
-    private void startCamera() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            capturedImageUri = createTempImageFile();
-            logger.info("Image URI: " + capturedImageUri);
-
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedImageUri);
-            cameraLauncher.launch(takePictureIntent);
-        }
-        else {
-            ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Unable to start camera. Try restarting the game.", Toast.LENGTH_LONG);
-        }
-    }
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_camera);
+//
+//        imageView = findViewById(R.id.capturedImageView);
+//        Button captureButton = findViewById(R.id.captureImageButton);
+//
+//        captureButton.setOnClickListener(v -> {
+//            if (ContextCompat.checkSelfPermission(
+//                    CastDefendSpellActivity.this, Manifest.permission.CAMERA) ==
+//                    PackageManager.PERMISSION_GRANTED) {
+//                startCamera();
+//            } else {
+//                // TODO: maybe can reuse permissions manager from map
+//                requestCameraPermission();
+//            }
+//        });
+//    }
 
     private Uri createTempImageFile() {
         File imageFile;
@@ -347,7 +355,7 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         try {
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             String imageFileName = "ENCHANTED_TOWERS_IMG_" + timeStamp + "_";
-            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File storageDir = parentActivity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             imageFile = File.createTempFile(
                     imageFileName,  /* prefix */
                     ".jpg",         /* suffix */
@@ -357,7 +365,7 @@ public class CastDefendSpellActivity extends AppCompatActivity {
             logger.info("Create tmp file for storing high quality image: name='" + imageFile.getName() + "'");
             // required for escaping FileUriExposedException exception
             // when saving and removing image from storage without additional permissions
-            return FileProvider.getUriForFile(getApplicationContext(), getPackageName() + ".fileprovider", imageFile);
+            return FileProvider.getUriForFile(parentActivity.getApplicationContext(), parentActivity.getPackageName() + ".fileprovider", imageFile);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -367,7 +375,7 @@ public class CastDefendSpellActivity extends AppCompatActivity {
     }
 
     private void deleteTempImageFile(Uri imageUri) {
-        int deletedObjects = getBaseContext().getContentResolver().delete(imageUri, null, null);
+        int deletedObjects = parentActivity.getBaseContext().getContentResolver().delete(imageUri, null, null);
         if (deletedObjects != 1) {
             logger.warning("Something went wrong while deleting temp image, deleted objects count " + deletedObjects);
         }
@@ -376,34 +384,34 @@ public class CastDefendSpellActivity extends AppCompatActivity {
         }
     }
 
-    private void requestCameraPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.CAMERA)) {
-            // Show an explanation to the user
-            // You can customize the message according to your needs
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    REQUEST_PERMISSION_CAMERA);
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    REQUEST_PERMISSION_CAMERA);
-        }
-    }
+//    private void requestCameraPermission() {
+//        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                Manifest.permission.CAMERA)) {
+//            // Show an explanation to the user
+//            // You can customize the message according to your needs
+//            ActivityCompat.requestPermissions(this,
+//                    new String[]{Manifest.permission.CAMERA},
+//                    REQUEST_PERMISSION_CAMERA);
+//        } else {
+//            ActivityCompat.requestPermissions(this,
+//                    new String[]{Manifest.permission.CAMERA},
+//                    REQUEST_PERMISSION_CAMERA);
+//        }
+//    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSION_CAMERA) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startCamera();
-            } else {
-                // Camera permission was denied
-                // You can show a message or handle the denial scenario accordingly
-                logger.warning("Camera permissions denied!");
-                ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Cannot take a picture without camera permissions!", Toast.LENGTH_LONG);
-            }
-        }
-    }
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+//                                           @NonNull int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        if (requestCode == REQUEST_PERMISSION_CAMERA) {
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                startCamera();
+//            } else {
+//                // Camera permission was denied
+//                // You can show a message or handle the denial scenario accordingly
+//                logger.warning("Camera permissions denied!");
+//                ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Cannot take a picture without camera permissions!", Toast.LENGTH_LONG);
+//            }
+//        }
+//    }
 }

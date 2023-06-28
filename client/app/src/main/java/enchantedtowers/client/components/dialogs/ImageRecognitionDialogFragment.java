@@ -1,12 +1,17 @@
 package enchantedtowers.client.components.dialogs;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -15,6 +20,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -22,35 +29,80 @@ import org.locationtech.jts.geom.Envelope;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
+import enchantedtowers.client.CastDefendSpell;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.canvas.CanvasDefendSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.permissions.PermissionManager;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
+import enchantedtowers.game_logic.algorithm.DefendSpellMatchingAlgorithm;
 import enchantedtowers.game_models.DefendSpell;
+import enchantedtowers.game_models.DefendSpellTemplateDescription;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 
 public class ImageRecognitionDialogFragment extends DialogFragment {
     private final String[] cameraPermission = new String[] { Manifest.permission.CAMERA };
     private ActivityResultLauncher<String[]> cameraPermissionLauncher;
-
-
     private int defendSpellId = -1;
+    private boolean isMatchedWithTemplate = false;
     private String defendSpellName = "";
+    private CastDefendSpell contoursExtractor;
 
     public static ImageRecognitionDialogFragment newInstance() {
         return new ImageRecognitionDialogFragment();
     }
 
-    public void setDefendSpellId(int defendSpellId) {
-        this.defendSpellId = defendSpellId;
+    private void onContoursExtractionSuccess(Pair<Bitmap, List<List<Vector2>>> data) {
+        Dialog dialog = getDialog();
+        if (dialog == null) {
+            return;
+        }
+        var processedImage = data.first;
+        var contours = data.second;
+
+        // Update layouts
+        LinearLayout submitPhotoLayout = dialog.findViewById(R.id.submit_photo_layout);
+        LinearLayout takePhotoLayout = dialog.findViewById(R.id.take_photo_layout);
+
+        if (takePhotoLayout != null) {
+            takePhotoLayout.setVisibility(View.INVISIBLE);
+        }
+        if (submitPhotoLayout != null) {
+            submitPhotoLayout.setVisibility(View.VISIBLE);
+        }
+
+        // Show contours of the taken image
+        ImageView imageView = dialog.findViewById(R.id.captured_photo_preview);
+        if (imageView != null) {
+            imageView.setImageBitmap(processedImage);
+        }
+
+        // run pattern matching
+        double matchPercentage = DefendSpellMatchingAlgorithm.getTemplateMatchPercentageWithHausdorffMetric(defendSpellId, contours);
+        String percent = Math.round(matchPercentage * 100) + "%";
+        TextView defendSpellMatch = dialog.findViewById(R.id.cast_match_percentage);
+        if (defendSpellMatch != null) {
+            defendSpellMatch.setText(percent);
+        }
+
+        isMatchedWithTemplate = DefendSpellMatchingAlgorithm.isMatchedWithTemplate(matchPercentage);
+        System.out.println("Is matched with template: " + isMatchedWithTemplate);
     }
 
-    public void setDefendSpellName(String defendSpellName) {
-        this.defendSpellName = defendSpellName;
+    private void onContoursExtractionError(String message) {
+        Dialog dialog = getDialog();
+        if (dialog == null) {
+            return;
+        }
+        ClientUtils.showSnackbar(
+                dialog.findViewById(R.id.defend_spell_preview_layout),
+                "Error while processing image: " + message,
+                Snackbar.LENGTH_LONG
+        );
     }
 
     @Override
@@ -73,13 +125,19 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
                         // TODO: run smth
                     }
                     else {
-                        ClientUtils.showSnackbar(frameLayout, "Content might be limited. Please, grant access of camera.", Snackbar.LENGTH_LONG);
+                        ClientUtils.showSnackbar(frameLayout, "Content might be limited. Please, grant access for camera.", Snackbar.LENGTH_LONG);
                     }
                 }
             );
+
+        contoursExtractor = new CastDefendSpell(
+                this,
+                requireActivity(),
+                this::onContoursExtractionSuccess,
+                this::onContoursExtractionError
+        );
     }
 
-    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_image_recognition_dialog, container, false);
@@ -94,27 +152,36 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
         Button leaveButton = view.findViewById(R.id.leave_photo_button);
         leaveButton.setOnClickListener(v -> dismiss());
 
-        // Layouts
-        LinearLayout submitPhotoLayout = view.findViewById(R.id.submit_photo_layout);
-        LinearLayout takePhotoLayout = view.findViewById(R.id.take_photo_layout);
-
         // setting take photo button
         Button takePhotoButton = view.findViewById(R.id.take_photo_button);
         takePhotoButton.setOnClickListener(v -> {
             System.out.println("Take photo");
-            takePhotoLayout.setVisibility(View.INVISIBLE);
-            submitPhotoLayout.setVisibility(View.VISIBLE);
+
+            withCameraPermission(() -> {
+                System.out.println("Camera permission already granted");
+                contoursExtractor.startCamera();
+            });
         });
 
         // setting retake photo button
         Button retakePhotoButton = view.findViewById(R.id.retake_photo_button);
         retakePhotoButton.setOnClickListener(v -> {
             System.out.println("Retake photo");
+            contoursExtractor.startCamera();
         });
 
         // setting submit photo
         Button submitPhotoButton = view.findViewById(R.id.submit_photo_button);
         submitPhotoButton.setOnClickListener(v -> {
+            if (!isMatchedWithTemplate && dialog != null) {
+                ClientUtils.showSnackbar(
+                        dialog.findViewById(R.id.defend_spell_preview_layout),
+                        "Match percentage with defend spell is not enough!",
+                        Snackbar.LENGTH_LONG
+                );
+                return;
+            }
+
             System.out.println("Submit photo");
         });
 
@@ -124,8 +191,6 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-        requestCameraPermission();
-
         Dialog dialog = getDialog();
         if (dialog == null) {
             return;
@@ -142,18 +207,14 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
     }
 
-    private void requestCameraPermission() {
+    private void withCameraPermission(Runnable onSuccessCallback) {
         new PermissionManager()
             .withPermissions(
                 cameraPermission,
                 requireContext(),
-                () -> {
-                    System.out.println("Camera permission already granted");
-                }
+                    onSuccessCallback::run
             )
             .otherwise(() -> {
-                System.out.println("Camera not permission already granted");
-
                 if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
                     showCameraRequestPermissionRationale(cameraPermissionLauncher);
                 }
@@ -163,20 +224,33 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
             });
     }
 
-    private void showCameraRequestPermissionRationale(ActivityResultLauncher<String[]> cameraPermissionLauncher) {
-        Runnable positiveCallback = () -> cameraPermissionLauncher.launch(cameraPermission);
+    public void setDefendSpellId(int defendSpellId) {
+        this.defendSpellId = defendSpellId;
+    }
 
+    public void setDefendSpellName(String defendSpellName) {
+        this.defendSpellName = defendSpellName;
+    }
+
+    private void showCameraRequestPermissionRationale(ActivityResultLauncher<String[]> cameraPermissionLauncher) {
+        Dialog currentDialog = getDialog();
+        if (currentDialog == null) {
+            return;
+        }
+
+        Runnable positiveCallback = () -> cameraPermissionLauncher.launch(cameraPermission);
         Runnable negativeCallback = () -> ClientUtils.showSnackbar(
-            Objects.requireNonNull(getDialog()).findViewById(R.id.defend_spell_preview_layout),
+            currentDialog.findViewById(R.id.defend_spell_preview_layout),
             "Content might be limited",
             Snackbar.LENGTH_LONG
         );
 
-        Dialog currentDialog = getDialog();
-        if (currentDialog != null) {
-            Dialog dialog = CameraRequestPermissionRationaleDialog.newInstance(currentDialog.getContext(), positiveCallback, negativeCallback);
-            dialog.show();
-        }
+        Dialog dialog = CameraRequestPermissionRationaleDialog.newInstance(
+            currentDialog.getContext(),
+            positiveCallback,
+            negativeCallback
+        );
+        dialog.show();
     }
 
     private void drawDefendSpell() {
