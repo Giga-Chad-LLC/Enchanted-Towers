@@ -28,5 +28,10 @@
         <mapping class="components.db.models.User" />
         <mapping class="components.db.models.JwtToken" />
         <mapping class="components.db.models.GameSessionToken" />
+        <!-- Game models -->
+        <mapping class="components.db.models.game.PositionModel" />
+        <mapping class="components.db.models.game.TowerModel" />
+        <mapping class="components.db.models.game.ProtectionWallModel" />
+        <mapping class="components.db.models.game.ProtectionWallStateModel" />
     </session-factory>
 </hibernate-configuration>

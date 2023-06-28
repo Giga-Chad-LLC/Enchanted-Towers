@@ -1,3 +1,8 @@
 DROP TABLE IF EXISTS game_session_tokens;
 DROP TABLE IF EXISTS jwt_tokens;
 DROP TABLE IF EXISTS users;
+
+DROP TABLE IF EXISTS protection_walls CASCADE;
+DROP TABLE IF EXISTS protection_wall_states CASCADE;
+DROP TABLE IF EXISTS towers CASCADE;
+DROP TABLE IF EXISTS positions CASCADE;

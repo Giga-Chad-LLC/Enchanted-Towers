@@ -8,10 +8,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-// TODO: make thread-safe?
 public class TowersRegistry {
     static private TowersRegistry instance = null;
 
+    // TODO: make thread-safe
     static public TowersRegistry getInstance() {
         if (instance == null) {
             instance = new TowersRegistry();

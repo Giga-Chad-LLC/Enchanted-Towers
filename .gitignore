@@ -5,6 +5,7 @@
 **/gradlew.bat
 /local.properties
 **/.idea
+**/venv
 # **/.idea/caches
 # **/.idea/libraries
 # **/.idea/modules.xml
