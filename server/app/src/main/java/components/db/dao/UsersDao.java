@@ -14,8 +14,6 @@ import java.util.logging.Logger;
 
 
 public class UsersDao {
-    public record UserDto(@NonNull String email, @NonNull String username, @NonNull String password) {}
-
     private static final Logger logger = Logger.getLogger(UsersDao.class.getName());
 
     public void save(User user) {
@@ -36,17 +34,6 @@ public class UsersDao {
         finally {
             session.close();
         }
-    }
-
-    public void updateUserRecord (User user) {
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-        User newUser = session.get(User.class, user.getId());//?
-        newUser = user;
-        session.merge(newUser);
-        transaction.commit();
-        session.close();
-        logger.log(Level.INFO, "User is updated");
     }
 
     public Optional<User> findByEmail(String email) {
