@@ -1,9 +1,7 @@
 package enchantedtowers.client.components.dialogs;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Dialog;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Pair;
@@ -20,18 +18,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.snackbar.Snackbar;
 
 import org.locationtech.jts.geom.Envelope;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
-import enchantedtowers.client.CastDefendSpell;
+import enchantedtowers.client.components.providers.ImageContoursProvider;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.canvas.CanvasDefendSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasWidget;
@@ -40,7 +34,6 @@ import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.game_logic.algorithm.DefendSpellMatchingAlgorithm;
 import enchantedtowers.game_models.DefendSpell;
-import enchantedtowers.game_models.DefendSpellTemplateDescription;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 
@@ -50,7 +43,7 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
     private int defendSpellId = -1;
     private boolean isMatchedWithTemplate = false;
     private String defendSpellName = "";
-    private CastDefendSpell contoursExtractor;
+    private ImageContoursProvider contoursExtractor;
 
     public static ImageRecognitionDialogFragment newInstance() {
         return new ImageRecognitionDialogFragment();
@@ -130,7 +123,7 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
                 }
             );
 
-        contoursExtractor = new CastDefendSpell(
+        contoursExtractor = new ImageContoursProvider(
                 this,
                 requireActivity(),
                 this::onContoursExtractionSuccess,

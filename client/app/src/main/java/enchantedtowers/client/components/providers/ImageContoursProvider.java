@@ -1,4 +1,4 @@
-package enchantedtowers.client;
+package enchantedtowers.client.components.providers;
 
 import android.app.Activity;
 import android.content.Context;
@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Pair;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -43,20 +42,19 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
 import kotlin.Triple;
 
-public class CastDefendSpell {
+public class ImageContoursProvider {
     private final FragmentActivity parentActivity;
-    private static final Logger logger = Logger.getLogger(CastDefendSpell.class.getName());
+    private static final Logger logger = Logger.getLogger(ImageContoursProvider.class.getName());
     private final ActivityResultLauncher<Intent> cameraLauncher;
     private Uri capturedImageUri;
     private final Consumer<String> onErrorCallback;
 
-    public CastDefendSpell(
+    public ImageContoursProvider(
             Fragment parentDialog,
             FragmentActivity parentActivity,
             Consumer<Pair<Bitmap, List<List<Vector2>>>> onSuccess,
