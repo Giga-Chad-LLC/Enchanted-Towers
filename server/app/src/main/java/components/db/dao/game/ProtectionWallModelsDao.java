@@ -17,8 +17,7 @@ public class ProtectionWallModelsDao {
 
     public void save(ProtectionWallModel protectionWall) throws HibernateException {
         Transaction transaction = null;
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        try {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             // save user
             session.persist(protectionWall);
@@ -29,9 +28,6 @@ public class ProtectionWallModelsDao {
             assert transaction != null;
             transaction.rollback();
             throw err;
-        }
-        finally {
-            session.close();
         }
     }
 

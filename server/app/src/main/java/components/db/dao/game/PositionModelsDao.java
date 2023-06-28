@@ -16,8 +16,7 @@ public class PositionModelsDao {
 
     public void save(PositionModel position) throws HibernateException {
         Transaction transaction = null;
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        try {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             // save user
             session.persist(position);
@@ -28,9 +27,6 @@ public class PositionModelsDao {
             assert transaction != null;
             transaction.rollback();
             throw err;
-        }
-        finally {
-            session.close();
         }
     }
 
