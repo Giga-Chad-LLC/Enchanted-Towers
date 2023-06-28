@@ -725,10 +725,17 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             return;
         }
 
+        long leftTimeMs = defendSpellsManager.getDefendSpellLeftTimeMs(towerId, defendSpellId);
         var attackers = sessionManager.getAttackersAssociatedWithTowerId(towerId);
+
         SessionStateInfoResponse notification = SessionStateInfoResponse.newBuilder()
             .setType(type)
-            .setDefendSpellId(defendSpellId)
+            .setUpdatedDefendSpell(
+                DefendSpellDescription.newBuilder()
+                    .setDefendSpellTemplateId(defendSpellId)
+                    .setLeftTimeMs(leftTimeMs)
+                    .build()
+            )
             .build();
 
         for (var attacker : attackers) {
@@ -742,10 +749,17 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             return;
         }
 
+        long leftTimeMs = defendSpellsManager.getDefendSpellLeftTimeMs(towerId, defendSpellId);
         var spectators = sessionManager.getSpectatorsAssociatedWithTowerId(towerId);
+
         SpectateTowerAttackResponse notification = SpectateTowerAttackResponse.newBuilder()
             .setResponseType(type)
-            .setDefendSpellId(defendSpellId)
+            .setUpdatedDefendSpell(
+                DefendSpellDescription.newBuilder()
+                    .setDefendSpellTemplateId(defendSpellId)
+                    .setLeftTimeMs(leftTimeMs)
+                    .build()
+            )
             .build();
 
         for (var spectator : spectators) {

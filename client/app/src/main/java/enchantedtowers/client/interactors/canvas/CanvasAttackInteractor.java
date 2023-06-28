@@ -9,6 +9,9 @@ import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +25,7 @@ import java.util.logging.Logger;
 import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
 import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasSessionTimer;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
@@ -29,6 +33,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.DefendSpellDescription;
 import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
@@ -333,13 +338,13 @@ public class CanvasAttackInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final Paint brush;
     private AttackEventWorker worker;
-    private final CanvasFragment canvasFragment;
+    private final CanvasAttackerFragment canvasFragment;
 
     private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private final ManagedChannel channel;
 
-    public CanvasAttackInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasAttackInteractor(CanvasAttackerFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
         this.canvasFragment = canvasFragment;
 
@@ -479,18 +484,32 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             this.timer = Optional.of(
                                     new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
 
-                            // TODO: apply defend spells
+                            // apply active defend spells
                             logger.info("Attacker: active defend spells count " + response.getActiveDefendSpellsCount());
+                            List<DefendSpellDescription> activeDefendSpells = response.getActiveDefendSpellsList();
+                            for (var activeDefendSpell : activeDefendSpells) {
+                                canvasFragment.addActiveDefendSpell(
+                                    activeDefendSpell.getDefendSpellTemplateId(),
+                                    activeDefendSpell.getLeftTimeMs()
+                                );
+                            }
 
                             logger.info("Starting worker...");
                             worker = new AttackEventWorker(CanvasAttackInteractor.this, canvasWidget);
                             worker.start();
                         }
                         case ADD_DEFEND_SPELL -> {
-                            logger.info("Attacker: add defend spell");
+                            int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+                            long totalDuration = response.getUpdatedDefendSpell().getLeftTimeMs();
+
+                            canvasFragment.addActiveDefendSpell(defendSpellId, totalDuration);
+                            logger.info("Attacker: add defend spell " + defendSpellId);
                         }
                         case REMOVE_DEFEND_SPELL -> {
-                            logger.info("Attacker: remove defend spell");
+                            int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+
+                            canvasFragment.removeActiveDefendSpell(defendSpellId);
+                            logger.info("Attacker: remove defend spell " + defendSpellId);
                         }
                         case SESSION_EXPIRED -> {
                             sessionExpired = true;

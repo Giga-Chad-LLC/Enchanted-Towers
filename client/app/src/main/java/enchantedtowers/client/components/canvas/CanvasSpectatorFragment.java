@@ -13,17 +13,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.Arrays;
 import java.util.Objects;
 
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.adapters.ActiveDefendSpellsAdapter;
 import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
 import enchantedtowers.client.interactors.canvas.CanvasSpectateInteractor;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
 
 public class CanvasSpectatorFragment extends CanvasFragment {
+    private final ActiveDefendSpellsAdapter adapter;
     private final DefendSpellbookDialogFragment defendSpellbookDialog;
 
     public static CanvasFragment newInstance(FragmentActivity parentActivity) {
@@ -35,17 +39,37 @@ public class CanvasSpectatorFragment extends CanvasFragment {
         defendSpellbookDialog = DefendSpellbookDialogFragment.newInstance(
             parentActivity.getSupportFragmentManager()
         );
+        adapter = new ActiveDefendSpellsAdapter();
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflateFragment(R.layout.fragment_canvas_spectate, inflater, container);
+        View view = inflateFragment(R.layout.fragment_canvas_spectate, inflater, container);
+
+        // set up defend spells adapter
+        RecyclerView recyclerView = view.findViewById(R.id.active_defend_spells_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setAdapter(adapter);
+
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View rootView, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(rootView, savedInstanceState);
         initSpectatorFunctionality(rootView);
+    }
+
+    public void addActiveDefendSpell(int defendSpellId, long totalDuration) {
+        requireActivity().runOnUiThread(() -> {
+            adapter.addItem(defendSpellId, totalDuration);
+        });
+    }
+
+    public void removeActiveDefendSpell(int defendSpellId) {
+        requireActivity().runOnUiThread(() -> {
+            adapter.removeItem(defendSpellId);
+        });
     }
 
     private void toggleSpectatingAttacker(ToggleAttackerRequest.RequestType requestType) {

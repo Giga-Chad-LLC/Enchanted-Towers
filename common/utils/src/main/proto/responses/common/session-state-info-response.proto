@@ -32,5 +32,5 @@ message SessionStateInfoResponse {
   // SESSION_EXPIRED
   SessionExpirationInfo expiration = 5;
   // ADD|REMOVE_DEFEND_SPELL
-  int32 defendSpellId = 6;
+  common.DefendSpellDescription updatedDefendSpell = 6;
 };

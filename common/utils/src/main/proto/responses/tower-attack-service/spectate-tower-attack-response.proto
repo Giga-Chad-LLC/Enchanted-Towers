@@ -45,5 +45,5 @@ message SpectateTowerAttackResponse {
   repeated common.SpellStat spellMatchStats = 9;
   bool ProtectionWallDestroyed = 10;
   // ADD|REMOVE_DEFEND_SPELL
-  int32 defendSpellId = 11;
+  common.DefendSpellDescription updatedDefendSpell = 11;
 };

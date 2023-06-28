@@ -22,6 +22,20 @@ public class DefendSpellsManager {
       ));
    }
 
+   public long getDefendSpellLeftTimeMs(int towerId, int defendSpellId) {
+      if (!defendSpellTimers.containsKey(towerId)) {
+         return 0;
+      }
+
+      for (var desc : defendSpellTimers.get(towerId)) {
+         if (desc.getId() == defendSpellId) {
+            return desc.getLeftExecutionTimeMs();
+         }
+      }
+
+      return 0;
+   }
+
    public void removeDefendSpell(int towerId, int defendSpellId) {
       if (!defendSpellTimers.containsKey(towerId)) {
          return;

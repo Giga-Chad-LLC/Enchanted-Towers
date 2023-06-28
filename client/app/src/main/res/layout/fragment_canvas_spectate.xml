@@ -13,37 +13,44 @@
         <ImageView
             android:id="@+id/tower_scenery_image"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:adjustViewBounds="true"
             android:maxHeight="210dp"
             android:scaleType="centerCrop"
             android:src="@drawable/scenery_spectate_with_swords_on_tower" />
 
         <TextView
-            style="@style/MedievalStyle.TextAppearance.Small"
             android:id="@+id/left_time_timer"
+            style="@style/MedievalStyle.TextAppearance.Small"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="12dp"
             android:background="@drawable/timer_background"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:textColor="#FFFFFF"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
             android:paddingLeft="10dp"
+            android:paddingTop="4dp"
             android:paddingRight="10dp"
-            android:text="00:00"/>
+            android:paddingBottom="4dp"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+
+        <include
+            layout="@layout/active_defend_spells_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_gravity="top|start"
+            android:layout_marginStart="12dp"
             android:layout_marginTop="12dp"
-            android:layout_marginStart="12dp">
+            android:orientation="vertical">
 
             <Button
                 android:id="@+id/leave_canvas_button"
