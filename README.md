@@ -132,7 +132,7 @@ A tower can have multiple walls of defense. To capture it, you must destroy all 
 ### **Use of image recognition**:
 
 <div style="text-align: center;">
-    <img height="500" src="assets/gifs/image-recognition.gif" />
+    <img height="500" src="assets/gifs/image-recognition-compressed.gif" />
 </div>
 
 

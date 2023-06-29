@@ -139,7 +139,7 @@ Enchanted Towers — мобильная игра в жанре средневе�
 ### **Использование распознования изображений**:
 
 <div style="text-align: center;">
-    <img height="500" src="assets/gifs/image-recognition.gif" />
+    <img height="500" src="assets/gifs/image-recognition-compressed.gif" />
 </div>
 
 ## Зависимости:
