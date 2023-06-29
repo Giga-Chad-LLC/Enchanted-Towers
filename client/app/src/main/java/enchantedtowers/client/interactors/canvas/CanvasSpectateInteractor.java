@@ -26,6 +26,7 @@ import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.DefendSpellDescription;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
 import enchantedtowers.common.utils.proto.requests.ToggleAttackerRequest;
@@ -66,7 +67,9 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         int port = ServerApiStorage.getInstance().getPort();
 
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        asyncStub = TowerAttackServiceGrpc.newStub(channel);
+        asyncStub = TowerAttackServiceGrpc
+                .newStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
 
         var playerId = ClientStorage.getInstance().getPlayerId();
         var sessionId = ClientStorage.getInstance().getSessionId();

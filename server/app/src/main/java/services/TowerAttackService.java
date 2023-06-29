@@ -501,6 +501,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 // notifying listeners of tower update
                 TowersUpdatesMediator.getInstance().notifyObservers(List.of(session.getAttackedTowerId()));
                 responseBuilder.setProtectionWallDestroyed(true);
+                // TODO: close attack sessions with this tower (since it is destroyed now)
             }
             else {
                 responseBuilder.setProtectionWallDestroyed(false);

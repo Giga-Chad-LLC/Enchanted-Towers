@@ -37,7 +37,8 @@
         <activity android:name=".CanvasActivity" />
         <activity android:name=".MapActivity" />
         <activity android:name=".AttackTowerMenuActivity" />
-        <activity android:name=".CastDefendSpellActivity" />
+        <activity android:name=".UserRegistrationActivity" />
+        <activity android:name=".UserLoginActivity" />
 
         <!--   Required for creating temporary image for casting defend spells     -->
         <provider

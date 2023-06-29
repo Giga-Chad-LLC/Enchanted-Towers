@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+    "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- Database connection properties -->
+        <property name="connection.driver_class">org.postgresql.Driver</property>
+        <property name="connection.url">jdbc:postgresql://localhost:5432/enchanted_towers_db</property>
+        <property name="connection.username">root</property>
+        <property name="connection.password">123</property>
+
+        <property name="current_session_context_class">thread</property>
+
+        <!-- Disable Hibernate's second-level cache -->
+        <property name="cache.provider_class">org.hibernate.cache.internal.NoCachingRegionFactory</property>
+
+        <!-- Hibernate dialect for PostgreSQL -->
+        <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+
+        <!-- Show SQL statements in console -->
+        <property name="show_sql">true</property>
+
+        <!-- Update the database schema automatically -->
+        <property name="hbm2ddl.auto">update</property>
+
+        <!-- Mapping classes -->
+        <mapping class="components.db.models.User" />
+        <mapping class="components.db.models.JwtToken" />
+        <mapping class="components.db.models.GameSessionToken" />
+    </session-factory>
+</hibernate-configuration>

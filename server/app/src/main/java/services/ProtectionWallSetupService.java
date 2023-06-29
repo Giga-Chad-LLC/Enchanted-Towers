@@ -53,11 +53,12 @@ public class ProtectionWallSetupService extends ProtectionWallSetupServiceGrpc.P
         if (serverError.isEmpty()) {
             int towerId = request.getTowerId();
             int playerId = request.getPlayerData().getPlayerId();
+            String username = request.getPlayerData().getUsername();
 
             // tower may be captured
             ProtectionWallSetupServiceInteractor interactor = new ProtectionWallSetupServiceInteractor(towerId);
             // make player an owner of tower and allow to set up protection walls
-            interactor.setTowerOwner(playerId);
+            interactor.setTowerOwner(playerId, username);
             interactor.setCaptureLock();
 
             // setting timeout of protection walls installation

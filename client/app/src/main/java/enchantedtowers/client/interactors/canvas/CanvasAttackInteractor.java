@@ -41,6 +41,7 @@ import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.DefendSpellDescription;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.SpellRequest;
@@ -215,7 +216,9 @@ class AttackEventWorker extends Thread {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
-        blockingStub = TowerAttackServiceGrpc.newBlockingStub(channel);
+        blockingStub = TowerAttackServiceGrpc
+                .newBlockingStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
     }
 
     @Override
@@ -317,14 +320,6 @@ class AttackEventWorker extends Thread {
                 // redirect to base activity
                 ClientUtils.redirectToActivityAndPopHistory(
                         (Activity) canvasWidget.getContext(), MapActivity.class, e.getMessage());
-
-                /*Intent intent = new Intent(canvasWidget.getContext(), MapActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                intent.putExtra("showToastOnStart", true);
-                intent.putExtra("toastMessage", e.getMessage());
-
-                canvasWidget.getContext().startActivity(intent);*/
             }
         }
 
@@ -374,7 +369,9 @@ public class CanvasAttackInteractor implements CanvasInteractor {
             String host = ServerApiStorage.getInstance().getClientHost();
             int port = ServerApiStorage.getInstance().getPort();
             channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-            asyncStub = TowerAttackServiceGrpc.newStub(channel);
+            asyncStub = TowerAttackServiceGrpc
+                    .newStub(channel)
+                    .withInterceptors(new GameSessionRequestInterceptor());
         }
 
         callAsyncAttackTowerById(canvasWidget);
@@ -485,9 +482,12 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         {
             int playerId = ClientStorage.getInstance().getPlayerId().get();
             int towerId = ClientStorage.getInstance().getTowerId().get();
+            String username = ClientStorage.getInstance().getUsername().get();
+
             requestBuilder.setTowerId(towerId);
             requestBuilder.getPlayerDataBuilder()
                     .setPlayerId(playerId)
+                    .setUsername(username)
                     .build();
         }
 

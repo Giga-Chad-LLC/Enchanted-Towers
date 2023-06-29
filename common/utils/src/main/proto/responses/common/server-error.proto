@@ -13,6 +13,7 @@ message ServerError {
     SESSION_NOT_FOUND = 3;
     SPELL_TEMPLATE_NOT_FOUND = 4;
     SPELL_BOOK_NOT_LOADED = 5;
+    UNEXPECTED_ERROR = 6;
   }
 
   ErrorType type = 2;

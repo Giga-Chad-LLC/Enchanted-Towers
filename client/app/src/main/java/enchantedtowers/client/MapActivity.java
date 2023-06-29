@@ -31,8 +31,6 @@ public class MapActivity extends BaseActivity {
 
     private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

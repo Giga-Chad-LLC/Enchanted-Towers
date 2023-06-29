@@ -1,84 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainActivityContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-
-    <EditText
-        android:id="@+id/main_activity_player_id_text_input"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:hint="PlayerId"
-        android:inputType="text" />
-
-    <Button
-        android:id="@+id/main_activity_set_player_id_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="160dp"
-        android:onClick="changeActivity"
-        android:text="Set player id"
-        app:barrierAllowsGoneWidgets="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/changeToAttackTowerMenu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="360dp"
-        android:onClick="changeActivity"
-        android:text="Attack Tower Menu"
-        app:barrierAllowsGoneWidgets="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/changeToCanvasActivity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="432dp"
-        android:onClick="changeActivity"
-        android:text="Canvas"
-        app:barrierAllowsGoneWidgets="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/changeToMapActivity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:onClick="changeActivity"
-        android:text="Map"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
-
-    <Button
-        android:id="@+id/changeToCameraActivity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="80dp"
-        android:onClick="changeActivity"
-        android:text="Camera"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/changeToCanvasActivity" />
-
     <FrameLayout
-        android:id="@+id/frame_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:src="@drawable/activity_main_background" />
+
+        <TextView
+            style="@style/MedievalStyle.TextAppearance.Large"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="changeActivity"
+            android:clickable="true"
+            android:layout_gravity="center"
+            android:layout_marginBottom="30dp"
+            android:text="Enchanted Towers"
+            android:textSize="56sp"
+            android:textAlignment="center"
+            android:textColor="#80FFFFFF" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="60dp">
+
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:id="@+id/changeToLoginActivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="changeActivity"
+                android:clickable="true"
+                android:layout_marginBottom="30dp"
+                android:text="Login"
+                android:textSize="32sp"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:id="@+id/changeToSignUpActivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="changeActivity"
+                android:clickable="true"
+                android:text="Register"
+                android:textSize="32sp"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+
+</LinearLayout>

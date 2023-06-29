@@ -35,6 +35,7 @@ import enchantedtowers.client.components.providers.ImageContoursProvider;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.client.interactors.canvas.CanvasDrawStateInteractor;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.PlayerData;
 import enchantedtowers.common.utils.proto.requests.CastDefendSpellRequest;
 import enchantedtowers.common.utils.proto.responses.ActionResultResponse;
@@ -74,7 +75,8 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
-        asyncStub = TowerAttackServiceGrpc.newStub(channel);
+        asyncStub = TowerAttackServiceGrpc.newStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
     }
 
     @Override

@@ -31,6 +31,7 @@ import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.registry.TowersRegistry;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallIdRequest;
 import enchantedtowers.common.utils.proto.requests.ProtectionWallRequest;
@@ -159,7 +160,9 @@ class ProtectionEventWorker extends Thread {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
-        blockingStub = ProtectionWallSetupServiceGrpc.newBlockingStub(channel);
+        blockingStub = ProtectionWallSetupServiceGrpc
+                .newBlockingStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
     }
 
     @Override
@@ -292,7 +295,10 @@ public class CanvasProtectionInteractor implements CanvasInteractor {
         String host = ServerApiStorage.getInstance().getClientHost();
         int port = ServerApiStorage.getInstance().getPort();
         channel = Grpc.newChannelBuilderForAddress(host, port, InsecureChannelCredentials.create()).build();
-        asyncStub = ProtectionWallSetupServiceGrpc.newStub(channel);
+
+        asyncStub = ProtectionWallSetupServiceGrpc
+                .newStub(channel)
+                .withInterceptors(new GameSessionRequestInterceptor());
 
         callAsyncEnterProtectionWall(canvasWidget);
         setProtectorCanvasStats();
