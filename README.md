@@ -78,5 +78,5 @@ There are markers (towers) on the map, players must live to get to the towers in
      - Delete folder `/common/build/generated/source`
      - When rebuilding models, you must manually delete the previous folder with generated files
 3. Run the docker database image: `cd /docker && docker-compose up`
-4. After that, the clients (target: `client.app`) are launched first, then the server (taget: `server`)
+4. After that, the clients (target: `client.app`) are launched first, then the server (target: `server`)
 
