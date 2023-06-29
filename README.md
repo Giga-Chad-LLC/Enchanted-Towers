@@ -1,4 +1,9 @@
 # Enchanted Towers
+
+<div style="text-align: center; width: 100%;">
+    <img src="assets/images/background.png" />
+</div>
+
 ## Java Project | Higher School of Economics, 2023
 
 Read this in other languages: [English](./README.md), [Русский](./README.ru.md)
