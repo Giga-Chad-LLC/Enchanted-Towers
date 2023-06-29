@@ -7,6 +7,8 @@
 
 Read this in other languages: [English](./README.md), [Русский](./README.ru.md)
 
+See presentation (ru) [here](https://docs.google.com/presentation/d/1EUZ_jMGauI1In_pn11sZEyMh0hu_vtjz4ywV4bDZ51w/edit?usp=sharing)
+
 ## Authors:
 - [Vladislav Artiukhov](https://github.com/Vladislav0Art)
 - [Vladislav Naumkin](https://github.com/dezd4r)
@@ -21,6 +23,29 @@ On behalf of our entire team, we would like to say huge thanks to [Vitaly Selish
 Enchanted Towers is a medieval fantasy mobile game in which players compete by capturing and holding towers on a real map while casting spells on their smartphone screen or on real paper.
 
 There are markers (towers) on the map, players must live to get to the towers in order to be able to capture them and subsequently set their defensive spells. Tower owners can thwart attackers from anywhere in the world by taking a picture of one of the available defensive spells with a unique effect on paper.
+
+### Core mechanics:
+
+**Enchantments and spells, improving the mage's skills:**
+
+The mage, having a certain set of spells (patterns), forms an enchantment on the canvass, then this enchantment is installed on the tower defense wall.
+
+**Attacker:**
+
+The attacker must guess the enchantment based on the list of elements used when enchanting this wall. The attacker must repeat the enchantment by drawing it with `>= N%` overlap with what is set on the wall of defense. The attacker must be in close proximity to the tower to begin its capture.
+
+**Defender:**
+
+The defender to defend the tower during the attack can draw a special pattern on a piece of paper that will respond to a special defensive spell, then he loads it through the camera into our game. The pattern is matched to the defensive spell, and if the match is `>= N%` correct, it triggers, and some action is performed on the attacking mages:
+
+1. Inverting the canvas to draw on the X-axis
+2. Inverting the canvas for drawing on the Y axis
+3. Phone vibration
+
+**Towers:**
+
+A tower can have multiple walls of defense. To capture it, you must destroy all defense walls one at a time.
+
 
 ## Game components:
 
