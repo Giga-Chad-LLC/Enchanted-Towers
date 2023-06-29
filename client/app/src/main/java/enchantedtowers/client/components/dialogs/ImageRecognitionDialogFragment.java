@@ -214,6 +214,7 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
             .setDefendSpellId(defendSpellId)
             .build();
 
+        logger.info("Casting defend spell: " + request);
         asyncStub
             .withDeadlineAfter(ServerApiStorage.getInstance().getClientRequestTimeout(), TimeUnit.MILLISECONDS)
             .castDefendSpell(request, new StreamObserver<>() {
@@ -221,7 +222,7 @@ public class ImageRecognitionDialogFragment extends DialogFragment {
 
                 @Override
                 public void onNext(ActionResultResponse response) {
-                    if (response.hasError()) {
+                    if (!response.getSuccess()) {
                         this.hadError = true;
                         ClientUtils.showSnackbar(
                                 dialog.findViewById(R.id.defend_spell_preview_layout),

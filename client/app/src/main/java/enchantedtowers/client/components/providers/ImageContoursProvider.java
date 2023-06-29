@@ -65,16 +65,15 @@ public class ImageContoursProvider {
 
         // Use Fragment class here to register for activity result
         this.cameraLauncher = parentDialog.registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            (result) -> {
-                try {
-                    Pair<Bitmap, List<List<Vector2>>> data = processImage(result);
-                    onSuccess.accept(data);
+                new ActivityResultContracts.StartActivityForResult(),
+                (result) -> {
+                    try {
+                        Pair<Bitmap, List<List<Vector2>>> data = processImage(result);
+                        onSuccess.accept(data);
+                    } catch (Exception e) {
+                        onError.accept(e.getMessage());
+                    }
                 }
-                catch(Exception e) {
-                    onError.accept(e.getMessage());
-                }
-            }
         );
     }
 
@@ -87,8 +86,7 @@ public class ImageContoursProvider {
 
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedImageUri);
             cameraLauncher.launch(takePictureIntent);
-        }
-        else {
+        } else {
             onErrorCallback.accept("Unable to start camera, try restarting the game.");
         }
     }
@@ -207,6 +205,7 @@ public class ImageContoursProvider {
 
     /**
      * Crop image from the sides in order to minimize noises
+     *
      * @return cropped image bitmap
      */
     private Bitmap cropImageAroundBorders(Bitmap bitmap, int x, int y) {
@@ -290,8 +289,9 @@ public class ImageContoursProvider {
     /**
      * On some devices retrieved image is captured rotated, so we need to adjust to that
      * and rotate the bitmap that we will show on the screen.
-     * @param context to get the correct content resolver
-     * @param img initial bitmap, without rotation applied
+     *
+     * @param context       to get the correct content resolver
+     * @param img           initial bitmap, without rotation applied
      * @param selectedImage uri where the image is saved
      * @return rotated new bitmap (allocated additional memory)
      */
@@ -300,8 +300,7 @@ public class ImageContoursProvider {
         ExifInterface ei;
         if (Build.VERSION.SDK_INT > 23) {
             ei = new ExifInterface(input);
-        }
-        else {
+        } else {
             ei = new ExifInterface(selectedImage.getPath());
         }
 
@@ -317,6 +316,7 @@ public class ImageContoursProvider {
 
     /**
      * Rotates given image (as a bitmap) by angle in degrees counter-clockwise
+     *
      * @return new bitmap with rotated image
      */
     private static Bitmap rotateImage(Bitmap img, int degree) {
@@ -376,40 +376,8 @@ public class ImageContoursProvider {
         int deletedObjects = parentActivity.getBaseContext().getContentResolver().delete(imageUri, null, null);
         if (deletedObjects != 1) {
             logger.warning("Something went wrong while deleting temp image, deleted objects count " + deletedObjects);
-        }
-        else {
+        } else {
             logger.info("Deleted temp image successfully: " + imageUri.getPath());
         }
     }
-
-//    private void requestCameraPermission() {
-//        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-//                Manifest.permission.CAMERA)) {
-//            // Show an explanation to the user
-//            // You can customize the message according to your needs
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.CAMERA},
-//                    REQUEST_PERMISSION_CAMERA);
-//        } else {
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.CAMERA},
-//                    REQUEST_PERMISSION_CAMERA);
-//        }
-//    }
-
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-//                                           @NonNull int[] grantResults) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//        if (requestCode == REQUEST_PERMISSION_CAMERA) {
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                startCamera();
-//            } else {
-//                // Camera permission was denied
-//                // You can show a message or handle the denial scenario accordingly
-//                logger.warning("Camera permissions denied!");
-//                ClientUtils.showToastOnUIThread(CastDefendSpellActivity.this, "Cannot take a picture without camera permissions!", Toast.LENGTH_LONG);
-//            }
-//        }
-//    }
 }

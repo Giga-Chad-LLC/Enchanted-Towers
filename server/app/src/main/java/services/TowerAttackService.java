@@ -712,6 +712,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             responseBuilder.setSuccess(true);
         }
         else {
+            responseBuilder.setSuccess(false);
             responseBuilder.setError(serverError.get());
         }
 

@@ -25,7 +25,8 @@ import enchantedtowers.client.components.utils.ClientUtils;
 public class MapActivity extends BaseActivity {
     private final String[] locationPermissions = new String[] {
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.VIBRATE
     };
 
     private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
@@ -47,7 +48,10 @@ public class MapActivity extends BaseActivity {
                     boolean coarseLocationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
                             Manifest.permission.ACCESS_COARSE_LOCATION, false));
 
-                    if (fineLocationPermissionGranted && coarseLocationPermissionGranted) {
+                    boolean vibrationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
+                            Manifest.permission.VIBRATE, false));
+
+                    if (fineLocationPermissionGranted && coarseLocationPermissionGranted && vibrationPermissionGranted) {
                         ClientUtils.showSnackbar(mapFrameLayout, "All required permissions granted. Thanks, enjoy the game!", Snackbar.LENGTH_LONG);
                         mountGoogleMapsFragment();
                     }
@@ -56,7 +60,7 @@ public class MapActivity extends BaseActivity {
                         mountGoogleMapsFragment();
                     }
                     else {
-                        ClientUtils.showSnackbar(mapFrameLayout, "Content might be limited. Please, grant access of location.", Snackbar.LENGTH_LONG);
+                        ClientUtils.showSnackbar(mapFrameLayout, "Content might be limited. Please, grant access of location and vibration.", Snackbar.LENGTH_LONG);
                     }
                 }
         );
@@ -65,7 +69,8 @@ public class MapActivity extends BaseActivity {
                 .withPermissions(locationPermissions, this, this::mountGoogleMapsFragment)
                 .otherwise(() -> {
                     if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
-                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                        shouldShowRequestPermissionRationale(Manifest.permission.VIBRATE)) {
                         showLocationRequestPermissionRationale(locationPermissionLauncher);
                     }
                     else {

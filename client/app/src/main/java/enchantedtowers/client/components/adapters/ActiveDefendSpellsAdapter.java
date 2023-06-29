@@ -55,22 +55,24 @@ public class ActiveDefendSpellsAdapter extends RecyclerView.Adapter<ActiveDefend
         public DefendSpellViewHolder(View itemView) {
             super(itemView);
 
+            System.out.println("Created holder: holder=" + this);
+
             this.nameView = itemView.findViewById(R.id.defend_spell_name);
             this.timerView = itemView.findViewById(R.id.defend_spell_timer);
-            this.timer = new Timer();
         }
 
         public void startTimer(long totalDuration) {
             if (!timerStarted) {
                 this.leftTime_ms = totalDuration;
                 this.timerStarted = true;
+                this.timer = new Timer();
 
                 timer.scheduleAtFixedRate(new TimerTask() {
                     public void run() {
                         updateTimerView();
 
                         if (DefendSpellViewHolder.this.leftTime_ms == 0) {
-                            DefendSpellViewHolder.this.timer.cancel();
+                            cancelTimer();
                         }
 
                         DefendSpellViewHolder.this.leftTime_ms = Math.max(DefendSpellViewHolder.this.leftTime_ms - TIMER_UPDATES_DELAY_MS, 0);
@@ -81,7 +83,9 @@ public class ActiveDefendSpellsAdapter extends RecyclerView.Adapter<ActiveDefend
 
         public void cancelTimer() {
             if (timer != null && timerStarted) {
+                System.out.println("Handler:" + this + ", cancel timer");
                 timer.cancel();
+                timerStarted = false;
             }
         }
 
@@ -99,7 +103,6 @@ public class ActiveDefendSpellsAdapter extends RecyclerView.Adapter<ActiveDefend
         }
     }
 
-
     @NonNull
     @Override
     public ActiveDefendSpellsAdapter.DefendSpellViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -109,12 +112,16 @@ public class ActiveDefendSpellsAdapter extends RecyclerView.Adapter<ActiveDefend
 
     @Override
     public void onBindViewHolder(@NonNull DefendSpellViewHolder holder, int position) {
-        int defendSpellId = items.get(position).getId();
+        var item = items.get(position);
+        int defendSpellId = item.getId();
+
         DefendSpell defendSpell = SpellBook.getDefendSpellTemplateById(defendSpellId);
         if (defendSpell != null) {
             holder.nameView.setText(defendSpell.getName());
         }
-        holder.startTimer(items.get(position).getTotalDuration());
+        holder.startTimer(item.getTotalDuration());
+
+        System.out.println("Adapter: bind holder, holder=" + holder + ", id=" + defendSpellId + ", duration=" + item.getTotalDuration());
     }
 
     @Override
@@ -125,6 +132,7 @@ public class ActiveDefendSpellsAdapter extends RecyclerView.Adapter<ActiveDefend
     @Override
     public void onViewRecycled(@NonNull DefendSpellViewHolder holder) {
         super.onViewRecycled(holder);
+        System.out.println("Adapter: recycle item: holder=" + holder);
         holder.cancelTimer();
     }
 

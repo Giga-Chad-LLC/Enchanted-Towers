@@ -1,10 +1,17 @@
 package enchantedtowers.client.interactors.canvas;
 
+import static android.content.Context.VIBRATOR_SERVICE;
+
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -349,13 +356,18 @@ public class CanvasAttackInteractor implements CanvasInteractor {
     // defend spells actions
     boolean invertedXDefendSpellActive = false;
     boolean invertedYDefendSpellActive = false;
-    // boolean smthElse
+    boolean vibrationDefendSpellActive = false;
+
+    private boolean isVibrating = false;
+    private Vibrator vibrator;
 
 
     public CanvasAttackInteractor(CanvasAttackerFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
         this.canvasFragment = canvasFragment;
         this.canvasWidget = canvasWidget;
+        this.vibrator = (Vibrator) canvasFragment.requireContext().getSystemService(VIBRATOR_SERVICE);
+
 
         // configuring async client stub
         {
@@ -509,11 +521,14 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             List<DefendSpellDescription> activeDefendSpells = response.getActiveDefendSpellsList();
                             for (var activeDefendSpell : activeDefendSpells) {
                                 int defendSpellId = activeDefendSpell.getDefendSpellTemplateId();
+                                long totalDuration = activeDefendSpell.getLeftTimeMs();
+
                                 setActiveDefendSpell(defendSpellId, true);
+                                toggleVibration(totalDuration);
 
                                 canvasFragment.addActiveDefendSpell(
                                     defendSpellId,
-                                    activeDefendSpell.getLeftTimeMs()
+                                    totalDuration
                                 );
                             }
 
@@ -526,6 +541,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             long totalDuration = response.getUpdatedDefendSpell().getLeftTimeMs();
 
                             setActiveDefendSpell(defendSpellId, true);
+                            toggleVibration(totalDuration);
 
                             canvasFragment.addActiveDefendSpell(defendSpellId, totalDuration);
                             logger.info("Attacker: add defend spell " + defendSpellId);
@@ -534,6 +550,7 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
 
                             setActiveDefendSpell(defendSpellId, false);
+                            toggleVibration(0);
 
                             canvasFragment.removeActiveDefendSpell(defendSpellId);
                             logger.info("Attacker: remove defend spell " + defendSpellId);
@@ -573,12 +590,39 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         });
     }
 
+    private void toggleVibration(long durationMs) {
+        if (vibrationDefendSpellActive) {
+            startVibration(durationMs);
+        }
+        else {
+            stopVibration();
+        }
+    }
+
+    private void startVibration(long durationMillis) {
+        if (vibrator != null && vibrator.hasVibrator() && !isVibrating) {
+            VibrationEffect vibrationEffect = VibrationEffect.createOneShot(durationMillis, VibrationEffect.DEFAULT_AMPLITUDE);
+            vibrator.vibrate(vibrationEffect);
+            vibrationDefendSpellActive = true;
+        }
+    }
+
+    private void stopVibration() {
+        if (vibrator != null && isVibrating) {
+            vibrator.cancel();
+            isVibrating = false;
+        }
+    }
+
     private void setActiveDefendSpell(int defendSpellId, boolean value) {
         if (defendSpellId == DefendSpell.DefendSpellType.INVERT_X_AXIS.getType()) {
             invertedXDefendSpellActive = value;
         }
         else if (defendSpellId == DefendSpell.DefendSpellType.INVERT_Y_AXIS.getType()) {
             invertedYDefendSpellActive = value;
+        }
+        else if (defendSpellId == DefendSpell.DefendSpellType.VIBRATE.getType()) {
+            vibrationDefendSpellActive = value;
         }
     }
 

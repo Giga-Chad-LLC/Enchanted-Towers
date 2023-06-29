@@ -16,7 +16,8 @@ import enchantedtowers.game_models.utils.Vector2;
 public class DefendSpell {
     public enum DefendSpellType {
         INVERT_X_AXIS(1),
-        INVERT_Y_AXIS(2);
+        INVERT_Y_AXIS(2),
+        VIBRATE(3);
 
         private final int type; // corresponds to the id of the defend spell
         DefendSpellType(int type) {
