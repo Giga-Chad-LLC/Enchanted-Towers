@@ -8,6 +8,8 @@
 
 Read this in other languages: [English](./README.md), [Русский](./README.ru.md)
 
+Презентация (рус.) [здесь](https://docs.google.com/presentation/d/1EUZ_jMGauI1In_pn11sZEyMh0hu_vtjz4ywV4bDZ51w/edit?usp=sharing)
+
 ## Участники проекта:
 
 - [Артюхов Владислав](https://github.com/Vladislav0Art)
