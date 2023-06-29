@@ -71,10 +71,6 @@ public class ActiveDefendSpellsAdapter extends RecyclerView.Adapter<ActiveDefend
                     public void run() {
                         updateTimerView();
 
-                        if (DefendSpellViewHolder.this.leftTime_ms == 0) {
-                            cancelTimer();
-                        }
-
                         DefendSpellViewHolder.this.leftTime_ms = Math.max(DefendSpellViewHolder.this.leftTime_ms - TIMER_UPDATES_DELAY_MS, 0);
                     }
                 }, 0, TIMER_UPDATES_DELAY_MS);
