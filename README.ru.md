@@ -1,9 +1,8 @@
-# Enchanted Towers
-
 <div style="text-align: center; width: 100%;">
-    <img src="assets/images/background.png" />
+    <img src="assets/images/titled-background.png" />
 </div>
 
+# Enchanted Towers
 ## Java Проект | Высшая Школа Экономики, 2023
 
 
@@ -76,5 +75,5 @@ Enchanted Towers — мобильная игра в жанре средневе�
     - А затем: `gradle :common:utils:SyncProtobufFiles :common:utils:SyncProtoGrpcDependencies`
     - Удалить папку `/common/build/generated/source`
     - При повторной пересборке моделей необходимо вручную удалить предыдщую папку со сгенерированными файлами
-3. Запустить докер-образ базы данных: `cd /docker && docker-compose up` 
+3. Запустить докер-образ базы данных: `cd /docker && docker-compose up`
 4. После чего вначале запускаются клиенты (target: `client.app`), затем сервер (taget: `server`)
