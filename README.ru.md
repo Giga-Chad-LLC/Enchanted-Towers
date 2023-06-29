@@ -41,15 +41,15 @@ Enchanted Towers — мобильная игра в жанре средневе�
 ### **Атака на башню**: слева наблюдатель, справа - атакующий
 
 <div style="text-align: center;">
-    <img style="max-height: 500px;" src="assets/gifs/spectator-1.gif"  />
-    <img style="max-height: 500px;" src="assets/gifs/attacker-1.gif"  />
+    <img height="500" src="assets/gifs/spectator-1.gif"  />
+    <img height="500" src="assets/gifs/attacker-1.gif"  />
 </div>
 
 
 ### **Установка защитной стены**:
 
 <div style="text-align: center;">
-    <img style="max-height: 500px;" src="assets/gifs/wall-protection.gif"  />
+    <img height="500" src="assets/gifs/wall-protection.gif"  />
 </div>
 
 
