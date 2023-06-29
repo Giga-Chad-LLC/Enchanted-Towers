@@ -1,4 +1,4 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.json;
 
 
 import org.json.JSONArray;
@@ -10,15 +10,14 @@ import java.util.List;
 import java.util.Objects;
 
 import enchantedtowers.common.utils.proto.common.SpellType;
-import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.utils.Vector2;
 
 
-public class EnchantmetTemplatesProvider {
-    private static final String FIRE_SPELL_LABEL = "fire";
-    private static final String WIND_SPELL_LABEL = "wind";
-    private static final String EARTH_SPELL_LABEL = "earth";
-    private static final String WATER_SPELL_LABEL = "water";
+public class SpellsTemplatesProvider {
+    public static final String FIRE_SPELL_LABEL = "Fire";
+    public static final String WIND_SPELL_LABEL = "Wind";
+    public static final String EARTH_SPELL_LABEL = "Earth";
+    public static final String WATER_SPELL_LABEL = "Water";
 
     static public class SpellTemplateData {
         private final int id;
@@ -44,7 +43,7 @@ public class EnchantmetTemplatesProvider {
         }
     }
 
-    static public List<SpellTemplateData> parseJson(String jsonString) throws JSONException {
+    static public List<SpellTemplateData> parseSpellsJson(String jsonString) throws JSONException {
         JSONObject content = new JSONObject(jsonString);
         JSONArray templatesJson = content.getJSONArray("spellsTemplates");
 

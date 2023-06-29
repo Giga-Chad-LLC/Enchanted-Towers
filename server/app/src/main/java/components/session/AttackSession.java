@@ -5,9 +5,9 @@ import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse;
-import enchantedtowers.game_logic.CanvasState;
-import enchantedtowers.game_models.TemplateDescription;
-import enchantedtowers.game_logic.SpellDrawingDescription;
+import enchantedtowers.game_logic.canvas.CanvasState;
+import enchantedtowers.game_models.SpellTemplateDescription;
+import enchantedtowers.game_logic.canvas.SpellDrawingDescription;
 import enchantedtowers.game_models.utils.Vector2;
 import io.grpc.stub.StreamObserver;
 
@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * <p>Caller must provide thread-safe execution of the methods.</p>
  */
 public class AttackSession {
-    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 120 * 1000; // 60s
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 120 * 1000;
 
     private final int id;
     private final int attackingPlayerId;
@@ -167,7 +167,7 @@ public class AttackSession {
         currentSpellDescription.addPoint(point);
     }
 
-    public void addTemplateToCanvasState(TemplateDescription template) {
+    public void addTemplateToCanvasState(SpellTemplateDescription template) {
         canvasState.addTemplate(template);
     }
 
@@ -176,7 +176,7 @@ public class AttackSession {
         currentSpellDescription.reset();
     }
 
-    public List<TemplateDescription> getDrawnSpellsDescriptions() {
+    public List<SpellTemplateDescription> getDrawnSpellsDescriptions() {
         return canvasState.getTemplates();
     }
 

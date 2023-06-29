@@ -30,6 +30,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                if ((requested.group == "org.jetbrains.kotlin") && (!requested.name.startsWith("kotlin-gradle"))) {
+                    useVersion("1.8.0")
+                }
+            }
+
+//            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.0'
+        }
+    }
 }
 
 

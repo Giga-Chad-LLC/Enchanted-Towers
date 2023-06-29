@@ -2,6 +2,9 @@ package enchantedtowers.client.components.providers;
 
 import android.app.Activity;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONException;
@@ -10,12 +13,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import enchantedtowers.client.BaseActivity;
+import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
 import enchantedtowers.client.components.utils.ClientUtils;
 import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.SpellBookResponse;
 import enchantedtowers.common.utils.proto.services.SpellBookServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
-import enchantedtowers.game_logic.EnchantmetTemplatesProvider;
+import enchantedtowers.game_logic.json.DefendSpellsTemplatesProvider;
+import enchantedtowers.game_logic.json.SpellsTemplatesProvider;
 import enchantedtowers.game_models.SpellBook;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -50,7 +56,10 @@ public class SpellBookProvider {
                         public void onNext(SpellBookResponse response) {
                             if (response.hasError()) {
                                 ClientUtils.showSnackbar(context.findViewById(android.R.id.content).getRootView(), response.getError().getMessage(), Snackbar.LENGTH_LONG);
-                                logger.warning("retrieveSpellBookAsJSON::Received error: " + response.getError().getMessage());
+                                logger.warning("retrieveSpellBookAsJSON::Received error=" + response.getError().getMessage());
+                            }
+                            else {
+                                logger.info("retrieveSpellBookAsJSON::Received response=" + response.getJsonData());
                             }
 
                             this.response = response;
@@ -59,26 +68,32 @@ public class SpellBookProvider {
                         @Override
                         public void onError(Throwable t) {
                             ClientUtils.showSnackbar(context.findViewById(android.R.id.content).getRootView(), t.getMessage(), Snackbar.LENGTH_LONG);
-                            SpellBook.instantiate(List.of());
+                            SpellBook.instantiate(List.of(), List.of());
+                            logger.warning("retrieveSpellBookAsJSON::onError error=" + t.getMessage());
                         }
 
                         @Override
                         public void onCompleted() {
-                            List<EnchantmetTemplatesProvider.SpellTemplateData> data = List.of();
+                            List<SpellsTemplatesProvider.SpellTemplateData> spellTemplatesData = List.of();
+                            List<DefendSpellsTemplatesProvider.DefendSpellTemplateData> defendSpellTemplatesData = List.of();
 
                             if (!response.hasError()) {
                                 try {
-                                    data = EnchantmetTemplatesProvider.parseJson(
+                                    spellTemplatesData = SpellsTemplatesProvider.parseSpellsJson(
                                         response.getJsonData()
                                     );
+                                    defendSpellTemplatesData = DefendSpellsTemplatesProvider.parseDefendSpellsJson(
+                                            response.getJsonData()
+                                    );
                                 } catch (JSONException e) {
-                                    data = List.of();
+                                    spellTemplatesData = List.of();
+                                    defendSpellTemplatesData = List.of();
                                     ClientUtils.showSnackbar(context.findViewById(android.R.id.content).getRootView(), e.getMessage(), Snackbar.LENGTH_LONG);
                                     logger.warning("retrieveSpellBookAsJSON::Received error: " + e.getMessage());
                                 }
                             }
 
-                            SpellBook.instantiate(data);
+                            SpellBook.instantiate(spellTemplatesData, defendSpellTemplatesData);
                         }
                     });
             }

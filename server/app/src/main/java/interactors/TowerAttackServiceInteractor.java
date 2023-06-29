@@ -2,7 +2,7 @@ package interactors;
 
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import components.registry.TowersRegistry;
 
@@ -37,8 +37,8 @@ public class TowerAttackServiceInteractor {
         return wall.getEnchantment().get();
     }
 
-    public Enchantment enchantmentOf(List<TemplateDescription> templateDescriptions) {
-        return new Enchantment(templateDescriptions);
+    public Enchantment enchantmentOf(List<SpellTemplateDescription> spellTemplateDescriptions) {
+        return new Enchantment(spellTemplateDescriptions);
     }
 
     public void destroyProtectionWallWithId(int protectionWallId) {

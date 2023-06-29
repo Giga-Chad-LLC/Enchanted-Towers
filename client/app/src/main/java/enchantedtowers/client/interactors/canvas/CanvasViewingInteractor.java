@@ -7,7 +7,7 @@ import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 
 public class CanvasViewingInteractor {
     private final ProtectionWall protectionWall;
@@ -25,8 +25,8 @@ public class CanvasViewingInteractor {
 
     public void addTemplateDescriptionsInCanvasState(CanvasState state) {
         Enchantment enchantment = protectionWall.getEnchantment().get();
-        for (TemplateDescription description : enchantment.getTemplateDescriptions()) {
-            Spell spell = SpellBook.getTemplateById(description.id());
+        for (SpellTemplateDescription description : enchantment.getTemplateDescriptions()) {
+            Spell spell = SpellBook.getSpellTemplateById(description.id());
 
             if (spell == null) {
                 throw new RuntimeException("Spell template with id " + description.id() +

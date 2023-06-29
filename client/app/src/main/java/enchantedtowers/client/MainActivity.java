@@ -2,11 +2,14 @@ package enchantedtowers.client;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+
+import org.opencv.android.OpenCVLoader;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +29,6 @@ import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
-
 public class MainActivity extends AppCompatActivity {
     private static final Logger logger = Logger.getLogger(MainActivity.class.getName());
     private Optional<ManagedChannel> channel = Optional.empty();
@@ -38,6 +40,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // initialize opencv
+        if (!OpenCVLoader.initDebug()) {
+            Log.e("OpenCV", "Unable to load OpenCV!");
+        }
+        else {
+            Log.d("OpenCV", "OpenCV loaded Successfully!");
+        }
 
         JwtFileManager jwtFileManager = new JwtFileManager(this);
         Optional<String> token = jwtFileManager.getJwtToken();

@@ -1,5 +1,12 @@
 package services;
 
+import components.defend_spells.DefendSpellTimeout;
+import components.defend_spells.DefendSpellsManager;
+import enchantedtowers.common.utils.proto.common.DefendSpellDescription;
+import enchantedtowers.common.utils.proto.requests.CastDefendSpellRequest;
+import enchantedtowers.common.utils.proto.responses.ServerError.Builder;
+import enchantedtowers.common.utils.proto.responses.ServerError.ErrorType;
+import enchantedtowers.game_models.SpellBook;
 import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
@@ -23,23 +30,25 @@ import enchantedtowers.common.utils.proto.requests.TowerIdRequest;
 import enchantedtowers.common.utils.proto.responses.*;
 import enchantedtowers.common.utils.proto.responses.SpectateTowerAttackResponse.ResponseType;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
-import enchantedtowers.game_logic.EnchantmentMatchingAlgorithm;
-import enchantedtowers.game_logic.SpellsPatternMatchingAlgorithm;
+import enchantedtowers.game_logic.algorithm.EnchantmentMatchingAlgorithm;
+import enchantedtowers.game_logic.algorithm.SpellsMatchingAlgorithm;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import components.registry.TowersRegistry;
 import enchantedtowers.game_models.utils.Vector2;
 import interactors.TowerAttackServiceInteractor;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-
+import javax.swing.Action;
+import javax.swing.text.html.Option;
 
 
 public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServiceImplBase {
     private final static double MINIMUM_REQUIRED_MATCH_COEFFICIENT = 0.80;
     private final AttackSessionManager sessionManager = new AttackSessionManager();
+    private final DefendSpellsManager defendSpellsManager = new DefendSpellsManager();
     private final Logger logger = Logger.getLogger(TowerAttackService.class.getName());
     private final IntConsumer onSessionExpiredCallback = this::onSessionExpired;
 
@@ -111,8 +120,10 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                     .setLeftTimeMs(session.getExpirationTimeoutMs())
                     .build();
 
-            streamObserver.onNext(responseBuilder.build());
+            // setting active defend spells
+            responseBuilder.addAllActiveDefendSpells(createActiveDefendSpellsList(towerId));
 
+            streamObserver.onNext(responseBuilder.build());
             // notifying listeners of tower update
             TowersUpdatesMediator.getInstance().notifyObservers(List.of(towerId));
         }
@@ -124,6 +135,20 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             streamObserver.onNext(responseBuilder.build());
             streamObserver.onCompleted();
         }
+    }
+
+    private List<DefendSpellDescription> createActiveDefendSpellsList(int towerId) {
+        List<DefendSpellTimeout> activeDefendSpells = defendSpellsManager.getActiveDefendSpellsByTowerId(towerId);
+        List<DefendSpellDescription> activeDefendSpellsToSend = new ArrayList<>();
+        for (var defendSpell : activeDefendSpells) {
+            DefendSpellDescription desc = DefendSpellDescription.newBuilder()
+                .setDefendSpellTemplateId(defendSpell.getId())
+                .setLeftTimeMs(defendSpell.getLeftExecutionTimeMs())
+                .build();
+            activeDefendSpellsToSend.add(desc);
+        }
+
+        return activeDefendSpellsToSend;
     }
 
     /**
@@ -300,7 +325,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
             logger.info("finishSpell: run hausdorff and return id of matched template and offset");
 
-            Optional<TemplateDescription> matchedTemplateDescriptionOpt = SpellsPatternMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
+            Optional<SpellTemplateDescription> matchedTemplateDescriptionOpt = SpellsMatchingAlgorithm.getMatchedTemplateWithHausdorffMetric(
                     session.getCurrentSpellPoints(),
                     offset,
                     session.getCurrentSpellType()
@@ -327,12 +352,12 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                 }
             }
             else {
-                TemplateDescription templateDescription = matchedTemplateDescriptionOpt.get();
+                SpellTemplateDescription spellTemplateDescription = matchedTemplateDescriptionOpt.get();
 
                 // send data to attacker
-                final int templateId = templateDescription.id();
-                final double x = templateDescription.offset().x;
-                final double y = templateDescription.offset().y;
+                final int templateId = spellTemplateDescription.id();
+                final double x = spellTemplateDescription.offset().x;
+                final double y = spellTemplateDescription.offset().y;
 
                 // Build template offset
                 responseBuilder.getSpellDescriptionBuilder().getSpellTemplateOffsetBuilder()
@@ -347,7 +372,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
                         .build();
 
                 // save the template to the canvas state
-                session.addTemplateToCanvasState(templateDescription);
+                session.addTemplateToCanvasState(spellTemplateDescription);
 
                 // send data to all spectators
                 final SpellType spellType = session.getCurrentSpellType();
@@ -424,7 +449,7 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
 
     /**
-     * Compares player's drawn enchantment (which is the list of {@link TemplateDescription}) with the actual enchantment stored inside {@link ProtectionWall} of {@link Tower} that is being under attack. Comparison is being made by calling {@link EnchantmentMatchingAlgorithm#getEnchantmentMatchStatsWithHausdorffMetric} method.
+     * Compares player's drawn enchantment (which is the list of {@link SpellTemplateDescription}) with the actual enchantment stored inside {@link ProtectionWall} of {@link Tower} that is being under attack. Comparison is being made by calling {@link EnchantmentMatchingAlgorithm#getEnchantmentMatchStatsWithHausdorffMetric} method.
      */
     @Override
     public synchronized void compareDrawnSpells(SpellRequest request, StreamObserver<MatchedSpellStatsResponse> streamObserver) {
@@ -576,6 +601,8 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
             responseBuilder.getCanvasStateBuilder().build();
             // setting remaining time
             responseBuilder.setLeftTimeMs(session.getLeftExecutionTimeMs());
+            // setting active defend spells
+            responseBuilder.addAllActiveDefendSpells(createActiveDefendSpellsList(session.getAttackedTowerId()));
 
             logger.info("Attack session with id " + session.getId() + " left execution time: " + session.getLeftExecutionTimeMs() + "ms");
 
@@ -659,6 +686,124 @@ public class TowerAttackService extends TowerAttackServiceGrpc.TowerAttackServic
 
         streamObserver.onNext(responseBuilder.build());
         streamObserver.onCompleted();
+    }
+
+    @Override
+    public synchronized void castDefendSpell(CastDefendSpellRequest request, StreamObserver<ActionResultResponse> streamObserver) {
+        final int spectatingPlayerId = request.getPlayerData().getPlayerId();
+        final int towerId = request.getTowerId();
+        final int defendSpellId = request.getDefendSpellId();
+
+        ActionResultResponse.Builder responseBuilder = ActionResultResponse.newBuilder();
+        Optional<ServerError> serverError = validateDefendSpellCast(spectatingPlayerId, towerId, defendSpellId);
+
+        if (serverError.isEmpty()) {
+            defendSpellsManager.addDefendSpell(towerId, defendSpellId, () -> {
+                logger.info("Remove defend spell with id " + defendSpellId + " from tower with id " + towerId);
+                notifyTowerAttackersWithDefendSpellUpdate(towerId, defendSpellId, SessionStateInfoResponse.ResponseType.REMOVE_DEFEND_SPELL);
+                notifyTowerSpectatorsWithDefendSpellUpdate(towerId, defendSpellId, ResponseType.REMOVE_DEFEND_SPELL);
+
+                // remove spell from manager
+                defendSpellsManager.removeDefendSpell(towerId, defendSpellId);
+            });
+
+            logger.info("Add defend spell with id " + defendSpellId + " to tower with id " + towerId);
+            notifyTowerAttackersWithDefendSpellUpdate(towerId, defendSpellId, SessionStateInfoResponse.ResponseType.ADD_DEFEND_SPELL);
+            notifyTowerSpectatorsWithDefendSpellUpdate(towerId, defendSpellId, ResponseType.ADD_DEFEND_SPELL);
+            responseBuilder.setSuccess(true);
+        }
+        else {
+            responseBuilder.setSuccess(false);
+            responseBuilder.setError(serverError.get());
+        }
+
+        streamObserver.onNext(responseBuilder.build());
+        streamObserver.onCompleted();
+    }
+
+    private void notifyTowerAttackersWithDefendSpellUpdate(int towerId, int defendSpellId, SessionStateInfoResponse.ResponseType type) {
+        if (type != SessionStateInfoResponse.ResponseType.ADD_DEFEND_SPELL && type != SessionStateInfoResponse.ResponseType.REMOVE_DEFEND_SPELL) {
+            logger.warning("Call notifyTowerAttackersWithDefendSpellUpdate with response type of `ADD_DEFEND_SPELL` or `REMOVE_DEFEND_SPELL`");
+            return;
+        }
+
+        long leftTimeMs = defendSpellsManager.getDefendSpellLeftTimeMs(towerId, defendSpellId);
+        var attackers = sessionManager.getAttackersAssociatedWithTowerId(towerId);
+
+        SessionStateInfoResponse notification = SessionStateInfoResponse.newBuilder()
+            .setType(type)
+            .setUpdatedDefendSpell(
+                DefendSpellDescription.newBuilder()
+                    .setDefendSpellTemplateId(defendSpellId)
+                    .setLeftTimeMs(leftTimeMs)
+                    .build()
+            )
+            .build();
+
+        for (var attacker : attackers) {
+            attacker.onNext(notification);
+        }
+    }
+
+    private void notifyTowerSpectatorsWithDefendSpellUpdate(int towerId, int defendSpellId, SpectateTowerAttackResponse.ResponseType type) {
+        if (type != SpectateTowerAttackResponse.ResponseType.ADD_DEFEND_SPELL && type != SpectateTowerAttackResponse.ResponseType.REMOVE_DEFEND_SPELL) {
+            logger.warning("Call notifyTowerSpectatorsWithDefendSpellUpdate with response type of `ADD_DEFEND_SPELL` or `REMOVE_DEFEND_SPELL`");
+            return;
+        }
+
+        long leftTimeMs = defendSpellsManager.getDefendSpellLeftTimeMs(towerId, defendSpellId);
+        var spectators = sessionManager.getSpectatorsAssociatedWithTowerId(towerId);
+
+        SpectateTowerAttackResponse notification = SpectateTowerAttackResponse.newBuilder()
+            .setResponseType(type)
+            .setUpdatedDefendSpell(
+                DefendSpellDescription.newBuilder()
+                    .setDefendSpellTemplateId(defendSpellId)
+                    .setLeftTimeMs(leftTimeMs)
+                    .build()
+            )
+            .build();
+
+        for (var spectator : spectators) {
+            spectator.onNext(notification);
+        }
+    }
+
+    private Optional<ServerError> validateDefendSpellCast(int spectatingPlayerId, int towerId, int defendSpellId) {
+        Optional<Tower> towerOpt = TowersRegistry.getInstance().getTowerById(towerId);
+        ServerError.Builder errorBuilder = ServerError.newBuilder();
+        boolean errorOccurred = false;
+
+        if (towerOpt.isEmpty()) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                ErrorType.TOWER_NOT_FOUND,
+                "tower with id " + towerId + " not found");
+        }
+        else if (towerOpt.get().getOwnerId().isEmpty() || towerOpt.get().getOwnerId().get() != spectatingPlayerId) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                ErrorType.INVALID_REQUEST,
+                "player with id " + spectatingPlayerId + " does not own tower with id " + towerId);
+        }
+        else if (SpellBook.getDefendSpellTemplateById(defendSpellId) == null) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                ErrorType.SPELL_TEMPLATE_NOT_FOUND,
+                "defend spell template with id " + defendSpellId + " not found");
+        }
+        else if (defendSpellsManager.isDefendSpellAlreadyCasted(towerId, defendSpellId)) {
+            errorOccurred = true;
+            ProtoModelsUtils.buildServerError(errorBuilder,
+                ErrorType.INVALID_REQUEST,
+                "Defend spell with id '" + defendSpellId + "' already casted");
+        }
+
+        if (errorOccurred) {
+            return Optional.of(errorBuilder.build());
+        }
+
+        return Optional.empty();
     }
 
     /**

@@ -196,7 +196,7 @@ class ProtectionEventWorker extends Thread {
 
 
                                 // substitute current spell with template
-                                Spell template = SpellBook.getTemplateById(templateId);
+                                Spell template = SpellBook.getSpellTemplateById(templateId);
 
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));

@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -18,11 +19,13 @@ import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.R;
 import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasSessionTimer;
+import enchantedtowers.client.components.canvas.CanvasSpectatorFragment;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
 import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.DefendSpellDescription;
 import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.requests.SessionIdRequest;
@@ -48,14 +51,14 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
     // TODO: unite the functionality of Attack and Spectate canvas interactors
     private final Path currentPath = new Path();
     private final Paint brush;
-    private final CanvasFragment canvasFragment;
+    private final CanvasSpectatorFragment canvasFragment;
     private Optional<CanvasSessionTimer> timer = Optional.empty();
     private final Logger logger = Logger.getLogger(AttackEventWorker.class.getName());
 
     // TODO: watch for the race conditions in this class
     // TODO: consider scaling the points that we retrieve from server (solution: make canvas size fixed or send to the server the canvas size of attacker and recalculate real path size on spectators)
 
-    public CanvasSpectateInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
+    public CanvasSpectateInteractor(CanvasSpectatorFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         // copy brush settings from CanvasState
         this.brush = state.getBrushCopy();
         this.canvasFragment = canvasFragment;
@@ -103,6 +106,17 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                 else {
                     switch (response.getResponseType()) {
                         case CURRENT_CANVAS_STATE -> {
+                            // apply active defend spells
+                            logger.info("Spectator: active defend spells count " + response.getActiveDefendSpellsCount());
+                            List<DefendSpellDescription> activeDefendSpells = response.getActiveDefendSpellsList();
+                            for (var activeDefendSpell : activeDefendSpells) {
+                                canvasFragment.addActiveDefendSpell(
+                                        activeDefendSpell.getDefendSpellTemplateId(),
+                                        activeDefendSpell.getLeftTimeMs()
+                                );
+                            }
+
+
                             logger.info("Received CURRENT_CANVAS_STATE");
                             onCurrentCanvasStateReceived(response, state, canvasWidget);
                         }
@@ -128,6 +142,19 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                             onCompareEnchantmentsReceived(response);
                             // clearing canvas
                             onClearCanvasReceived(state, canvasWidget);
+                        }
+                        case ADD_DEFEND_SPELL -> {
+                            int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+                            long totalDuration = response.getUpdatedDefendSpell().getLeftTimeMs();
+
+                            canvasFragment.addActiveDefendSpell(defendSpellId, totalDuration);
+                            logger.info("Received ADD_DEFEND_SPELL, spectator: add defend spell " + defendSpellId);
+                        }
+                        case REMOVE_DEFEND_SPELL -> {
+                            int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+
+                            canvasFragment.removeActiveDefendSpell(defendSpellId);
+                            logger.info("Received REMOVE_DEFEND_SPELL, spectator: remove defend spell " + defendSpellId);
                         }
                     }
                 }
@@ -264,7 +291,7 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
                     description.getSpellTemplateOffset().getX(),
                     description.getSpellTemplateOffset().getY()
             );
-            Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
+            Spell templateSpell = SpellBook.getSpellTemplateById(description.getSpellTemplateId());
 
             if (templateSpell != null) {
                 templateSpell.setOffset(templateOffset);
@@ -368,9 +395,8 @@ public class CanvasSpectateInteractor implements CanvasInteractor {
         // case when it is not found is handled when server responded with SPELL_TEMPLATE_NOT_FOUND error (see above)
         var description = response.getSpellDescription();
         var templateOffset = description.getSpellTemplateOffset();
-        var templateType = description.getSpellType();
-        Spell templateSpell = SpellBook.getTemplateById(description.getSpellTemplateId());
-        templateSpell.setOffset(new Vector2(
+        Spell templateSpell = SpellBook.getSpellTemplateById(description.getSpellTemplateId());
+        Objects.requireNonNull(templateSpell).setOffset(new Vector2(
                 templateOffset.getX(),
                 templateOffset.getY()
         ));

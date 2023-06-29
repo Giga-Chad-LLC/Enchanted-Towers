@@ -6,12 +6,15 @@ import android.view.View;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Optional;
 
+import enchantedtowers.client.components.dialogs.DefendSpellbookDialogFragment;
 import enchantedtowers.client.components.dialogs.LocationRequestPermissionRationaleDialog;
 import enchantedtowers.client.components.map.MapFragment;
 import enchantedtowers.client.components.permissions.PermissionManager;
@@ -22,7 +25,8 @@ import enchantedtowers.client.components.utils.ClientUtils;
 public class MapActivity extends BaseActivity {
     private final String[] locationPermissions = new String[] {
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.VIBRATE
     };
 
     private Optional<LocationRequestPermissionRationaleDialog> dialog = Optional.empty();
@@ -42,7 +46,10 @@ public class MapActivity extends BaseActivity {
                     boolean coarseLocationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
                             Manifest.permission.ACCESS_COARSE_LOCATION, false));
 
-                    if (fineLocationPermissionGranted && coarseLocationPermissionGranted) {
+                    boolean vibrationPermissionGranted = Boolean.TRUE.equals(result.getOrDefault(
+                            Manifest.permission.VIBRATE, false));
+
+                    if (fineLocationPermissionGranted && coarseLocationPermissionGranted && vibrationPermissionGranted) {
                         ClientUtils.showSnackbar(mapFrameLayout, "All required permissions granted. Thanks, enjoy the game!", Snackbar.LENGTH_LONG);
                         mountGoogleMapsFragment();
                     }
@@ -51,7 +58,7 @@ public class MapActivity extends BaseActivity {
                         mountGoogleMapsFragment();
                     }
                     else {
-                        ClientUtils.showSnackbar(mapFrameLayout, "Content might be limited. Please, grant access of location.", Snackbar.LENGTH_LONG);
+                        ClientUtils.showSnackbar(mapFrameLayout, "Content might be limited. Please, grant access of location and vibration.", Snackbar.LENGTH_LONG);
                     }
                 }
         );
@@ -60,14 +67,14 @@ public class MapActivity extends BaseActivity {
                 .withPermissions(locationPermissions, this, this::mountGoogleMapsFragment)
                 .otherwise(() -> {
                     if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
-                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                        shouldShowRequestPermissionRationale(Manifest.permission.VIBRATE)) {
                         showLocationRequestPermissionRationale(locationPermissionLauncher);
                     }
                     else {
                         locationPermissionLauncher.launch(locationPermissions);
                     }
                 });
-
 
         // initialize spell book
         SpellBookProvider.getInstance().provideSpellBook(this);

@@ -1,18 +1,17 @@
 package components.session;
 
-import components.time.Timeout;
-import enchantedtowers.common.utils.proto.responses.SessionInfoResponse;
-import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
-import enchantedtowers.game_logic.CanvasState;
-import enchantedtowers.game_models.TemplateDescription;
-import io.grpc.stub.StreamObserver;
-
 import java.util.List;
 import java.util.function.IntConsumer;
 import java.util.logging.Logger;
 
+import components.time.Timeout;
+import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
+import enchantedtowers.game_logic.canvas.CanvasState;
+import enchantedtowers.game_models.SpellTemplateDescription;
+import io.grpc.stub.StreamObserver;
+
 public class ProtectionWallSession {
-    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 30 * 1000; // 60s
+    private static final long SESSION_EXPIRATION_TIMEOUT_MS = 60 * 1000; // 60s
 
     private final int id;
     private final int playerId;
@@ -72,7 +71,7 @@ public class ProtectionWallSession {
         return playerResponseObserver;
     }
 
-    public void addTemplateToCanvasState(TemplateDescription template) {
+    public void addTemplateToCanvasState(SpellTemplateDescription template) {
         canvasState.addTemplate(template);
     }
 
@@ -80,7 +79,7 @@ public class ProtectionWallSession {
         canvasState.clear();
     }
 
-    public List<TemplateDescription> getTemplateDescriptions() {
+    public List<SpellTemplateDescription> getTemplateDescriptions() {
         return canvasState.getTemplates();
     }
 }

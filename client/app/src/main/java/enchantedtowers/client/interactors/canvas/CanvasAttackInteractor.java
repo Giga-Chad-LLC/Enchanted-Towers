@@ -1,13 +1,23 @@
 package enchantedtowers.client.interactors.canvas;
 
+import static android.content.Context.VIBRATOR_SERVICE;
+
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +32,7 @@ import java.util.logging.Logger;
 import enchantedtowers.client.AttackTowerMenuActivity;
 import enchantedtowers.client.MapActivity;
 import enchantedtowers.client.R;
+import enchantedtowers.client.components.canvas.CanvasAttackerFragment;
 import enchantedtowers.client.components.canvas.CanvasFragment;
 import enchantedtowers.client.components.canvas.CanvasSessionTimer;
 import enchantedtowers.client.components.canvas.CanvasSpellDecorator;
@@ -29,6 +40,7 @@ import enchantedtowers.client.components.canvas.CanvasState;
 import enchantedtowers.client.components.canvas.CanvasWidget;
 import enchantedtowers.client.components.storage.ClientStorage;
 import enchantedtowers.client.components.utils.ClientUtils;
+import enchantedtowers.common.utils.proto.common.DefendSpellDescription;
 import enchantedtowers.client.interceptors.GameSessionRequestInterceptor;
 import enchantedtowers.common.utils.proto.common.SpellStat;
 import enchantedtowers.common.utils.proto.common.SpellType;
@@ -42,6 +54,7 @@ import enchantedtowers.common.utils.proto.responses.SessionStateInfoResponse;
 import enchantedtowers.common.utils.proto.responses.SpellFinishResponse;
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
+import enchantedtowers.game_models.DefendSpell;
 import enchantedtowers.game_models.Spell;
 import enchantedtowers.game_models.SpellBook;
 import enchantedtowers.game_models.utils.Vector2;
@@ -258,7 +271,7 @@ class AttackEventWorker extends Thread {
 
 
                                 // substitute current spell with template
-                                Spell template = SpellBook.getTemplateById(templateId);
+                                Spell template = SpellBook.getSpellTemplateById(templateId);
 
                                 if (template != null) {
                                     template.setOffset(new Vector2(offset.getX(), offset.getY()));
@@ -328,15 +341,28 @@ public class CanvasAttackInteractor implements CanvasInteractor {
     private final Path path = new Path();
     private final Paint brush;
     private AttackEventWorker worker;
-    private final CanvasFragment canvasFragment;
+    private final CanvasAttackerFragment canvasFragment;
 
     private static final Logger logger = Logger.getLogger(CanvasAttackInteractor.class.getName());
     private final TowerAttackServiceGrpc.TowerAttackServiceStub asyncStub;
     private final ManagedChannel channel;
+    private final CanvasWidget canvasWidget;
 
-    public CanvasAttackInteractor(CanvasFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
+    // defend spells actions
+    boolean invertedXDefendSpellActive = false;
+    boolean invertedYDefendSpellActive = false;
+    boolean vibrationDefendSpellActive = false;
+
+    private boolean isVibrating = false;
+    private Vibrator vibrator;
+
+
+    public CanvasAttackInteractor(CanvasAttackerFragment canvasFragment, CanvasState state, CanvasWidget canvasWidget) {
         brush = state.getBrushCopy();
         this.canvasFragment = canvasFragment;
+        this.canvasWidget = canvasWidget;
+        this.vibrator = (Vibrator) canvasFragment.requireContext().getSystemService(VIBRATOR_SERVICE);
+
 
         // configuring async client stub
         {
@@ -377,6 +403,17 @@ public class CanvasAttackInteractor implements CanvasInteractor {
         if (worker == null) {
             return false;
         }
+
+        if (invertedXDefendSpellActive) {
+            System.out.println("Invert X axis, canvas width: " + canvasWidget.getWidth());
+            x = canvasWidget.getWidth() - x;
+        }
+
+        if (invertedYDefendSpellActive) {
+            System.out.println("Invert Y axis, canvas height: " + canvasWidget.getHeight());
+            y = canvasWidget.getHeight() - y;
+        }
+
 
         return switch (motionEventType) {
             case MotionEvent.ACTION_DOWN -> onActionDownStartNewPath(state, x, y);
@@ -479,9 +516,44 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                             this.timer = Optional.of(
                                     new CanvasSessionTimer(canvasFragment.requireActivity(), timeView, response.getSession().getLeftTimeMs()));
 
+                            // apply active defend spells
+                            logger.info("Attacker: active defend spells count " + response.getActiveDefendSpellsCount());
+                            List<DefendSpellDescription> activeDefendSpells = response.getActiveDefendSpellsList();
+                            for (var activeDefendSpell : activeDefendSpells) {
+                                int defendSpellId = activeDefendSpell.getDefendSpellTemplateId();
+                                long totalDuration = activeDefendSpell.getLeftTimeMs();
+
+                                setActiveDefendSpell(defendSpellId, true);
+                                toggleVibration(totalDuration);
+
+                                canvasFragment.addActiveDefendSpell(
+                                    defendSpellId,
+                                    totalDuration
+                                );
+                            }
+
                             logger.info("Starting worker...");
                             worker = new AttackEventWorker(CanvasAttackInteractor.this, canvasWidget);
                             worker.start();
+                        }
+                        case ADD_DEFEND_SPELL -> {
+                            int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+                            long totalDuration = response.getUpdatedDefendSpell().getLeftTimeMs();
+
+                            setActiveDefendSpell(defendSpellId, true);
+                            toggleVibration(totalDuration);
+
+                            canvasFragment.addActiveDefendSpell(defendSpellId, totalDuration);
+                            logger.info("Attacker: add defend spell " + defendSpellId);
+                        }
+                        case REMOVE_DEFEND_SPELL -> {
+                            int defendSpellId = response.getUpdatedDefendSpell().getDefendSpellTemplateId();
+
+                            setActiveDefendSpell(defendSpellId, false);
+                            toggleVibration(0);
+
+                            canvasFragment.removeActiveDefendSpell(defendSpellId);
+                            logger.info("Attacker: remove defend spell " + defendSpellId);
                         }
                         case SESSION_EXPIRED -> {
                             sessionExpired = true;
@@ -516,6 +588,48 @@ public class CanvasAttackInteractor implements CanvasInteractor {
                         (Activity) canvasWidget.getContext(), MapActivity.class, message);
             }
         });
+    }
+
+    private void toggleVibration(long durationMs) {
+        if (vibrationDefendSpellActive) {
+            startVibration(durationMs);
+        }
+        else {
+            stopVibration();
+        }
+    }
+
+    private void startVibration(long durationMillis) {
+        if (vibrator != null && vibrator.hasVibrator() && !isVibrating) {
+            // VibrationEffect vibrationEffect = VibrationEffect.createOneShot(durationMillis, VibrationEffect.DEFAULT_AMPLITUDE);
+
+            long[] timings = {0, durationMillis};
+            int[] amplitudes = {VibrationEffect.DEFAULT_AMPLITUDE, VibrationEffect.DEFAULT_AMPLITUDE};
+            VibrationEffect vibrationEffect = VibrationEffect.createWaveform(timings, amplitudes, 0);
+
+            vibrator.vibrate(vibrationEffect);
+            isVibrating = true;
+            vibrationDefendSpellActive = true;
+        }
+    }
+
+    private void stopVibration() {
+        if (vibrator != null && isVibrating) {
+            vibrator.cancel();
+            isVibrating = false;
+        }
+    }
+
+    private void setActiveDefendSpell(int defendSpellId, boolean value) {
+        if (defendSpellId == DefendSpell.DefendSpellType.INVERT_X_AXIS.getType()) {
+            invertedXDefendSpellActive = value;
+        }
+        else if (defendSpellId == DefendSpell.DefendSpellType.INVERT_Y_AXIS.getType()) {
+            invertedYDefendSpellActive = value;
+        }
+        else if (defendSpellId == DefendSpell.DefendSpellType.VIBRATE.getType()) {
+            vibrationDefendSpellActive = value;
+        }
     }
 
     private boolean onActionDownStartNewPath(CanvasState state, float x, float y) {

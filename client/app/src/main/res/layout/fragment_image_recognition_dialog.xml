@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFD5A4">
+
+
+    <FrameLayout
+        android:id="@+id/defend_spell_preview_layout"
+        android:layout_width="match_parent"
+        android:layout_height="294dp">
+
+        <enchantedtowers.client.components.canvas.CanvasWidget
+            android:id="@+id/canvas_widget"
+            android:layout_width="340dp"
+            android:layout_height="220dp"
+            android:layout_gravity="center"
+            android:background="@drawable/element_spellbook_item_background" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/leave_photo_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/leave_button_icon"
+                android:clickable="true" />
+        </LinearLayout>
+    </FrameLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="#fff">
+
+        <!--    Selected spell row    -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:layout_width="2dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Selected spell:"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/selected_spell_name"
+                style="@style/MedievalStyle.TextAppearance.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:text="N/A"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+
+
+        <!--    Cast match percentage row    -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/MedievalStyle.TextAppearance.Large"
+                android:layout_width="2dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cast match:"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/cast_match_percentage"
+                style="@style/MedievalStyle.TextAppearance.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:text="N/A"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/captured_photo_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="50dp"
+            android:orientation="horizontal"
+            android:id="@+id/take_photo_layout"
+            android:visibility="visible">
+
+            <Button
+                android:id="@+id/take_photo_button"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/take_photo_button_icon"
+                android:clickable="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="50dp"
+            android:orientation="horizontal"
+            android:id="@+id/submit_photo_layout"
+            android:visibility="invisible">
+
+            <Button
+                android:id="@+id/retake_photo_button"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/retake_photo_button_icon"
+                android:clickable="true" />
+
+
+            <Button
+                android:id="@+id/submit_photo_button"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/submit_photo_button_icon"
+                android:clickable="true" />
+        </LinearLayout>
+
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -6,20 +6,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import enchantedtowers.common.utils.proto.common.Empty;
 import enchantedtowers.common.utils.proto.responses.EnchantmentResponse;
 import enchantedtowers.common.utils.proto.responses.ProtectionWallResponse;
 import enchantedtowers.common.utils.proto.responses.TowerResponse;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
-import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
-import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.Enchantment;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import enchantedtowers.game_models.utils.Vector2;
-import io.grpc.Grpc;
-import io.grpc.InsecureChannelCredentials;
 
 public class TowersRegistry {
     static private TowersRegistry instance = null;
@@ -61,7 +56,7 @@ public class TowersRegistry {
     }
 
     static private Enchantment createEnchantment(EnchantmentResponse response) {
-        List<TemplateDescription> spells = new ArrayList<>();
+        List<SpellTemplateDescription> spells = new ArrayList<>();
 
         for (var spell : response.getSpellsList()) {
             Vector2 offset = new Vector2(
@@ -69,7 +64,7 @@ public class TowersRegistry {
                     spell.getSpellTemplateOffset().getY()
             );
 
-            spells.add(new TemplateDescription(
+            spells.add(new SpellTemplateDescription(
                     spell.getSpellTemplateId(),
                     spell.getSpellType(),
                     offset

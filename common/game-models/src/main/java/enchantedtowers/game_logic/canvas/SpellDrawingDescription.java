@@ -1,4 +1,4 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.canvas;
 
 import enchantedtowers.common.utils.proto.common.SpellType;
 import enchantedtowers.game_models.utils.Vector2;

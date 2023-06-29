@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import enchantedtowers.common.utils.proto.common.Empty;
-import enchantedtowers.common.utils.proto.responses.ServerError;
 import enchantedtowers.common.utils.proto.responses.TowersAggregationResponse;
 import enchantedtowers.common.utils.proto.services.TowersServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;

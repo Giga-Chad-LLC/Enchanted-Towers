@@ -9,12 +9,15 @@ package response_models;
 import "responses/common/server-error.proto";
 // common
 import "common/session-info.proto";
+import "common/defend-spell-description.proto";
 
 
 message SessionStateInfoResponse {
   enum ResponseType {
     SESSION_CREATED = 0;
     SESSION_EXPIRED = 1;
+    ADD_DEFEND_SPELL = 2;
+    REMOVE_DEFEND_SPELL = 3;
   };
 
   message SessionExpirationInfo {
@@ -25,6 +28,9 @@ message SessionStateInfoResponse {
   response_models.ServerError error = 2;
   // SESSION_CREATED
   common.SessionInfo session = 3;
+  repeated common.DefendSpellDescription activeDefendSpells = 4;
   // SESSION_EXPIRED
-  SessionExpirationInfo expiration = 4;
+  SessionExpirationInfo expiration = 5;
+  // ADD|REMOVE_DEFEND_SPELL
+  common.DefendSpellDescription updatedDefendSpell = 6;
 };

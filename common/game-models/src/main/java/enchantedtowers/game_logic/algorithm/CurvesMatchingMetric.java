@@ -1,4 +1,4 @@
-package enchantedtowers.game_logic;
+package enchantedtowers.game_logic.algorithm;
 
 import org.locationtech.jts.geom.Geometry;
 

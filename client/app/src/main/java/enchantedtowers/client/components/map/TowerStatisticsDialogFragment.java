@@ -47,7 +47,7 @@ import enchantedtowers.common.utils.proto.services.ProtectionWallSetupServiceGrp
 import enchantedtowers.common.utils.proto.services.TowerAttackServiceGrpc;
 import enchantedtowers.common.utils.storage.ServerApiStorage;
 import enchantedtowers.game_models.ProtectionWall;
-import enchantedtowers.game_models.TemplateDescription;
+import enchantedtowers.game_models.SpellTemplateDescription;
 import enchantedtowers.game_models.Tower;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
@@ -227,7 +227,7 @@ public class TowerStatisticsDialogFragment extends BottomSheetDialogFragment {
             noUsedSpellsPresentText.setVisibility(View.GONE);
             spellsRecycler.setVisibility(View.VISIBLE);
 
-            List<TemplateDescription> TemplateDescriptions = tower.getEnchantedProtectionWall()
+            List<SpellTemplateDescription> TemplateDescriptions = tower.getEnchantedProtectionWall()
                     .getEnchantment().get().getTemplateDescriptions();
 
             Map<Integer, Boolean> insertedSpellImages = new HashMap<>();
