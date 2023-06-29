@@ -150,10 +150,10 @@ public class ImageContoursProvider {
                 enchantedtowers.game_models.utils.Utils.getNormalizedLines(contours)
         );
         // blit saved templates for debug purposes
-        for (var entry : SpellBook.getDefendSpellsTemplates().entrySet()) {
-            DefendSpell defendSpell = entry.getValue();
-            resultingBitmap = blitContoursToBitmap(resultingBitmap, defendSpell.getPoints());
-        }
+//        for (var entry : SpellBook.getDefendSpellsTemplates().entrySet()) {
+//            DefendSpell defendSpell = entry.getValue();
+//            resultingBitmap = blitContoursToBitmap(resultingBitmap, defendSpell.getPoints());
+//        }
 
         // remove temporary image file
         deleteTempImageFile(capturedImageUri);

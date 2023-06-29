@@ -23,6 +23,10 @@ public class DefendSpellMatchingAlgorithm {
             int defendSpellId,
             List<List<Vector2>> defendSpellLines
     ) {
+        if (defendSpellLines.isEmpty()) {
+            return 0;
+        }
+
         List<List<Vector2>> normalizedLines = Utils.getNormalizedLines(defendSpellLines);
         DefendSpell pattern = new DefendSpell(normalizedLines);
 

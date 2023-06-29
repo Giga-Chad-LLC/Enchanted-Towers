@@ -601,8 +601,14 @@ public class CanvasAttackInteractor implements CanvasInteractor {
 
     private void startVibration(long durationMillis) {
         if (vibrator != null && vibrator.hasVibrator() && !isVibrating) {
-            VibrationEffect vibrationEffect = VibrationEffect.createOneShot(durationMillis, VibrationEffect.DEFAULT_AMPLITUDE);
+            // VibrationEffect vibrationEffect = VibrationEffect.createOneShot(durationMillis, VibrationEffect.DEFAULT_AMPLITUDE);
+
+            long[] timings = {0, durationMillis};
+            int[] amplitudes = {VibrationEffect.DEFAULT_AMPLITUDE, VibrationEffect.DEFAULT_AMPLITUDE};
+            VibrationEffect vibrationEffect = VibrationEffect.createWaveform(timings, amplitudes, 0);
+
             vibrator.vibrate(vibrationEffect);
+            isVibrating = true;
             vibrationDefendSpellActive = true;
         }
     }
