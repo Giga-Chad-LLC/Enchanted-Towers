@@ -1,92 +1,73 @@
 # Enchanted Towers
 ## Java Project | Higher School of Economics, 2023
 
-### Project Description:
-tbd
+Read this in other languages: [English](./README.md), [Русский](./README.ru.md)
 
-### Authors:
-1. Vladislav Artiukhov
-2. Vladislav Naumkin
-3. Dmitrii Artiukhov
+## Authors: 
+- [Vladislav Artiukhov](https://github.com/Vladislav0Art)
+- [Vladislav Naumkin](https://github.com/dezd4r)
+- [Dmitrii Artiukhov](https://github.com/dmitrii-artuhov)
 
-### Development Policies:
+## Words of gratitude:
 
-#### Branch naming:
+On behalf of our entire team, we would like to say huge thanks to [Vitaly Selishchev](https://github.com/vvselischev), our mentor, for his invaluable contribution to the project. In addition to the main duties of the mentor, Vitaly held online meetings for us, where he helped us solve problems that we encountered as we developed, Vitaly also conducted an online code review, where he pointed out our mistakes and suggested possible alternatives for writing code that would facilitate the development process for us. And even that's not all: at almost every online meeting, Vitaly showed us various OOP patterns and methods for solving classical problems related to the creation of project architecture.
 
-1. Каждая ветка должна соблюдать следующую конвенцию наименования (разбиение на 3 **сегмента**): `[author-handle]/[topic]/[short-task-description]`, где:
+## Description of the project:
 
-    1. `[author-handle]` - конкатенация **первой буквы имени** и **фамилии** (полностью). Например: `vartiukhov`, `vnaumkin`, `dartiukhov`.
+Enchanted Towers is a medieval fantasy mobile game in which players compete by capturing and holding towers on a real map while casting spells on their smartphone screen or on real paper.
 
-    1. `[topic]` - **тема/категория**, к которой по смыслу относятся изменения в ветке. Например: `feature`, `bug-fix`, `enhancement`. На данный момент допустимо использовать следующие категории (если хотите добавить свои, то обсудите это с членами команды):
+There are markers (towers) on the map, players must live to get to the towers in order to be able to capture them and subsequently set their defensive spells. Tower owners can thwart attackers from anywhere in the world by taking a picture of one of the available defensive spells with a unique effect on paper.
 
-        1. `feature`
-        2. `environment`
-        3. `bug-fix`
-        4. `enhancement`
-        5. `research`
-        6. `playground`
+## Game components:
 
-    1. `[short-task-description]` - краткое описание из 1-6 слов изменений, которые находятся в ветке. Например: `websocket-server-implementation`, `google-map-api-setup`, `drawing-board-implementation`.
-
-1. Для разделения слов в каждом **сегменте** нужно использовать `-`. Например, `vartiukhov/bug-fix/yet-another-branch`.
+- Registration / authorization
+- Tower capture and defense session
+- Session for installing fortifications on the walls of the tower
+- Recognition of the contours of spells and substitution for existing templates
+- Use the camera to capture pictures in high quality
+- Image processing and contour selection
+- Special effects of defensive spells: invert attacker's canvases vertically, horizontally and enable vibration on their devices.
 
 
-#### Standard Java Naming Conventions:
+## Screenshots and videos:
 
-1. **Packages:** Names should be in lowercase. With small projects that only have a few packages it's okay to just give them simple (but meaningful!) names:
+### **Tower attack**: observer on the left, attacker on the right
 
-    ```java
-    package pokeranalyzer;
-    package mycalculator;
-    ```
+<div style="text-align: center;">
+    <img style="max-height: 500px;" src="assets/gifs/spectator-1.gif"  />
+    <img style="max-height: 500px;" src="assets/gifs/attacker-1.gif"  />
+</div>
 
-   In large projects where the packages might be imported into other classes, the names will normally be subdivided. Typically this will start with the company domain before being split into layers or features:
 
-    ```java
-    package com.mycompany.utilities;
-    package org.bobscompany.application.userinterface;
-    ```
+### **Protection wall installation**:
 
-1. **Classes:** Names should be in **CamelCase**. Try to use nouns because a class is normally representing something in the real world:
 
-    ```java
-    class Customer;
-    class Account;
-    class WebSocketServer;
-    ```
+<div style="text-align: center;">
+    <img style="max-height: 500px;" src="assets/gifs/wall-protection.gif"  />
+</div>
 
-1. **Interfaces:** Names should be in CamelCase starting with letter `I`. They tend to have a name that describes an operation that a class can do:
 
-    ```java
-    interface IComparable;
-    interface IEnumerable;
-    ```
 
-1. **Methods:** Names should be in mixed case. Use verbs to describe what the method does:
+## Dependencies:
 
-    ```java
-    void calculateTax();
-    String getSurname();
-    ```
+- PostgreSQL
+- GRPC
+- OpenCV (quickbirds)
+-jts
+- Google Maps API
+- Hibernate ORM
+- JWT
 
-1. **Variables:** Names should be in mixed case. The names should represent what the value of the variable represents:
 
-    ```java
-    String firstName;
-    int orderNumber;
-    ```
 
-   Only use very **short names** when the variables are short-lived, such as in for loops:
+## Local build:
 
-    ```java
-    for (int i=0; i < 20; i++) {
-        /* `i` only lives in here */
-    }
-    ```
+1. `git clone https://github.com/Giga-Chad-LLC/Enchanted-Towers.git`
+2. Building proto-models:
+     - Run task: `gradle :common:utils:build`
+     - And then: `gradle :common:utils:SyncProtobufFiles :common:utils:SyncProtoGrpcDependencies`
+     - Delete folder `/common/build/generated/source`
+     - When rebuilding models, you must manually delete the previous folder with generated files
+3. Run the docker database image: `cd /docker && docker-compose up`
+4. After that, the clients (target: `client.app`) are launched first, then the server (taget: `server`)
 
-1. **Constants:** Names should be in uppercase:
-
-    ```java
-    static final int DEFAULT_WIDTH;
-    static final int MAX_HEIGHT;
-    ```
