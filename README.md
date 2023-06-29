@@ -62,7 +62,7 @@ There are markers (towers) on the map, players must live to get to the towers in
 - PostgreSQL
 - GRPC
 - OpenCV (quickbirds)
--jts
+- jts
 - Google Maps API
 - Hibernate ORM
 - JWT
