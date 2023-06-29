@@ -68,19 +68,56 @@ A tower can have multiple walls of defense. To capture it, you must destroy all 
 | PostgreSQL | Database |
 | JBcrypt | Passwords hashing (related to authentication service) |
 | Hibernate | Database ORM |
+| OpenCV (quickbirds) | Image recognition |
 
+## Done tasks:
+
+### Vladislav Artiukhov:
+
+1. Project builds and dependencies setup
+1. Game UI development
+1. Service for defensive enchantments creation
+1. Service of attacking protection walls
+1. Service of spectating tower attackers
+1. Authorization, registration and request interceptors (the latter are used to attach (client) and validate (server) **GameSessionToken**)
+
+### Dmitrii Artiukhov:
+
+1. Interaction functionality on the canvas
+1. Pattern matching: searching for patterns similar to the one drawn
+1. Service of attacking protection walls
+1. Service of spectating tower attackers
+1. Image recognition: getting and preprocessing a photo
+1. Service of defensive spells casting
+1. Spellbook drawing
+
+### Vladislav Naumkin:
+
+1. Connecting Google Maps API and processing interactions with the map
+1. Requesting and processing geolocation rights
+1. Drawing towers and player on the map and processing click events
+1. Request of towers coordinates at map start
+1. Connecting and configuring **Hibernate** and Database
+1. Authorization and registration
+1. Request interceptors for game session token transfer
 
 ## Screenshots and videos:
 
 ### Gameplay record using defensive spells (image recognition via camera):
+
+**Youtube gameplay video (click the image):**
+
+<a href="https://www.youtube.com/watch?v=sT9mJeBanjU">
+    <img src="./assets/images/thumbnail.png" alt="Video thumbnail" width="350"/>
+</a>
 
 [Enchanted Towers - gameplay footage](https://drive.google.com/file/d/1r4isSCaLmbLplhZf8eS9OvL7gWaWBl1V/view?usp=sharing)
 
 ### **Tower attack**: observer on the left, attacker on the right
 
 <div style="text-align: center;">
-    <img height="500" src="assets/gifs/spectator-1.gif"  />
-    <img height="500" src="assets/gifs/attacker-1.gif"  />
+    <img height="500" src="assets/gifs/spectator-1.gif" />
+    <img height="500" src="assets/gifs/attacker-1.gif" />
 </div>
 
 
@@ -88,9 +125,15 @@ A tower can have multiple walls of defense. To capture it, you must destroy all 
 
 
 <div style="text-align: center;">
-    <img height="500" src="assets/gifs/wall-protection.gif"  />
+    <img height="500" src="assets/gifs/wall-protection.gif" />
 </div>
 
+
+### **Use of image recognition**:
+
+<div style="text-align: center;">
+    <img height="500" src="assets/gifs/image-recognition.gif" />
+</div>
 
 
 ## Dependencies:
