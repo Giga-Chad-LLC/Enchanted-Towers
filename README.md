@@ -36,6 +36,10 @@ There are markers (towers) on the map, players must live to get to the towers in
 
 ## Screenshots and videos:
 
+### Gameplay record using defensive spells (image recognition via camera):
+
+[Enchanted Towers - gameplay footage](https://drive.google.com/file/d/1r4isSCaLmbLplhZf8eS9OvL7gWaWBl1V/view?usp=sharing)
+
 ### **Tower attack**: observer on the left, attacker on the right
 
 <div style="text-align: center;">
