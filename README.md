@@ -39,8 +39,8 @@ There are markers (towers) on the map, players must live to get to the towers in
 ### **Tower attack**: observer on the left, attacker on the right
 
 <div style="text-align: center;">
-    <img style="max-height: 500px !important;" src="assets/gifs/spectator-1.gif"  />
-    <img style="max-height: 500px !important;" src="assets/gifs/attacker-1.gif"  />
+    <img height="500" src="assets/gifs/spectator-1.gif"  />
+    <img height="500" src="assets/gifs/attacker-1.gif"  />
 </div>
 
 
@@ -48,7 +48,7 @@ There are markers (towers) on the map, players must live to get to the towers in
 
 
 <div style="text-align: center;">
-    <img style="max-height: 500px;" src="assets/gifs/wall-protection.gif"  />
+    <img height="500" src="assets/gifs/wall-protection.gif"  />
 </div>
 
 
