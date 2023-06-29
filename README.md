@@ -51,11 +51,23 @@ A tower can have multiple walls of defense. To capture it, you must destroy all 
 
 - Registration / authorization
 - Tower capture and defense session
-- Session for installing fortifications on the walls of the tower
+- Session for installing enchantments on the walls of the tower
 - Recognition of the contours of spells and substitution for existing templates
 - Use the camera to capture pictures in high quality
 - Image processing and contour selection
 - Special effects of defensive spells: invert attacker's canvases vertically, horizontally and enable vibration on their devices.
+
+
+## Used technologies:
+
+| Technology | Description |
+|------------|-------------|
+| Android SDK | Game client + UI |
+| gRPC | Network communication |
+| Google Map API | Maps functionality |
+| PostgreSQL | Database |
+| JBcrypt | Passwords hashing (related to authentication service) |
+| Hibernate | Database ORM |
 
 
 ## Screenshots and videos:
